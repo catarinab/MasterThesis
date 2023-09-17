@@ -76,9 +76,13 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     int me, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+
     vector<double> g(size); //gradient, inicializar na primeira iteraçao?
     vector<double> d = subtractVec(b, matrixVector(A, x, size), size); //initial direction = residue
     double s; //step size
+
+    int dest = (me == nprocs - 1 ? 0 : me + 1);
+    int source = (me == 0 ? nprocs - 1 : me - 1);
 
     //auxiliar
     vector<double> op(size);
@@ -86,31 +90,30 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     double denom2 = 0;
     double num1 = 0;
     double num2 = 0;
+
+    vector<double> auxGrad(size);
+    vector<double> auxDir(size);
+
     MPI_Status status;
     MPI_Request sendGradReq;
     MPI_Request sendDirReq;
-    /* Distribuir as iteraçoes pelos mpi nodes */
+
     for(int t = me; t < MAXITER; t+=nprocs) {
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", Will be done by process " << me << endl;
-        //MPI: esperar para receber valor de g(t-1) do node anterior
-        //MPI: esperar para receber valor de x(t-1) do node anterior
-        //a seguir, podemos calcular o restantes
+        
         if(t != 0){
-            if(debugParallel) cout << "Proccess number: " << me << " Waiting to receive g(t-1) from node " << (me == 0 ? nprocs - 1 : me - 1) << endl;
-            MPI_Recv(&g[0], size, MPI_DOUBLE, (me == 0 ? nprocs - 1 : me - 1), MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if(debugParallel) cout << "Proccess number: " << me << " Received g(t-1) from node " << (me == 0 ? nprocs - 1 : me - 1) 
+            //MPI: esperar para receber valor de g(t-1) do node anterior
+            //o size e o maximo de items que ira receber. se for com END_TAG, apenas recebe 1 item
+            MPI_Recv(&g[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            if(debugParallel) cout << "Proccess number: " << me << " Received g(t-1) from node " << source 
                                     << " with tag " << status.MPI_TAG << endl;
-            if(debugParallel){
-                cout << "Iter" << t << " g(t-1): " << endl;
-                for(int i = 0; i < size; i++) {
-                    cout << "Iter " << t <<"g [" << i << "]=" << g[i] << endl;
-                }
-            }
-            int dest = (me == nprocs - 1 ? 0 : me + 1);
+
+            
+            //se tivermos recebido a endtag, enviar end tag para o processo seguinte
+            //se o nosso destino for o master node, entao podemos acabar a execucao
             if(status.MPI_TAG == ENDTAG && g[0] != dest) {
-                if(debugParallel) cout << "Proccess number: " << me << " Sending g(t) to node " << me + 1 <<" and ending execution"<< endl;
-                MPI_Send(&g[0], size, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
-                if(debugParallel) cout << "Proccess number: " << me << " Sent g(t) to node " << me + 1 << endl;
+                MPI_Send(&g[0], 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
+                if(debugParallel) cout << "Proccess number: " << me << " Sent end tag to node " << endl;
                 break;
             }
             else if(status.MPI_TAG == ENDTAG) break;
@@ -118,95 +121,82 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
             //unico trabalho q se pode fazer antes de receber o x(t-1)
             denom1 = dotProduct(g, g, size);
 
-            if(debugParallel) cout << "Proccess number: " << me << " Waiting to receive x(t-1) from node " << (me == 0 ? nprocs - 1 : me - 1) << endl;
-            MPI_Recv(&x[0], size, MPI_DOUBLE, (me == 0 ? nprocs - 1 : me - 1), XTAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if(debugParallel) cout << "Proccess number: " << me << " Received x(t-1) from node " << (me == 0 ? nprocs - 1 : me - 1) << endl;
-            if(debugParallel) {
-                cout << "Iter " << t << " x(t-1): " << endl;
-                for(int i = 0; i < size; i++) {
-                    cout << "Iter" << t <<"x(t-1) [" << i << "]=" << x[i] << endl;
-                }
-            }
+            MPI_Recv(&x[0], size, MPI_DOUBLE, source, XTAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if(debugParallel) cout << "Proccess number: " << me << " Received x(t-1) from node " << source << endl;
         }
 
-        //step 1
         //Ax(t-1)
-
-
         op = matrixVector(A, x, size);
-        if(debugMtr){
-            cout << "Iter: " << t << "Ax(t-1): " << endl;
-            for(int i = 0; i < size; i++) {
-                cout <<"Iter: " << t << "Ax(t-1)[" << i << "]= " << op[i] << endl;
-            }
-        }
+
         //g(t) = Ax(t-1) - b
         g =  subtractVec(op, b, size);
-
-        if(debugMtr) {
-            cout << "Iter: " << t << "g(t): " << endl;
-            for(int i = 0; i < size; i++) {
-                cout <<"Iter: " << t << "g[" << i << "]= " << g[i] << endl;
-            }
-        }
         
 
-        //step 2
         //g(t)^T g(t)
         num1 = dotProduct(g, g, size);
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", num1: " << num1 << endl;
+        
         if (num1 < epsilon){
             *master = me;
             *finalIter = t;
-            g[0] = me; //define master node that calls for execution end
-            if(debugParallel) cout << "Proccess number: " << me << " Sending end tag to node " << (me == nprocs - 1 ? 0 : me + 1) << endl;
-            MPI_Send(&g[0], size, MPI_DOUBLE, (me == nprocs - 1 ? 0 : me + 1), ENDTAG, MPI_COMM_WORLD);
-            if(debugParallel) cout << "Proccess number: " << me << " Sent end tag to node " << (me == nprocs - 1 ? 0 : me + 1) << endl;
+            MPI_Send(master, 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
+            if(debugParallel) cout << "Proccess number: " << me << " Sent end tag to node " << dest << endl;
             break;
         }
         else{
-            //MPI: enviar g(t) para o proximo node
-            vector<double> auxGrad(size);
-            for(int i = 0; i < size; i++) auxGrad[i] = g[i];
-            MPI_Isend(&auxGrad[0], size, MPI_DOUBLE, (me == nprocs - 1 ? 0 : me + 1), GRADTAG, MPI_COMM_WORLD, &sendGradReq);
-        } 
+            //MPI: enviar g(t) para o proximo node asincronamente
+            #pragma omp parallel for
+            for(int i = 0; i < size; i++) {
+                auxGrad[i] = g[i];
+            }
+            MPI_Isend(&auxGrad[0], size, MPI_DOUBLE, dest, GRADTAG, MPI_COMM_WORLD, &sendGradReq);
+            if(debugParallel) cout << "Proccess number: " << me << " Sent g(t) to node " << dest << endl;
 
-        if(debugParallel) cout << "Proccess number: " << me << " Sent g(t) to node " << (me == nprocs - 1 ? 0 : me + 1) << endl;
+        } 
 
         //step 3
         //d(t) = -g(t) + (g(t)^T g(t))/(g(t-1)^T g(t-1)) * d(t-1)
         //se estivermos na iteracao 0, a direcao foi ja calculada no inicio da funcao com o residuo
-        if(t!= 0)
-            MPI_Recv(&d[0], size, MPI_DOUBLE, (me == 0 ? nprocs - 1 : me - 1), MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        for(int i = 0; i < size && t != 0; i++) {
-             d[i] = -g[i] + (num1/denom1) * d[i];
-            if(debugMtr) {
-                cout << "Iter: " << t << "-g[i]: " << -g[i] << endl;
-                cout << "Iter: " << t << "(num1/denom1): " << (num1/denom1) << endl;
-                cout << "Iter: " << t << "d[i]: " << d[i] << endl;
-                cout << "Iter: " << t << "d(t)[" << i << "]: " << d[i] << endl;
+        //senao, temos de receber a direcao da iteracao anterior e calcular a nova direcao
+        if(t!= 0){
+            MPI_Recv(&d[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            #pragma omp parallel for
+            for(int i = 0; i < size; i++) {
+                d[i] = -g[i] + (num1/denom1) * d[i];
+                if(debugMtr) 
+                    cout << "Iter: " << t << "d(t)[" << i << "]: " << d[i] << endl;
+                
             }
-            
         }
-        vector<double> auxDir(size);
-        for(int i = 0; i < size; i++) auxDir[i] = d[i];
-        MPI_Isend(&auxDir[0], size, MPI_DOUBLE, (me == nprocs - 1 ? 0 : me + 1), DIRTAG, MPI_COMM_WORLD, &sendDirReq);
+
+        //MPI: enviar d(t) para o proximo node asincronamente
+        #pragma omp parallel for
+        for(int i = 0; i < size; i++){
+            auxDir[i] = d[i];
+        }
+        MPI_Isend(&auxDir[0], size, MPI_DOUBLE, dest, DIRTAG, MPI_COMM_WORLD, &sendDirReq);
+
         //d(t)^T g(t)
         num2 = dotProduct(d, g, size);
 
         //A*d(t)
         op = matrixVector(A, d, size);
+
+        //d(t)^T A*d(t)
         denom2 = dotProduct(d, op, size);
+
         s = -num2/denom2;
         if(debugMtr){
             cout << "Iter: " << t << "num2: " << num2 << endl;
             cout << "Iter: " << t << "denom2: " << denom2 << endl;
             cout << "Iter: " << t << "s: " << s << endl;
         }
+
         #pragma omp parallel for
         for(int i = 0; i < size; i++) {
             x[i] = x[i] + s*d[i];
         }
+
         if((debugMtr || debugParallel)) {
             cout << "Iter: " << t << "x(t): " << endl;
             for(int i = 0; i < size; i++) {
@@ -215,9 +205,9 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
         MPI_Wait(&sendGradReq, &status);
         MPI_Wait(&sendDirReq, &status);
-        if(debugParallel) cout << "Proccess number: " << me << " Sending x(t) to node " << (me == nprocs - 1 ? 0 : me + 1) << endl;
-        MPI_Send(&x[0], size, MPI_DOUBLE, (me == nprocs - 1 ? 0 : me + 1), XTAG, MPI_COMM_WORLD);
-        if(debugParallel) cout << "Proccess number: " << me << " Sent x(t) to node " << (me == nprocs - 1 ? 0 : me + 1) << endl;
+        if(debugParallel) cout << "Proccess number: " << me << " Sending x(t) to node " << dest << endl;
+        MPI_Send(&x[0], size, MPI_DOUBLE, dest, XTAG, MPI_COMM_WORLD);
+        if(debugParallel) cout << "Proccess number: " << me << " Sent x(t) to node " << dest << endl;
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", Finished" << endl;
     }
     return x;
@@ -249,7 +239,7 @@ int main (int argc, char* argv[]) {
     //dividir trabalho pelos nodes
     vector<vector<double>> A = buildMatrix(input_file);
     vector<double> b = buildVector(input_file);
-    int size = 3;
+    int size = b.size();
     //num max de threads
     omp_set_num_threads(size/2);
     //initial guess: b
