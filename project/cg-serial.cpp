@@ -29,7 +29,6 @@ vector<double> buildVector(string input_file) {
 
 double dotProduct(vector<double> a, vector<double> b, int size) {
 	double dotProd = 0.0;
-    #pragma omp parallel for reduction(+:dotProd)
 	for (int i = 0; i < size; i++) {
 		dotProd += (a[i] * b[i]);
 	}
@@ -38,7 +37,6 @@ double dotProduct(vector<double> a, vector<double> b, int size) {
 
 vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
     vector<double> res(size);
-    #pragma omp parallel for
     for (int i = 0; i < size; i++) {
         res[i] = a[i] - b[i];
     }
@@ -47,8 +45,6 @@ vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
 
 vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int size) {
     vector <double> res(size);
-    //TODO: chessboard decomposition com MPI
-    #pragma omp parallel for
 	for (int i = 0; i < size; i++) {
 		res[i] = 0;
 		for (int j = 0; j < size; j++) {
@@ -136,7 +132,6 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
             cout << "denom2: " << denom2 << endl;
             cout << "s: " << s << endl;
         }
-        #pragma omp parallel for
         for(int i = 0; i < size; i++) {
             x[i] = x[i] + s*d[i];
         }
@@ -162,15 +157,18 @@ void processInput(int argc, char* argv[]) {
 }
 
 int main (int argc, char* argv[]) {
+    double exec_time;       /* execution time */
     processInput(argc, argv);
 
     vector<vector<double>> A = buildMatrix(input_file);
     vector<double> b = buildVector(input_file);
     int size = 3;
+    exec_time = -omp_get_wtime();
     //num max de threads
-    omp_set_num_threads(size);
     vector<double> x0 {2, 1};
     vector<double> x = cg(A, b, size, b);
+    exec_time += omp_get_wtime();
+    fprintf(stderr, "%.10fs\n", exec_time);
     for(int i = 0; i < size; i++) {
         cout << "x[" << i << "]: " << x[i] << endl;
     }
