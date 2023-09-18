@@ -13,13 +13,13 @@ using namespace std;
 #define DIRTAG 1
 #define GRADTAG 2
 #define XTAG 3
+#define IDLETAG 4
 
 bool debugMtr = false;
 bool debugParallel = false;
 string input_file;
 
-//construir tendo em conta as matrizes do matlab?
-//paralelizar e distribuir por blocos?
+//dividir a construcao pelos nodes e depois fazer reducao?
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
 vector<vector<double>> buildMatrix(string input_file) {
@@ -52,11 +52,15 @@ vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
     return res;
 }
 
-vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int size) {
-    vector <double> res(size);
-    //TODO: chessboard decomposition com MPI
+vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int begin, int end, int size) {
+    /*Ver todos os processos que estao idle (a espera de informacao)
+    escolher os processos com o id mais afastados de mim (?) e enviar-lhes iteracoes
+    se nao houver nenhum processo idle, fazer so eu o trabalho
+    no final, juntar o trabalho de todos os processos
+    */
+    vector <double> res(end - begin);
     #pragma omp parallel for
-	for (int i = 0; i < size; i++) {
+	for (int i = begin; i < end; i++) {
 		res[i] = 0;
 		for (int j = 0; j < size; j++) {
 			res[i] += matrix[i][j] * v[j];
@@ -78,7 +82,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
     vector<double> g(size); //gradient, inicializar na primeira iteraçao?
-    vector<double> d = subtractVec(b, matrixVector(A, x, size), size); //initial direction = residue
+    vector<double> d = subtractVec(b, matrixVector(A, x, 0, size, size), size); //initial direction = residue
     double s; //step size
 
     int dest = (me == nprocs - 1 ? 0 : me + 1);
@@ -90,6 +94,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     double denom2 = 0;
     double num1 = 0;
     double num2 = 0;
+    int flag=0;
 
     vector<double> auxGrad(size);
     vector<double> auxDir(size);
@@ -97,41 +102,66 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     MPI_Status status;
     MPI_Request sendGradReq;
     MPI_Request sendDirReq;
+    MPI_Request sendIdleReq;
 
     for(int t = me; t < MAXITER; t+=nprocs) {
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", Will be done by process " << me << endl;
-        
+
+        int received = 0;
         if(t != 0){
-            //MPI: esperar para receber valor de g(t-1) do node anterior
-            //o size e o maximo de items que ira receber. se for com END_TAG, apenas recebe 1 item
-            MPI_Recv(&g[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-            if(debugParallel) cout << "Proccess number: " << me << " Received g(t-1) from node " << source 
-                                    << " with tag " << status.MPI_TAG << endl;
-
-            
-            //se tivermos recebido a endtag, enviar end tag para o processo seguinte
-            //se o nosso destino for o master node, entao podemos acabar a execucao
-            if(status.MPI_TAG == ENDTAG && g[0] != dest) {
-                MPI_Send(&g[0], 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
-                if(debugParallel) cout << "Proccess number: " << me << " Sent end tag to node " << endl;
-                break;
+            while(received < 3) {
+                MPI_Recv(&auxGrad[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                switch (status.MPI_TAG) {
+                    case GRADTAG:
+                        if(debugParallel) cout << "Proccess number: " << me << " Received g(t-1) from node " << source << endl;
+                        #pragma omp parallel for
+                        for(int i = 0; i < size; i++) {
+                            g[i] = auxGrad[i];
+                        }
+                        received++;
+                        break;
+                    case DIRTAG:
+                        if(debugParallel) cout << "Proccess number: " << me << " Received d(t-1) from node " << source << endl;
+                        #pragma omp parallel for
+                        for(int i = 0; i < size; i++) {
+                            d[i] = auxGrad[i];
+                        }
+                        received++;
+                        break;
+                    case XTAG:
+                        if(debugParallel) cout << "Proccess number: " << me << " Received x(t-1) from node " << source << endl;
+                        #pragma omp parallel for
+                        for(int i = 0; i < size; i++) {
+                            x[i] = auxGrad[i];
+                        }
+                        received++;
+                        break;
+                    case ENDTAG:
+                        if(status.MPI_TAG == ENDTAG && g[0] != dest) {
+                            MPI_Send(&g[0], 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
+                            if(debugParallel) cout << "Proccess number: " << me << " Sent end tag to node " << endl;
+                            return x;
+                        }
+                        return x;
+                    default:
+                        break;
+                }
             }
-            else if(status.MPI_TAG == ENDTAG) break;
-
-            //unico trabalho q se pode fazer antes de receber o x(t-1)
-            denom1 = dotProduct(g, g, size);
-
-            MPI_Recv(&x[0], size, MPI_DOUBLE, source, XTAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if(debugParallel) cout << "Proccess number: " << me << " Received x(t-1) from node " << source << endl;
+            
         }
 
+        if(debugParallel) cout << "Proccess number: " << me << " Received all data from node " << source << endl;
+
+        //unico trabalho q se pode fazer antes de receber o x(t-1)
+            //g(t-1)^T g(t-1)
+            denom1 = dotProduct(g, g, size);
+
         //Ax(t-1)
-        op = matrixVector(A, x, size);
+        op = matrixVector(A, x, 0, size, size);
 
         //g(t) = Ax(t-1) - b
         g =  subtractVec(op, b, size);
         
-
         //g(t)^T g(t)
         num1 = dotProduct(g, g, size);
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", num1: " << num1 << endl;
@@ -159,7 +189,6 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         //se estivermos na iteracao 0, a direcao foi ja calculada no inicio da funcao com o residuo
         //senao, temos de receber a direcao da iteracao anterior e calcular a nova direcao
         if(t!= 0){
-            MPI_Recv(&d[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
             #pragma omp parallel for
             for(int i = 0; i < size; i++) {
                 d[i] = -g[i] + (num1/denom1) * d[i];
@@ -180,7 +209,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         num2 = dotProduct(d, g, size);
 
         //A*d(t)
-        op = matrixVector(A, d, size);
+        op = matrixVector(A, d, 0, size, size);
 
         //d(t)^T A*d(t)
         denom2 = dotProduct(d, op, size);
@@ -231,6 +260,7 @@ int main (int argc, char* argv[]) {
     int me, nprocs;
     double master = -1;
     int finalIter = -1;
+    double exec_time;       /* execution time */
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
 
@@ -243,8 +273,12 @@ int main (int argc, char* argv[]) {
     //num max de threads
     omp_set_num_threads(size/2);
     //initial guess: b
+    MPI_Barrier(MPI_COMM_WORLD);
+    exec_time = -omp_get_wtime();
     vector<double> x = cg(A, b, size, b, &master, &finalIter);
+    exec_time += omp_get_wtime();
     if(me == master) {
+        fprintf(stderr, "%.10fs\n", exec_time);
         cout << "Master node: " << me << endl;  
         cout << "Final iteration: " << finalIter << endl;
         for(int i = 0; i < size; i++) {
