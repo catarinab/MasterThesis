@@ -30,8 +30,10 @@ vector<double> buildVector(string input_file) {
 double dotProduct(vector<double> a, vector<double> b, int size) {
 	double dotProd = 0.0;
 	for (int i = 0; i < size; i++) {
+        cout << "a[" << i << "]: " << a[i] << "b[" << i << "]: "<< b[i] << endl;
 		dotProd += (a[i] * b[i]);
 	}
+    cout << "dotProd: " << dotProd << endl;
 	return dotProd;
 }
 
@@ -39,6 +41,7 @@ vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
     vector<double> res(size);
     for (int i = 0; i < size; i++) {
         res[i] = a[i] - b[i];
+        cout << "res[" << i << "]: " << res[i] << endl;
     }
     return res;
 }
