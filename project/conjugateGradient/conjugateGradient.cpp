@@ -10,9 +10,6 @@ using namespace std;
 #define MAXITER 4
 
 #define ENDTAG 0
-#define DIRTAG 1
-#define GRADTAG 2
-#define XTAG 3
 #define IDLETAG 4
 #define FUNCTAG 5
 #define MV 6
@@ -44,7 +41,7 @@ vector<double> buildVector(string input_file) {
 vector<double> subtractVec(vector<double> a, vector<double> b, int begin, int end, int me) {
     vector<double> res(end - begin);
     int resIndex = 0;
-    
+
     #pragma omp parallel for
     for (int i = begin; i < end; i++) {
         res[resIndex] = a[i] - b[i];
