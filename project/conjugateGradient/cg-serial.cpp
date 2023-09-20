@@ -30,10 +30,8 @@ vector<double> buildVector(string input_file) {
 double dotProduct(vector<double> a, vector<double> b, int size) {
 	double dotProd = 0.0;
 	for (int i = 0; i < size; i++) {
-        cout << "a[" << i << "]: " << a[i] << "b[" << i << "]: "<< b[i] << endl;
 		dotProd += (a[i] * b[i]);
 	}
-    cout << "dotProd: " << dotProd << endl;
 	return dotProd;
 }
 
@@ -41,7 +39,6 @@ vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
     vector<double> res(size);
     for (int i = 0; i < size; i++) {
         res[i] = a[i] - b[i];
-        cout << "res[" << i << "]: " << res[i] << endl;
     }
     return res;
 }
@@ -53,6 +50,7 @@ vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int
 		for (int j = 0; j < size; j++) {
 			res[i] += matrix[i][j] * v[j];
 		}
+        cout << "res[" << i << "]: " << res[i] << endl;
 	}
 	return res;
 }
@@ -77,7 +75,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     double num2 = 0;
     /* Dsitribuir as iteraçoes pelos mpi nodes */
     for(int t = 0; t < MAXITER; t++) {
-        if(debug) cout << "============Iteration number:============" << t << endl;
+        cout << "============Iteration number:============" << t << endl;
         //MPI: esperar para receber valor de g(t-1) do node anterior
         if(t != 0) denom1 = dotProduct(g, g, size);
 
