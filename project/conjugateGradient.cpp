@@ -46,7 +46,6 @@ double dotProduct(vector<double> a, vector<double> b, int begin, int end, int me
 	double dotProd = 0.0;
     #pragma omp parallel for reduction(+:dotProd)
 	for (int i = begin; i < end; i++) {
-        cout << "doing dotprod iter" << i << "by proccess" << me << endl;
 		dotProd += (a[i] * b[i]);
 	}
     return dotProd;
@@ -55,25 +54,23 @@ double dotProduct(vector<double> a, vector<double> b, int begin, int end, int me
 double getHelpDotProduct(vector<double> a, vector<double> b, int size, int me, int nprocs, int dest) {
     int count = 0;
     int flag = 0;
-    int begin = 0;
-    double help = 0;
+    int func = VV;
+    int helpSize = 2;
     MPI_Request sendReq;
     if(debugLD) cout << "Proccess number: " << me << " Sending idle tag to node " << dest << endl;
-    MPI_Isend(&help, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD, &sendReq);
+    MPI_Isend(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD, &sendReq);
     MPI_Test(&sendReq, &flag, MPI_STATUS_IGNORE);
     if(flag) {
         if(debugLD) cout << "Proccess number: " << me << " is going to get help from node " << dest << endl;
         int func = VV;
         MPI_Send(&func, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
-        MPI_Send(&a[0], size/2, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
-        MPI_Send(&b[0], size/2, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        MPI_Send(&helpSize, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
+        MPI_Send(&a[size-helpSize], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        MPI_Send(&b[size-helpSize], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
         if(debugLD) cout << "Proccess number: " << me << " Sent VV to node " << dest << endl;
     }
-        
-    if(flag)
-        begin = size/2 + 1;
-    if(debugLD) cout << "Proccess number: " << me << " Starting dot product on index" << begin << endl;
-    double dotProd = dotProduct(a, b, begin, size-begin, me);
+    if(!flag) helpSize = 0;
+    double dotProd = dotProduct(a, b, 0, size-helpSize, me);
     if(debugLD) cout << "Proccess number: " << me << " Finished dot product with value" << dotProd << endl;
     double temp = 0;
     if(flag){
@@ -109,6 +106,56 @@ vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int
 		}
 	}
 	return res;
+}
+
+void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int me) {
+    int flag = 0;
+    int func = -1;
+    int helpSize = 0;
+    double dotProd = 0;
+    MPI_Status status;
+    MPI_Request sendIdleReq;
+
+    vector<double> op(0);
+    vector<double> auxBuf2(0);
+
+    MPI_Isend(&flag, 1, MPI_C_BOOL, helpDest, IDLETAG, MPI_COMM_WORLD, &sendIdleReq);
+    MPI_Test(&sendIdleReq, &flag, MPI_STATUS_IGNORE);
+    if(flag) {
+        MPI_Recv(&func, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&helpSize, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+
+        vector<double> auxBuf(helpSize);
+
+        MPI_Recv(&auxBuf[0], helpSize, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+        switch(func){
+            case MV:
+                op.resize(helpSize);
+                op = matrixVector(A, auxBuf, 0, 0, helpSize);
+                MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, MV, MPI_COMM_WORLD);
+                break;
+            case VV:
+                auxBuf2.resize(helpSize);
+                MPI_Recv(&auxBuf2[0], helpSize, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+
+                dotProd = dotProduct(auxBuf, auxBuf2, 0, helpSize, me);
+                
+                if(debugLD) cout << "Proccess number: " << me << " Sending VV with value" << dotProd << "to node " << helpDest << endl;
+                MPI_Send(&dotProd, 1, MPI_DOUBLE, helpDest, VV, MPI_COMM_WORLD);
+                if(debugLD) cout << "Proccess number: " << me << " Sent VV to node " << helpDest << endl;
+                break;
+            case SUB:
+                auxBuf2.resize(helpSize);
+                MPI_Recv(&auxBuf2[0], helpSize, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);;
+                op.resize(helpSize);
+                op = subtractVec(auxBuf, auxBuf2, helpSize);
+                MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, SUB, MPI_COMM_WORLD);
+                break;
+            default: 
+                if(debugLD) cout << "Proccess number: " << me << " Received wrong function tag from node " << helpDest << endl;
+                break;
+        }
+    }
 }
 
 /* Conjugate Gradient Method: iterative method for efficiently solving linear systems of equations: Ax=b
@@ -157,7 +204,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         int received = 0;
         if(t != 0){
             while(received < 3) {
-                MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
                 switch (status.MPI_TAG) {
                     case GRADTAG:
                         if(debugParallel) cout << "Proccess number: " << me << " Received g(t-1) from node " << source << endl;
@@ -191,40 +238,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
                         }
                         return x;
                     case IDLETAG:
-                        helpDest = status.MPI_SOURCE;
-                        if(debugLD) cout << "Proccess number: " << me << " Received idle tag from node " << helpDest << "on iteration" << t << endl;
-                        MPI_Isend(&idle, 1, MPI_C_BOOL, helpDest, IDLETAG, MPI_COMM_WORLD, &sendIdleReq);
-                        MPI_Test(&sendIdleReq, &flag, MPI_STATUS_IGNORE);
-                        if(flag) {
-                            if(debugLD) cout << "Proccess number: " << me << " is going to help node " << helpDest << "on iteration" << t <<  endl;
-                            MPI_Recv(&func, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-                            if(debugLD) cout << "Proccess number: " << me << " Received function tag  " << func << endl;
-                            MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-                            switch(func){
-                                case MV:
-                                    op = matrixVector(A, auxBuf, 0, 0, helpSize);
-                                    MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, MV, MPI_COMM_WORLD);
-                                    break;
-                                case VV:
-                                    if(debugLD) cout << "Proccess number: " << me << " Received vector from node " << helpDest << endl;
-                                    MPI_Recv(&auxBuf2[0], size, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-                                    MPI_Get_count(&status, MPI_DOUBLE, &helpSize);
-                                    if(debugLD) cout << "Proccess number: " << me << " Received vector size " << helpSize << endl;
-                                    if(debugLD) cout << "Proccess number: " << me << " Received VV from node " << helpDest << endl;
-                                    dotProd = dotProduct(auxBuf, auxBuf, 0, helpSize + 1, me);
-                                    if(debugLD) cout << "Proccess number: " << me << " Sending VV with value" << dotProd << "to node " << helpDest << endl;
-                                    MPI_Send(&dotProd, 1, MPI_DOUBLE, helpDest, VV, MPI_COMM_WORLD);
-                                    if(debugLD) cout << "Proccess number: " << me << " Sent VV to node " << helpDest << endl;
-                                    break;
-                                case SUB:
-                                    op = subtractVec(auxBuf, b, helpSize);
-                                    MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, SUB, MPI_COMM_WORLD);
-                                    break;
-                                default: 
-                                    if(debugLD) cout << "Proccess number: " << me << " Received wrong function tag from node " << helpDest << endl;
-                                    break;
-                            }
-                        }
+                        helpProccess(source, A, b, me);
                         break;
                     default:
                         break;
@@ -246,7 +260,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         g =  subtractVec(op, b, size);
         
         //g(t)^T g(t)
-        num1 = dotProduct(g, g, 0, size, me);
+        num1 = getHelpDotProduct(g, g, size, me, nprocs, dest);
         if(debugParallel || debugMtr) cout << "Iteration number: " << t << ", num1: " << num1 << endl;
         
         if (num1 < epsilon){
@@ -289,13 +303,13 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         MPI_Isend(&auxBuf[0], size, MPI_DOUBLE, dest, DIRTAG, MPI_COMM_WORLD, &sendDirReq);
 
         //d(t)^T g(t)
-        num2 = dotProduct(d, g, 0, size, me);
+        num2 = getHelpDotProduct(d, g, size, me, nprocs, dest);
 
         //A*d(t)
         op = matrixVector(A, d, 0, size, size);
 
         //d(t)^T A*d(t)
-        denom2 = dotProduct(d, op, 0, size, me);
+        denom2 = getHelpDotProduct(d, op, size, me, nprocs, dest);
 
         s = -num2/denom2;
         if(debugMtr){
