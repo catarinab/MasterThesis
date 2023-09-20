@@ -41,22 +41,21 @@ vector<double> buildVector(string input_file) {
     return b;
 }
 
-vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
-    vector<double> res(size);
+vector<double> subtractVec(vector<double> a, vector<double> b, int begin, int end, int me) {
+    vector<double> res(end - begin);
+    int resIndex = 0;
+    
     #pragma omp parallel for
-    for (int i = 0; i < size; i++) {
-        res[i] = a[i] - b[i];
+    for (int i = begin; i < end; i++) {
+        res[resIndex] = a[i] - b[i];
+        resIndex++;
     }
     return res;
 }
 
 vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int begin, int end, int size) {
-    /*Ver todos os processos que estao idle (a espera de informacao)
-    escolher os processos com o id mais afastados de mim (?) e enviar-lhes iteracoes
-    se nao houver nenhum processo idle, fazer so eu o trabalho
-    no final, juntar o trabalho de todos os processos
-    */
-    vector <double> res(end - begin);
+    vector <double> res(end - begin + 1);
+
     #pragma omp parallel for
 	for (int i = begin; i < end; i++) {
 		res[i] = 0;
@@ -67,8 +66,9 @@ vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int
 	return res;
 }
 
-double dotProduct(vector<double> a, vector<double> b, int begin, int end, int me) {
+double dotProduct(vector<double> a, vector<double> b, int begin, int end) {
 	double dotProd = 0.0;
+
     #pragma omp parallel for reduction(+:dotProd)
 	for (int i = begin; i < end; i++) {
 		dotProd += (a[i] * b[i]);
@@ -93,21 +93,22 @@ void sendVectors(vector<double> a, vector<double> b, int begin, int helpSize, in
 double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int nprocs, int dest) {
     int count = 0; 
     int flag = 0;
-    int func = VV;
     int helpSize = size/nprocs;
-    MPI_Request sendReq;
-
-    if(nprocs == 1) return dotProduct(a, b, 0, size, me);
+    int end = 0;
 
     while(count != nprocs - 1) {
-        MPI_Isend(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD, &sendReq);
-        sendVectors(a, b, count * helpSize, helpSize, dest, func, me);
+        MPI_Send(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD);
+        sendVectors(a, b, count * helpSize, helpSize, dest, VV, me);
         count++;
         dest = (dest == nprocs - 1 ? 0 : dest + 1);
     }
     dest = (dest == 0 ? nprocs - 1 : 1);
 
-    double dotProd = dotProduct(a, b, count * helpSize, size-helpSize + 1, me);
+    if(count == 0) end = size;
+    else end = size - helpSize + 1;
+    
+    double dotProd = dotProduct(a, b, count * helpSize, end);
+
     double temp = 0;
     while(count > 0) {
         dest = (dest == me ? (me == nprocs - 1 ? 0 : dest + 1) : dest);
@@ -118,6 +119,48 @@ double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int
     }
 
     return dotProd;
+}
+
+vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, int nprocs) {
+    int count = 0;
+    int helpSize = size/nprocs;
+    int end = 0;
+    int dest = 1;
+    
+    vector<double> res;
+    vector<double> finalRes;   
+
+    while(count != nprocs - 1) {
+        MPI_Send(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD);
+        sendVectors(a, b, count * helpSize, helpSize, dest, SUB, me);
+        count++;
+        dest++;
+    }
+
+    if(count == 0) end = size;
+    else end = size - helpSize + 1;
+    if(helpSize*(nprocs-1) != size)
+        res = subtractVec(a, b, count * helpSize, end, me);
+
+    double temp[helpSize];
+    dest = 1;
+    while(count > 0) {
+        MPI_Recv(&temp, helpSize, MPI_DOUBLE, dest, SUB, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        #pragma omp parallel for
+        for(int i = 0; i < helpSize; i++) {
+            finalRes.push_back(temp[i]);
+        }
+        dest++;
+        count--;
+    }
+
+    #pragma omp parallel for
+    for(int i = 0; i < res.size() && helpSize*(nprocs-1) != size; i++) {
+        finalRes.push_back(res[i]);
+    }
+
+    return finalRes;
 }
 
 void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int me) {
@@ -152,7 +195,7 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
             MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, MV, MPI_COMM_WORLD);
             break;
         case VV:
-            dotProd = dotProduct(auxBuf, auxBuf2, 0, helpSize, me);
+            dotProd = dotProduct(auxBuf, auxBuf2, 0, helpSize);
 
             if(debugLD) cout << "Proccess number: " << me << " Sending VV with value" << dotProd << "to node " << helpDest << endl;
             MPI_Send(&dotProd, 1, MPI_DOUBLE, helpDest, VV, MPI_COMM_WORLD);
@@ -160,7 +203,7 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
             break;
         case SUB:
             op.resize(helpSize);
-            op = subtractVec(auxBuf, auxBuf2, helpSize);
+            op = subtractVec(auxBuf, auxBuf2, 0, helpSize, me);
             MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, SUB, MPI_COMM_WORLD);
             break;
         default: 
@@ -181,13 +224,13 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    vector<double> g(size); //gradient, inicializar na primeira iteraçao?
-    vector<double> d = subtractVec(b, matrixVector(A, x, 0, size, size), size); //initial direction = residue
-    double s; //step size
-
     int dest = (me == nprocs - 1 ? 0 : me + 1);
     int source = (me == 0 ? nprocs - 1 : me - 1);
 
+    vector<double> g(size); //gradient, inicializar na primeira iteraçao?
+    vector<double> d(size); //direction
+    double s; //step size
+    
     //auxiliar
     vector<double> op(size);
     double denom1 = 0;
@@ -208,15 +251,17 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     MPI_Request sendGradReq;
     MPI_Request sendDirReq;
     MPI_Request sendIdleReq;
+    if(me == 0) {
+        op = matrixVector(A, x, 0, size, size);
+        d = distrSubOp(b, op, size, me, nprocs); //initial direction = residue
+    }
 
     while(me != 0) {
         MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         switch (status.MPI_TAG) {
             case ENDTAG:
                 if(status.MPI_TAG == ENDTAG && g[0] != dest) {
-                    cout << "Proccess number: " << me << " Sending end tag to node " << dest << endl;
                     MPI_Send(&g[0], 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
-                    cout << "Proccess number: " << me << " Sent end tag to node " << endl;
                     return x;
                 }
                 return x;
@@ -229,7 +274,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
     }
     for(int t = 0; t < MAXITER; t++) {
-        //unico trabalho q se pode fazer antes de receber o x(t-1)
+
         //g(t-1)^T g(t-1)
         if(t != 0)
             denom1 = distrDotProduct(g, g, size, me, nprocs, dest);
@@ -238,7 +283,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         op = matrixVector(A, x, 0, size, size);
 
         //g(t) = Ax(t-1) - b
-        g =  subtractVec(op, b, size);
+        g =  distrSubOp(op, b, size, me, nprocs);
         
         //g(t)^T g(t)
         num1 = distrDotProduct(g, g, size, me, nprocs, dest);
@@ -285,14 +330,9 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         for(int i = 0; i < size; i++) {
             x[i] = x[i] + s*d[i];
         }
-
-        if((debugMtr || debugParallel)) {
-            cout << "Iter: " << t << "x(t): " << endl;
-            for(int i = 0; i < size; i++) {
-                cout << "FINAL X Iter" << t <<"x(t) [" << i << "]=" << x[i] << endl;
-            }
-        }
     }
+    *finalIter = MAXITER;
+    MPI_Send(&finalIter, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
     return x;
 }
 
