@@ -5,7 +5,7 @@
 
 using namespace std;
 
-#define epsilon 0.001
+#define epsilon 0.000001
 #define MAXITER 20
 
 bool debug = false;
@@ -16,14 +16,24 @@ string input_file;
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
 vector<vector<double>> buildMatrix(string input_file) {
-    vector<vector<double>> A{{2, -1, 0}, {-1, 2, -1}, {0, -1, 2}};
+    vector<vector<double>> A{
+        {10, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+        {1, 20, 1, 2, 3, 4, 5, 6, 7, 8},
+        {2, 1, 30, 1, 2, 3, 4, 5, 6, 7},
+        {3, 2, 1, 40, 1, 2, 3, 4, 5, 6},
+        {4, 3, 2, 1, 50, 1, 2, 3, 4, 5},
+        {5, 4, 3, 2, 1, 60, 1, 2, 3, 4},
+        {6, 5, 4, 3, 2, 1, 70, 1, 2, 3},
+        {7, 6, 5, 4, 3, 2, 1, 80, 1, 2},
+        {8, 7, 6, 5, 4, 3, 2, 1, 90, 1},
+        {9, 8, 7, 6, 5, 4, 3, 2, 1, 100}
+    };
     return A;
 }
 
 //construir tendo em conta as matrizes do matlab?
 vector<double> buildVector(string input_file) {
-    vector<double> b{2, 8, 9};
-
+    vector<double> b{2, 8, 9, 2, 3, 4, 5, 6, 7, 8};
     return b;
 }
 
@@ -50,7 +60,6 @@ vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int
 		for (int j = 0; j < size; j++) {
 			res[i] += matrix[i][j] * v[j];
 		}
-        cout << "res[" << i << "]: " << res[i] << endl;
 	}
 	return res;
 }
@@ -91,8 +100,6 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
         //g(t) = Ax(t-1) - b
         g =  subtractVec(op, b, size);
-
-
         if(debug) {
             cout << "g(t): " << endl;
             for(int i = 0; i < size; i++) {
@@ -126,6 +133,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
 
         //A*d(t)
         op = matrixVector(A, d, size);
+
         denom2 = dotProduct(d, op, size);
         s = -num2/denom2;
         if(debug){
@@ -163,7 +171,7 @@ int main (int argc, char* argv[]) {
 
     vector<vector<double>> A = buildMatrix(input_file);
     vector<double> b = buildVector(input_file);
-    int size = 3;
+    int size = b.size();
     exec_time = -omp_get_wtime();
     //num max de threads
     vector<double> x0 {2, 1};

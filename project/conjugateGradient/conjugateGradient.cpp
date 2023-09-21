@@ -3,11 +3,12 @@
 #include <cstdlib>
 #include <omp.h>
 #include <mpi.h>
+#include <bits/stdc++.h>
 
 using namespace std;
 
 #define epsilon 0.001
-#define MAXITER 4
+#define MAXITER 100
 
 #define ENDTAG 0
 #define IDLETAG 4
@@ -23,39 +24,50 @@ string input_file;
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
 vector<vector<double>> buildMatrix(string input_file) {
-    vector<vector<double>> A{{2, -1, 0}, {-1, 2, -1}, {0, -1, 2}};
+    vector<vector<double>> A{
+        {10, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+        {1, 20, 1, 2, 3, 4, 5, 6, 7, 8},
+        {2, 1, 30, 1, 2, 3, 4, 5, 6, 7},
+        {3, 2, 1, 40, 1, 2, 3, 4, 5, 6},
+        {4, 3, 2, 1, 50, 1, 2, 3, 4, 5},
+        {5, 4, 3, 2, 1, 60, 1, 2, 3, 4},
+        {6, 5, 4, 3, 2, 1, 70, 1, 2, 3},
+        {7, 6, 5, 4, 3, 2, 1, 80, 1, 2},
+        {8, 7, 6, 5, 4, 3, 2, 1, 90, 1},
+        {9, 8, 7, 6, 5, 4, 3, 2, 1, 100}
+    };
     return A;
 }
 
 //construir tendo em conta as matrizes do matlab?
 vector<double> buildVector(string input_file) {
-    vector<double> b{2, 8, 9};
+    vector<double> b{2, 8, 9, 2, 3, 4, 5, 6, 7, 8};
     return b;
 }
 
-vector<double> subtractVec(vector<double> a, vector<double> b, int begin, int end, int me) {
+vector<double> subtractVec(vector<double> a, vector<double> b, int begin, int end) {
     vector<double> res(end - begin);
     int resIndex = 0;
 
-    #pragma omp parallel for
+    #pragma omp parallel for private(resIndex)
     for (int i = begin; i < end; i++) {
+        resIndex = i - begin;
         res[resIndex] = a[i] - b[i];
-        resIndex++;
     }
     return res;
 }
 
-vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int begin, int end, int size, int me) {
+vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int begin, int end, int size) {
     vector <double> res(end - begin);
     int resIndex = 0;
     
-    #pragma omp parallel for
+    #pragma omp parallel for private(resIndex)
 	for (int i = begin; i < end; i++) {
+        resIndex = i - begin;
 		res[resIndex] = 0;
 		for (int j = 0; j < size; j++) {
 			res[resIndex] += matrix[i][j] * v[j];
 		}
-        resIndex++;
 	}
 	return res;
 }
@@ -101,7 +113,7 @@ double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int
     if(count == 0) end = size;
     else end = size - helpSize + 1;
     
-    double dotProd = dotProduct(a, b, count * helpSize, end);
+    double dotProd = dotProduct(a, b, count * helpSize, size);
 
     double temp = 0;
     dest = 1;
@@ -131,16 +143,13 @@ vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, 
         count++; dest++;
     }
 
-    if(count == 0) end = size;
-    else end = size - helpSize + 1;
     if(helpSize*(nprocs-1) != size || count == 0)
-        res = subtractVec(a, b, count * helpSize, end, me);
+        res = subtractVec(a, b, count * helpSize, size);
 
     dest = 1;
     while(count > 0) {
         MPI_Recv(&temp, helpSize, MPI_DOUBLE, dest, SUB, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        #pragma omp parallel for
         for(int i = 0; i < helpSize; i++) {
             finalRes.push_back(temp[i]);
         }
@@ -148,7 +157,6 @@ vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, 
     }
     
     if(helpSize*(nprocs-1) != size || count == 0) {
-        #pragma omp parallel for
         for(int i = 0; i < res.size(); i++) {
             finalRes.push_back(res[i]);
         }
@@ -175,34 +183,31 @@ vector<double> distrMatrixVec(vector<double> vec, vector<vector<double>> A, int 
 
         int begin = count * helpSize;
         int sendEnd = count * helpSize + helpSize;
+        if(sendEnd > size) sendEnd = size;
         MPI_Send(&begin, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
         MPI_Send(&sendEnd, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
 
         count++; dest++;
     }
 
-    if(count == 0) end = size;
-    else end = size - helpSize + 1;
-
-    if(count != size || count == 0)
-        res = matrixVector(A, vec, count * helpSize, end, size, me);
+    if(count <= size || count == 0){
+        res = matrixVector(A, vec, count * helpSize, size, size);
+    }
+        
+    
+        
 
     dest = 1;
     while(count > 0) {
         MPI_Recv(&temp, helpSize, MPI_DOUBLE, dest, MV, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        #pragma omp parallel for
-        for(int i = 0; i < helpSize; i++) {
+        for(int i = 0; i < helpSize; i++) 
             finalRes.push_back(temp[i]);
-        }
         dest++; count--;
     }
 
     if(count != size || count == 0) {
-        #pragma omp parallel for
-        for(int i = 0; i < res.size(); i++) {
+        for(int i = 0; i < res.size(); i++) 
             finalRes.push_back(res[i]);
-        }
     }
 
     return finalRes;
@@ -241,7 +246,7 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
             MPI_Recv(&begin, 1, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
             MPI_Recv(&end, 1, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
             op.resize(helpSize);
-            op = matrixVector(A, auxBuf, begin, end, size, me);
+            op = matrixVector(A, auxBuf, begin, end, size);
             MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, MV, MPI_COMM_WORLD);
             break;
         case VV:
@@ -251,7 +256,7 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
             break;
         case SUB:
             op.resize(helpSize);
-            op = subtractVec(auxBuf, auxBuf2, 0, helpSize, me);
+            op = subtractVec(auxBuf, auxBuf2, 0, helpSize);
             MPI_Send(&op[0], helpSize, MPI_DOUBLE, helpDest, SUB, MPI_COMM_WORLD);
             break;
         default: 
@@ -322,19 +327,37 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
     }
     for(int t = 0; t < MAXITER; t++) {
+        if(debugLD || debugMtr || debugParallel)cout << "============Iteration number:============" << t << endl;
 
         //g(t-1)^T g(t-1)
-        if(t != 0)
+        if(t != 0){
             denom1 = distrDotProduct(g, g, size, me, nprocs, dest);
+            //Ax(t-1)
+            op = distrMatrixVec(x, A, size, me, nprocs);
+            
+        }
+        if(debugMtr){
+                cout << "Ax(t-1): " << endl;
+                for(int i = 0; i < size; i++) {
+                    cout << op[i] << endl;
+                }
+            }
+            
 
-        //Ax(t-1)
-        op = distrMatrixVec(x, A, size, me, nprocs);
+        
 
         //g(t) = Ax(t-1) - b
         g =  distrSubOp(op, b, size, me, nprocs);
+        if(debugMtr) {
+            cout << "g(t): " << endl;
+            for(int i = 0; i < size; i++) {
+                cout << g[i] << endl;
+            }
+        }
         
         //g(t)^T g(t)
         num1 = distrDotProduct(g, g, size, me, nprocs, dest);
+        if(debugMtr) cout << "num1: " << num1 << endl;
         
         if (num1 < epsilon){
             *finalIter = t;
@@ -352,8 +375,12 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
             #pragma omp parallel for
             for(int i = 0; i < size; i++) {
                 d[i] = -g[i] + (num1/denom1) * d[i];
-                if(debugMtr) 
-                    cout << "Iter: " << t << "d(t)[" << i << "]: " << d[i] << endl;
+                if(debugMtr) {
+                cout << "-g[i]: " << -g[i] << endl;
+                cout << "(num1/denom1): " << (num1/denom1) << endl;
+                cout << "d[i]: " << d[i] << endl;
+                cout << "d(t)[" << i << "]: " << d[i] << endl;
+            }
                 
             }
         }
@@ -369,9 +396,22 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
 
         s = -num2/denom2;
 
+        if(debugMtr){
+            cout << "num2: " << num2 << endl;
+            cout << "denom2: " << denom2 << endl;
+            cout << "s: " << s << endl;
+        }
+
         #pragma omp parallel for
         for(int i = 0; i < size; i++) {
             x[i] = x[i] + s*d[i];
+        }
+
+        if(debugMtr) {
+            cout << "x(t): " << endl;
+            for(int i = 0; i < size; i++) {
+                cout << x[i] << endl;
+            }
         }
     }
     *finalIter = MAXITER;
