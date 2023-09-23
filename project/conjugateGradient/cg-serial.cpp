@@ -50,6 +50,10 @@ vector<double> subtractVec(vector<double> a, vector<double> b, int size) {
     for (int i = 0; i < size; i++) {
         res[i] = a[i] - b[i];
     }
+    cout << "res: " << endl;
+    for(int i = 0; i < size; i++) {
+        cout << res[i] << endl;
+    }
     return res;
 }
 
