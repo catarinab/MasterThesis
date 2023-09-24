@@ -65,7 +65,6 @@ vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, 
     int helpSize = size/nprocs;
     int end = 0;
     int dest = 1;
-    double temp[helpSize];
     
     vector<double> res;
     vector<double> finalRes(helpSize * (nprocs - 1));  
@@ -97,10 +96,8 @@ vector<double> distrMatrixVec(vector<double> vec, vector<vector<double>> A, int 
     int count = 0;
     int helpSize = size/nprocs;
     if(helpSize == 0) helpSize = 1; // caso extremo em que o numero de procs e maior que o tamanho do vetor
-
-    int end = 0;
     int dest = 1;
-    double temp[helpSize];
+    int index = 0;
     
     vector<double> res;
     vector<double> finalRes(helpSize * (nprocs - 1));   
@@ -122,7 +119,6 @@ vector<double> distrMatrixVec(vector<double> vec, vector<vector<double>> A, int 
 
     
     dest = 1;
-    int index;
     for(index = 0; count > 0; index++) {
         MPI_Recv(&finalRes[index*helpSize], helpSize, MPI_DOUBLE, dest, MV, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         dest++; count--;
@@ -149,16 +145,12 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
     vector<double> auxBuf(size);
     vector<double> auxBuf2(size);
 
-
     MPI_Recv(&func, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
     MPI_Recv(&helpSize, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-
     MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-
-
-    if(func == VV || func == SUB) {
+    if(func == VV || func == SUB) 
         MPI_Recv(&auxBuf2[0], helpSize, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-    }
+    
     switch(func){
         case MV:
             MPI_Recv(&begin, 1, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);

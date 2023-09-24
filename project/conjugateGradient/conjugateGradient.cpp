@@ -39,8 +39,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int dest = (me == nprocs - 1 ? 0 : me + 1);
-    int source = (me == 0 ? nprocs - 1 : me - 1);
+    int dest = 0;
 
     vector<double> g(size); //gradient, inicializar na primeira iteraçao?
     vector<double> d(size); //direction
@@ -54,8 +53,6 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     double num2 = 0;
     int flag=0;
     bool idle = 0;
-    int helpDest = -1;
-    int func = MV;
     int helpSize = 0;
     double dotProd;
 
@@ -63,9 +60,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     vector<double> auxBuf2(size);
 
     MPI_Status status;
-    MPI_Request sendGradReq;
-    MPI_Request sendDirReq;
-    MPI_Request sendIdleReq;
+    
     if(me == 0) {
         op = distrMatrixVec(x, A, size, me, nprocs);
         d = distrSubOp(b, op, size, me, nprocs); //initial direction = residue
