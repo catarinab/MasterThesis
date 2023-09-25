@@ -1,9 +1,9 @@
-CC = mpic++
-CFLAGS=-fopenmp
+C++ = mpic++
+CFLAGS=-fopenmp -std=c++17
 TARGET=cg
 
 all:
-	$(CC) $(CFLAGS) conjugateGradient.cpp -o $(TARGET)
+	$(C++) $(CFLAGS) conjugateGradient.cpp -o $(TARGET)
 
 clean:
 	rm $(TARGET)%

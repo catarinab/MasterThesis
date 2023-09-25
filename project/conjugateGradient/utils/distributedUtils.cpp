@@ -31,20 +31,18 @@ void sendVectors(vector<double> a, vector<double> b, int begin, int helpSize, in
 }
 
 
-double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int nprocs, int dest) {
+double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int nprocs) {
     int count = 0; 
     int flag = 0;
     int helpSize = size/nprocs;
     int end = 0;
+    int dest = 1;
 
     while(count != nprocs - 1) {
         sendVectors(a, b, count * helpSize, helpSize, dest, VV, me, size);
         count++;
-        dest = (dest == nprocs - 1 ? 0 : dest + 1);
+        dest++;
     }
-
-    if(count == 0) end = size;
-    else end = size - helpSize + 1;
     
     double dotProd = dotProduct(a, b, count * helpSize, size);
 
@@ -162,7 +160,6 @@ void helpProccess(int helpDest, vector<vector<double>> A, vector<double> b, int 
             break;
         case VV:
             dotProd = dotProduct(auxBuf, auxBuf2, 0, helpSize);
-
             MPI_Send(&dotProd, 1, MPI_DOUBLE, helpDest, VV, MPI_COMM_WORLD);
             break;
         case SUB:

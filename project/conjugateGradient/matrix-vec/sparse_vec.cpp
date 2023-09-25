@@ -50,6 +50,7 @@ class Sparse_Vec {
     }
 
     void insertValues(int col[], int value[]) {
+        //acho que nao vale a pena paralelizar (?)
         #pragma omp parallel for
         for (int i = 0; i < this->size; i++) {
             if (value[i] != 0) {
@@ -67,18 +68,4 @@ class Sparse_Vec {
         omp_destroy_lock(&writelock);
     }
 };
-
-int main() {
-    cout << "testing sparse_vec" << endl;
-    int size = 20;
-    int col[20] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 
-                   16, 17, 18, 19};
-    //sparse values for vector
-    int value[20] = {0, 0, 0, 0, 4, 0, 0, 0, 0, 9, 0, 0, 
-                     0, 0, 0, 0, 0, 0, 0, 20};
-    Sparse_Vec sv = Sparse_Vec(size);
-    sv.insertValues(col, value);
-    sv.printAttr();
-    return 0;
-}
 

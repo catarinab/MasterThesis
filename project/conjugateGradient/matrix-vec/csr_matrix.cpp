@@ -85,18 +85,3 @@ class CSR_Matrix {
         return rowValues;
     }
 };
-
-int main() {
-    cout << "testing csr matrix" << endl;	
-    CSR_Matrix csr = CSR_Matrix(4);
-    SparseTriplet row1[4] = {{0, 0, 5}};
-    SparseTriplet row2[4] = {{1, 1, 8}};
-    SparseTriplet row3[4] = {{2, 2, 3}};
-    SparseTriplet row4[4] = {{1, 3, 6}};
-    csr.insertRow(row1);
-    csr.insertRow(row2);
-    csr.insertRow(row3);
-    csr.insertRow(row4);
-    csr.printAttr();
-    return 0;
-}

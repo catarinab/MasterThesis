@@ -5,7 +5,7 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 
-#include "distributedUtils.cpp"
+#include "utils/distributedUtils.cpp"
 
 using namespace std;
 
@@ -70,10 +70,8 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         switch (status.MPI_TAG) {
             case ENDTAG:
-                if(status.MPI_TAG == ENDTAG && g[0] != dest) {
-                    MPI_Send(&g[0], 1, MPI_DOUBLE, dest, ENDTAG, MPI_COMM_WORLD);
-                    return x;
-                }
+                if((me + 1) != nprocs) 
+                    MPI_Send(&me, 1, MPI_DOUBLE, me + 1, ENDTAG, MPI_COMM_WORLD);
                 return x;
             case IDLETAG:
                 if(status.MPI_SOURCE != 0) break;
@@ -88,7 +86,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
 
         //g(t-1)^T g(t-1)
         if(t != 0){
-            denom1 = distrDotProduct(g, g, size, me, nprocs, dest);
+            denom1 = distrDotProduct(g, g, size, me, nprocs);
             //Ax(t-1)
             op = distrMatrixVec(x, A, size, me, nprocs);
             
@@ -113,13 +111,13 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
         
         //g(t)^T g(t)
-        num1 = distrDotProduct(g, g, size, me, nprocs, dest);
+        num1 = distrDotProduct(g, g, size, me, nprocs);
         if(debugMtr) cout << "num1: " << num1 << endl;
         
         if (num1 < epsilon){
             *finalIter = t;
             if(nprocs > 1){
-                MPI_Send(&num1, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
+                MPI_Send(&me, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
             }
             return x;
         } 
@@ -143,13 +141,13 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         }
 
         //d(t)^T g(t)
-        num2 = distrDotProduct(d, g, size, me, nprocs, dest);
+        num2 = distrDotProduct(d, g, size, me, nprocs);
 
         //A*d(t)
         op = distrMatrixVec(d, A, size, me, nprocs);
 
         //d(t)^T A*d(t)
-        denom2 = distrDotProduct(d, op, size, me, nprocs, dest);
+        denom2 = distrDotProduct(d, op, size, me, nprocs);
 
         s = -num2/denom2;
 
