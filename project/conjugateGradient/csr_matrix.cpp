@@ -2,7 +2,6 @@
 #include <vector>
 #include <cstdlib>
 #include <omp.h>
-#include <mpi.h>
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -21,38 +20,83 @@ bool operator<( const SparseTriplet& a, const SparseTriplet&b ){
 class CSR_Matrix {
 
     private:
-        int size;
+        int size; //nr rows e de colunas
         int nz;
-        vector<double> nzValues;
-        vector<int> colIndex;
+        vector<double> nzValues = vector<double>();
+        vector<int> colIndex = vector<int>();
         vector<int> rowPtr;
 
     public:
 
-    CSR_Matrix(int size) {
-        this->size = size;
-        this->nz = 0;
-        this->nzValues = vector<double>();
-        this->colIndex = vector<int>();
+    CSR_Matrix() : size(0) {
+        this->rowPtr = vector<int>(0);
+    }
+
+    CSR_Matrix(int size) : size(size), nz(0) {
         this->rowPtr = vector<int>(size + 1);
+    }
+
+    void printAttr() {
+        cout << "size: " << this->size << endl;
+        cout << "nz: " << this->nz << endl;
+        cout << "nzValues: ";
+        for (int i = 0; i < this->nzValues.size(); i++) {
+            cout << this->nzValues[i] << " ";
+        }
+        cout << endl;
+        cout << "colIndex: ";
+        for (int i = 0; i < this->colIndex.size(); i++) {
+            cout << this->colIndex[i] << " ";
+        }
+        cout << endl;
+        cout << "rowPtr: ";
+        for (int i = 0; i < this->rowPtr.size(); i++) {
+            cout << this->rowPtr[i] << " ";
+        }
+        cout << endl;
     }
 
     void insertRow(SparseTriplet row[]) {
         //implementar parallel sort ?
-        sort(row, row + this->size);
+        //sort(row, row + this->size);
         //como paralelizar ?????
+        int currRow = row[0].row;
         for (int i = 0; i < this->size; i++) {
             if (row[i].value != 0) {
                 this->nzValues.push_back(row[i].value);
                 this->colIndex.push_back(row[i].col);
                 this->nz++;
             }
-        this->rowPtr[row[i].row + 1] = this->nz;
         }
+        this->rowPtr[currRow + 1] = this->nz;
     }
 
-    
-    void insertVal(int row, int col, double value) {
-        
+    vector<SparseTriplet> getRow(int row) {
+        vector<SparseTriplet> rowValues = vector<SparseTriplet>();
+        int start = this->rowPtr[row];
+        int end = this->rowPtr[row + 1];
+        for (int i = start; i < end; i++) {
+            SparseTriplet triplet;
+            triplet.row = row;
+            triplet.col = this->colIndex[i];
+            triplet.value = this->nzValues[i];
+            rowValues.push_back(triplet);
+        }
+        return rowValues;
     }
 };
+
+int main() {
+    cout << "testing csr matrix" << endl;	
+    CSR_Matrix csr = CSR_Matrix(4);
+    SparseTriplet row1[4] = {{0, 0, 5}};
+    SparseTriplet row2[4] = {{1, 1, 8}};
+    SparseTriplet row3[4] = {{2, 2, 3}};
+    SparseTriplet row4[4] = {{1, 3, 6}};
+    csr.insertRow(row1);
+    csr.insertRow(row2);
+    csr.insertRow(row3);
+    csr.insertRow(row4);
+    csr.printAttr();
+    return 0;
+}
