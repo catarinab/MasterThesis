@@ -5,7 +5,7 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 
-#include "utils.cpp"
+#include "mtx_ops.cpp"
 
 using namespace std;
 
