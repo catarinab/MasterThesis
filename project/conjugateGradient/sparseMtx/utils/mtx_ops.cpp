@@ -149,24 +149,24 @@ double dotProduct(vector<double> a, vector<double> b, int begin, int end) {
     return dotProd;
 }
 
-double dotProductSparseVec(Sparse_Vec a, Sparse_Vec b, int begin, int end) {
+double dotProductSparseVec(vector<SparseDouble> a, vector<SparseDouble> b, int begin, int end) {
     double dotProd = 0;
     int vecPtrA = 0, vecPtrB = 0;
 
-    if(a.nzValues.size() == 0 || b.nzValues.size() == 0) 
+    if(a.size() == 0 || b.size() == 0) 
         return 0;
 
     for(int i = begin; i < end; i++) {
-        if(a.nzValues[vecPtrA].col == i && b.nzValues[vecPtrB].col == i) {
-            dotProd += a.nzValues[vecPtrA].value * b.nzValues[vecPtrB].value;
+        if(a[vecPtrA].col == i && b[vecPtrB].col == i) {
+            dotProd += a[vecPtrA].value * b[vecPtrB].value;
             vecPtrA++; vecPtrB++;
         }
-        else if(a.nzValues[vecPtrA].col == i)
+        else if(a[vecPtrA].col == i)
             vecPtrA++;
-        else if(b.nzValues[vecPtrB].col == i)
+        else if(b[vecPtrB].col == i)
             vecPtrB++;
         
-        if(vecPtrA == a.nzValues.size() || vecPtrB == b.nzValues.size()) break;
+        if(vecPtrA == a.size() || vecPtrB == b.size()) break;
     }
     return dotProd;
 }

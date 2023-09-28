@@ -30,7 +30,7 @@ void sendVectors(vector<double> a, vector<double> b, int begin, int helpSize, in
 
 }
 
-
+//receives the nzValues of a sparse vector
 double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int nprocs) {
     int count = 0; 
     int flag = 0;

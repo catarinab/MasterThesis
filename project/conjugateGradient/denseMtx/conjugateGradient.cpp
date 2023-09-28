@@ -202,17 +202,6 @@ int main (int argc, char* argv[]) {
 
     processInput(argc, argv);
 
-    //dividir trabalho pelos nodes
-    if(me == 0){
-        CSR_Matrix csr = buildMtx(input_file);
-        csr.printAttr();
-        Sparse_Vec b = buildRandSparseVec(csr.getSize());
-        b.printAttr();
-        Sparse_Vec ola = sparseMatrixVector(csr, b, 0, csr.getSize(), csr.getSize());
-        ola.printAttr();
-    }
-
-
     vector<vector<double>> A = buildMatrix();
     vector<double> b = buildVector();
     int size = b.size();
