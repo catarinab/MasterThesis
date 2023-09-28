@@ -27,6 +27,14 @@ class CSR_Matrix {
         this->rowPtr = vector<int>(size + 1);
     }
 
+    int getNZ() {
+        return this->nz;	
+    }
+
+    int getSize() {
+        return this->size;
+    }
+
     void printAttr() {
         cout << "size: " << this->size << endl;
         cout << "nz: " << this->nz << endl;

@@ -19,7 +19,7 @@ void initRows(int rows, int cols) {
     rowValues.resize(rows);
 }
 
-vector<vector<SparseTriplet>> readFile(string inputFile, int * rows, int * cols, int * nz) {
+vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz) {
     //paralelizar ?
     ifstream file(inputFile);
     string line;
