@@ -16,6 +16,35 @@ using namespace std;
 #define VV 7
 #define SUB 8
 
+MPI_Datatype mpi_sd_type;
+MPI_Aint offsetsSD[2];
+
+MPI_Datatype mpi_st_type;
+MPI_Aint offsetsST[3];
+
+void initMPIDatatypes() {
+    const int nitemsST=2;
+    int blocklengthsST[2] = {1,1};
+    MPI_Datatype typesST[2] = {MPI_INT, MPI_DOUBLE};
+
+    offsetsSD[0] = offsetof(SparseDouble, col);
+    offsetsSD[1] = offsetof(SparseDouble, value);
+
+    MPI_Type_create_struct(nitemsST, blocklengthsST, offsetsSD, typesST, &mpi_sd_type);
+    MPI_Type_commit(&mpi_sd_type);
+
+    const int nitems=3;
+    int blocklengths[3] = {1, 1, 1};
+    MPI_Datatype types[3] = {MPI_INT, MPI_INT, MPI_DOUBLE};
+
+    offsetsST[0] = offsetof(SparseTriplet, col);
+    offsetsST[1] = offsetof(SparseTriplet, row);
+    offsetsST[2] = offsetof(SparseTriplet, value);
+
+    MPI_Type_create_struct(nitems, blocklengths, offsetsST, types, &mpi_st_type);
+    MPI_Type_commit(&mpi_st_type);
+}
+
 void sendVectors(vector<double> a, vector<double> b, int begin, int helpSize, int dest, int func, int me, int size) {
     MPI_Send(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD);
     MPI_Send(&func, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
@@ -72,33 +101,6 @@ double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int
     return dotProd;
 }
 
-double distrSparseDotProduct(vector<SparseDouble> a, vector<SparseDouble> b, int size, int me, int nprocs, bool sameVec) {
-    int count = 0; 
-    int flag = 0;
-    int helpSize = size/nprocs;
-    int end = 0;
-    int dest = 1;
-    int nz = 0;
-
-    while(count != nprocs - 1) {
-        sendSDVectors(a, b, count * helpSize, helpSize, dest, VV, me, size);
-        count++;
-        dest++;
-    }
-    
-    double dotProd = dotProductSparseVec(a, b, count * helpSize, size);
-
-    double temp = 0;
-    dest = 1;
-
-    while(count > 0) {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, dest, VV, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        dotProd += temp;
-        count--; dest++;
-    }
-
-    return dotProd;
-}
 
 vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, int nprocs) {
     int count = 0;

@@ -24,10 +24,6 @@ bool debugParallel = false;
 bool debugLD = false;
 string input_file;
 
-MPI_Datatype mpi_sd_type;
-MPI_Aint offsets[2];
-
-
 
 
 /* Conjugate Gradient Method: iterative method for efficiently solving linear systems of equations: Ax=b
@@ -37,19 +33,19 @@ MPI_Aint offsets[2];
     Step 4: Compute step size: s(t)
     Step 5: Compute new aproximation: x(t) = x(t-1) + s(t)d(t)
 */
-vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<double> x, int * finalIter) {
+Sparse_Vec cg(CSR_Matrix A, Sparse_Vec b, int size, Sparse_Vec x, int * finalIter) {
     int me, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
     int dest = 0;
 
-    vector<double> g(size); //gradient, inicializar na primeira iteraçao?
-    vector<double> d(size); //direction
+    Sparse_Vec g(size); //gradient, inicializar na primeira iteraçao?
+    Sparse_Vec d(size); //direction
     double s; //step size
     
     //auxiliar
-    vector<double> op(size);
+    Sparse_Vec op(size);
     double denom1 = 0;
     double denom2 = 0;
     double num1 = 0;
@@ -59,18 +55,15 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     int helpSize = 0;
     double dotProd;
 
-    vector<double> auxBuf(size);
-    vector<double> auxBuf2(size);
-
     MPI_Status status;
     
     if(me == 0) {
-        op = distrMatrixVec(x, A, size, me, nprocs);
-        d = distrSubOp(b, op, size, me, nprocs); //initial direction = residue
+        op = sparseMatrixVector(A, x, 0, size, size);
+        d = subtractSparseVec(b, op, 0, size); //initial direction = residue
     }
-
+    /*
     while(me != 0) {
-        MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&helpSize, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         switch (status.MPI_TAG) {
             case ENDTAG:
                 if((me + 1) != nprocs) 
@@ -84,37 +77,26 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
                 break;
         }
     }
+    */
     for(int t = 0; t < MAXITER; t++) {
         cout << "============Iteration number:============" << t << endl;
 
         //g(t-1)^T g(t-1)
         if(t != 0){
-            denom1 = distrDotProduct(g, g, size, me, nprocs);
+            denom1 = dotProductSparseVec(g, g, 0, size);
             //Ax(t-1)
-            op = distrMatrixVec(x, A, size, me, nprocs);
+            op = sparseMatrixVector(A, x, 0, size, size);
             
         }
-        if(debugMtr){
-                cout << "Ax(t-1): " << endl;
-                for(int i = 0; i < size; i++) {
-                    cout << op[i] << endl;
-                }
-            }
             
 
         
 
         //g(t) = Ax(t-1) - b
-        g =  distrSubOp(op, b, size, me, nprocs);
-        if(debugMtr) {
-            cout << "g(t): " << endl;
-            for(int i = 0; i < size; i++) {
-                cout << g[i] << endl;
-            }
-        }
+        g =  subtractSparseVec(op, b, 0, size);
         
         //g(t)^T g(t)
-        num1 = distrDotProduct(g, g, size, me, nprocs);
+        num1 = dotProductSparseVec(g, g, 0, size);
         if(debugMtr) cout << "num1: " << num1 << endl;
         
         if (num1 < epsilon){
@@ -130,27 +112,18 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         //se estivermos na iteracao 0, a direcao foi ja calculada no inicio da funcao com o residuo
         //senao, temos de receber a direcao da iteracao anterior e calcular a nova direcao
         if(t!= 0){
-            #pragma omp parallel for
-            for(int i = 0; i < size; i++) {
-                d[i] = -g[i] + (num1/denom1) * d[i];
-                if(debugMtr) {
-                cout << "-g[i]: " << -g[i] << endl;
-                cout << "(num1/denom1): " << (num1/denom1) << endl;
-                cout << "d[i]: " << d[i] << endl;
-                cout << "d(t)[" << i << "]: " << d[i] << endl;
-            }
-                
-            }
+                op = d*(num1/denom1);
+                d = subtractSparseVec(op, g, 0, size);
         }
 
         //d(t)^T g(t)
-        num2 = distrDotProduct(d, g, size, me, nprocs);
+        num2 = dotProductSparseVec(d, g, 0, size);
 
         //A*d(t)
-        op = distrMatrixVec(d, A, size, me, nprocs);
+        op = sparseMatrixVector(A, d, 0, size, size);
 
         //d(t)^T A*d(t)
-        denom2 = distrDotProduct(d, op, size, me, nprocs);
+        denom2 = dotProductSparseVec(d, op, 0, size);
 
         s = -num2/denom2;
 
@@ -160,17 +133,9 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
             cout << "s: " << s << endl;
         }
 
-        #pragma omp parallel for
-        for(int i = 0; i < size; i++) {
-            x[i] = x[i] + s*d[i];
-        }
-
-        if(debugMtr) {
-            cout << "x(t): " << endl;
-            for(int i = 0; i < size; i++) {
-                cout << x[i] << endl;
-            }
-        }
+        op = d*s;
+        //x(t) = x(t-1) + s(t)d(t)
+        x = addSparseVec(x, op, 0, size);
     }
     *finalIter = MAXITER;
     if(nprocs > 1)
@@ -195,6 +160,7 @@ void processInput(int argc, char* argv[]) {
     }
 }
 
+
 int main (int argc, char* argv[]) {
     int me, nprocs;
     double master = -1;
@@ -203,48 +169,31 @@ int main (int argc, char* argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
 
-    const int nitems=2;
-    int blocklengths[2] = {1,1};
-    MPI_Datatype types[2] = {MPI_DOUBLE, MPI_DOUBLE};
-
-    offsets[0] = offsetof(SparseDouble, col);
-    offsets[1] = offsetof(SparseDouble, value);
-
-    MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_sd_type);
-    MPI_Type_commit(&mpi_sd_type);
-
+    initMPIDatatypes();
 
     processInput(argc, argv);
 
     //dividir trabalho pelos nodes
-    if(me == 0){
-        CSR_Matrix csr = buildMtx(input_file);
-        //csr.printAttr();
-        Sparse_Vec b = buildRandSparseVec(csr.getSize());
-        b.printAttr();
-        double dotProd = distrSparseDotProduct(b.nzValues, b.nzValues, csr.getSize(), me, nprocs, true);
-    }
-    else{
-        
-    }
+    
+    CSR_Matrix csr = buildMtx(input_file);
+    int size = csr.getSize();
+    Sparse_Vec b = buildRandSparseVec(size);
+    
+    b.printAttr();
 
-
-    vector<vector<double>> A = buildMatrix();
-    vector<double> b = buildVector();
-    int size = b.size();
     //num max de threads
     omp_set_num_threads(size/2);
     //initial guess: b
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
-    vector<double> x = cg(A, b, size, b, &finalIter);
+    Sparse_Vec x = cg(csr, b, size, b, &finalIter);
     exec_time += omp_get_wtime();
     if(me == 0) {
         fprintf(stderr, "%.10fs\n", exec_time);
         cout << "Final iteration: " << finalIter << endl;
-        for(int i = 0; i < size; i++) {
-        cout << "x[" << i << "]: " << x[i] << endl;
-    }
+        for(int i = 0; i < x.nz; i++) {
+            cout << "x[" << x.nzValues[i].col << "]: " << x.nzValues[i].value << endl;
+        }
     }
     cout << "Proccess number: " << me << " Ending execution" << endl;
     MPI_Finalize();

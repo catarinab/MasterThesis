@@ -91,6 +91,36 @@ Sparse_Vec subtractSparseVec(Sparse_Vec a, Sparse_Vec b, int begin, int end) {
     return res;
 }
 
+Sparse_Vec addSparseVec(Sparse_Vec a, Sparse_Vec b, int begin, int end) {
+    Sparse_Vec res(end - begin, false);
+    int resIndex = 0;
+    int vecPtrA = 0, vecPtrB = 0;
+
+    if(a.nzValues.size() == 0) 
+        return b;
+    
+    else if(b.nzValues.size() == 0) 
+        return a;
+    
+
+    for(int i = begin; i < end; i++) {
+        if(a.nzValues[vecPtrA].col == i == b.nzValues[vecPtrB].col) {
+            res.insertValue(SparseDouble(i, a.nzValues[vecPtrA].value + b.nzValues[vecPtrB].value));
+            vecPtrA++; vecPtrB++;
+        }
+        else if(a.nzValues[vecPtrA].col == i){
+            res.insertValue(SparseDouble(i, a.nzValues[vecPtrA].value));
+            vecPtrA++;
+        }
+        else if(b.nzValues[vecPtrB].col == i){
+            res.insertValue(SparseDouble(i, b.nzValues[vecPtrB].value));
+            vecPtrB++;
+        }
+        if(vecPtrA == a.nzValues.size() && vecPtrB == b.nzValues.size()) break;
+    }
+    return res;
+}
+
 vector<double> matrixVector(vector<vector<double>> matrix, vector<double> v, int begin, int end, int size) {
     vector <double> res(end - begin);
     int resIndex = 0;
@@ -111,7 +141,6 @@ Sparse_Vec sparseMatrixVector(CSR_Matrix matrix, Sparse_Vec vec, int begin, int 
     if(matrix.getNZ() == 0 || vec.nzValues.size() == 0) 
         return res;
 
-    #pragma omp parallel for
     for(int i = 0; i < end; i++) {
         int mtxPtr = 0, vecPtr = 0;
         vector<SparseTriplet> row = matrix.getRow(i);
@@ -135,7 +164,6 @@ Sparse_Vec sparseMatrixVector(CSR_Matrix matrix, Sparse_Vec vec, int begin, int 
             res.insertValue(SparseDouble(i, resVal));
         
     }
-    sort(res.nzValues.begin(), res.nzValues.end());
     return res;
 }
 
@@ -149,24 +177,24 @@ double dotProduct(vector<double> a, vector<double> b, int begin, int end) {
     return dotProd;
 }
 
-double dotProductSparseVec(vector<SparseDouble> a, vector<SparseDouble> b, int begin, int end) {
+double dotProductSparseVec(Sparse_Vec a, Sparse_Vec b, int begin, int end) {
     double dotProd = 0;
     int vecPtrA = 0, vecPtrB = 0;
 
-    if(a.size() == 0 || b.size() == 0) 
+    if(a.nzValues.size() == 0 || b.nzValues.size() == 0) 
         return 0;
 
     for(int i = begin; i < end; i++) {
-        if(a[vecPtrA].col == i && b[vecPtrB].col == i) {
-            dotProd += a[vecPtrA].value * b[vecPtrB].value;
+        if(a.nzValues[vecPtrA].col == i && b.nzValues[vecPtrB].col == i) {
+            dotProd += a.nzValues[vecPtrA].value * b.nzValues[vecPtrB].value;
             vecPtrA++; vecPtrB++;
         }
-        else if(a[vecPtrA].col == i)
+        else if(a.nzValues[vecPtrA].col == i)
             vecPtrA++;
-        else if(b[vecPtrB].col == i)
+        else if(b.nzValues[vecPtrB].col == i)
             vecPtrB++;
         
-        if(vecPtrA == a.size() || vecPtrB == b.size()) break;
+        if(vecPtrA == a.nzValues.size() || vecPtrB == b.nzValues.size()) break;
     }
     return dotProd;
 }

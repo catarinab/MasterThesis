@@ -58,6 +58,7 @@ double distrDotProduct(vector<double> a, vector<double> b, int size, int me, int
     return dotProd;
 }
 
+
 vector<double> distrSubOp(vector<double> a, vector<double> b, int size, int me, int nprocs) {
     int count = 0;
     int helpSize = size/nprocs;

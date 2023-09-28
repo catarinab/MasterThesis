@@ -3,9 +3,9 @@
 #include <cstdlib>
 #include <omp.h>
 #include <bits/stdc++.h>
-#ifndef SPARSE_TRIPLET_H
-#define SPARSE_TRIPLET_H 1
-    #include "sparse_triplet.h"
+#ifndef SPARSE_STRUCT_H
+#define SPARSE_STRUCT_H 1
+    #include "sparse_structs.h"
 #endif
 
 

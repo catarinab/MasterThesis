@@ -4,20 +4,13 @@
 #include <omp.h>
 #include <bits/stdc++.h>
 #include <time.h>
+#ifndef SPARSE_STRUCT_H
+#define SPARSE_STRUCT_H 1
+    #include "sparse_structs.h"
+#endif
 
 using namespace std;
 
-
-struct SparseDouble {
-    int col;
-    double value;
-
-    SparseDouble(int col, int value) : col(col), value(value) {}
-};
-
-bool operator<( const SparseDouble& a, const SparseDouble&b ){
-    return a.col < b.col;
-}
 
 class Sparse_Vec {
 
@@ -27,23 +20,39 @@ class Sparse_Vec {
     public:
         int size; //nr colunas
         int nz;
-        vector<SparseDouble> nzValues = vector<SparseDouble>();
+        vector<SparseDouble> nzValues;
         
 
 
     Sparse_Vec() : size(0) {
+        this->nzValues = vector<SparseDouble>();
+    }
+
+    Sparse_Vec(int size) : size(size), nz(0) {
+        this->nzValues = vector<SparseDouble>(size);
     }
 
     Sparse_Vec(int size, bool random) : size(size), nz(0), random(random) {
         //srand(time(0));
         if(random)
             getRandomVec(size);
+        else
+            this->nzValues = vector<SparseDouble>(size);
     }
 
     Sparse_Vec operator-()  {
         Sparse_Vec res(this->size, false);
         for(int i = 0; i < this->nzValues.size(); i++) {
             res.nzValues.push_back(SparseDouble(this->nzValues[i].col, -this->nzValues[i].value));
+        }
+        return res;
+    }
+
+    Sparse_Vec operator* (float x) {
+        Sparse_Vec res(this->size, false);
+        #pragma omp parallel for
+        for(int i = 0; i < this->nzValues.size(); i++) {
+            res.nzValues.push_back(SparseDouble(this->nzValues[i].col, this->nzValues[i].value * x));
         }
         return res;
     }

@@ -4,10 +4,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#ifndef SPARSE_TRIPLET_H
-#define SPARSE_TRIPLET_H 1
-    #include "sparse_triplet.h"
-#endif
 
 using namespace std;
 

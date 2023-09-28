@@ -56,9 +56,6 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     int helpSize = 0;
     double dotProd;
 
-    vector<double> auxBuf(size);
-    vector<double> auxBuf2(size);
-
     MPI_Status status;
     
     if(me == 0) {
@@ -67,7 +64,7 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
     }
 
     while(me != 0) {
-        MPI_Recv(&auxBuf[0], size, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(&helpSize, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         switch (status.MPI_TAG) {
             case ENDTAG:
                 if((me + 1) != nprocs) 
