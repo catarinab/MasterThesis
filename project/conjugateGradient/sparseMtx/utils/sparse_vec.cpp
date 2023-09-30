@@ -16,6 +16,7 @@ class Sparse_Vec {
 
     private:
         bool random = false;
+        bool aux = false;
 
     public:
         int size; //nr colunas
@@ -24,12 +25,26 @@ class Sparse_Vec {
         
 
 
-    Sparse_Vec() : size(0) {
-        this->nzValues = vector<SparseDouble>();
+    Sparse_Vec() : size(0) , nz(0) {
+        this->nzValues = vector<SparseDouble>(0);
     }
 
     Sparse_Vec(int size) : size(size), nz(0) {
-        this->nzValues = vector<SparseDouble>(size);
+        this->nzValues = vector<SparseDouble>(0);
+    }
+
+    void setNzVec(int nz) {
+        this->nz = nz;
+        this->nzValues.resize(nz);
+    }
+
+    void setNZ(int nz) {
+        this->nz += nz;
+    }
+
+    void addNz(int nz) {
+        this->nz += nz;
+        this->nzValues.resize(this->nz);
     }
 
     Sparse_Vec(int size, bool random) : size(size), nz(0), random(random) {
@@ -37,22 +52,22 @@ class Sparse_Vec {
         if(random)
             getRandomVec(size);
         else
-            this->nzValues = vector<SparseDouble>(size);
+            this->nzValues = vector<SparseDouble>();
     }
 
     Sparse_Vec operator-()  {
-        Sparse_Vec res(this->size, false);
+        Sparse_Vec res(this->size);
         for(int i = 0; i < this->nzValues.size(); i++) {
             res.nzValues.push_back(SparseDouble(this->nzValues[i].col, -this->nzValues[i].value));
         }
         return res;
     }
 
-    Sparse_Vec operator* (float x) {
-        Sparse_Vec res(this->size, false);
-        #pragma omp parallel for
+    Sparse_Vec operator* (double x) {
+        Sparse_Vec res(this->size);
         for(int i = 0; i < this->nzValues.size(); i++) {
-            res.nzValues.push_back(SparseDouble(this->nzValues[i].col, this->nzValues[i].value * x));
+            double newVal = this->nzValues[i].value * x;
+            res.nzValues.push_back(SparseDouble(this->nzValues[i].col, newVal));
         }
         return res;
     }
@@ -65,14 +80,18 @@ class Sparse_Vec {
         }
     }
 
+    void pushVal(SparseDouble sd) {
+        #pragma omp critical
+        this->nzValues.push_back(sd);
+    }
+
     //so para testes
     void getRandomVec(int size) {
         for(int i = 0; i < size; i++) {
-            bool zeroVal = (rand() % 100) < 75;
+            bool zeroVal = (rand() % 100) < 90;
             if(!zeroVal) {
                 double val = (rand() % 100);
-                int col = rand() % size;
-                insertValue(SparseDouble(col, val));
+                insertValue(SparseDouble(i, val));
             }
         }
         sort(this->nzValues.begin(), this->nzValues.end());

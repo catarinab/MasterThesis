@@ -15,7 +15,7 @@ struct SparseDouble {
     int col;
     double value;
 
-    SparseDouble(int col, int value) : col(col), value(value) {}
+    SparseDouble(int col, double value) : col(col), value(value) {}
     SparseDouble() : col(0), value(0) {}
 };
 
