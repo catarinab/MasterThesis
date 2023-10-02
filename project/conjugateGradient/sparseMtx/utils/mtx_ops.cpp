@@ -24,16 +24,22 @@ CSR_Matrix buildMtx(string input_file) {
 
 Vector sparseMatrixVector(CSR_Matrix matrix, Vector vec, int begin, int end, int size) {
     Vector res(end - begin);
+    int resIndex = 0;
+    int mtxPtr = 0;
+    double resVal = 0;
 
     if(matrix.getNZ() == 0 || vec.values.size() == 0) 
         return res;
 
+    #pragma omp parallel for private(resIndex, mtxPtr, resVal)
     for(int i = begin; i < end; i++) {
-        int resIndex = i - begin;
-        int mtxPtr = 0;
+        resIndex = i - begin;
+        mtxPtr = 0;
+        resVal = 0;
+
         vector<SparseTriplet> row = matrix.getRow(i);
         if(row.size() == 0) continue;
-        double resVal = 0;
+
         for(int j = 0; j < size; j++) {
             if(row[mtxPtr].col == j) {
                 resVal += row[mtxPtr].value * vec.values[j];
@@ -69,7 +75,7 @@ Vector addVec(Vector a, Vector b, int begin, int end) {
     #pragma omp parallel for private(resIndex)
     for (int i = begin; i < end; i++) {
         resIndex = i - begin;
-        res.insertValue(i, a.values[i] + b.values[i]);
+        res.insertValue(resIndex, a.values[i] + b.values[i]);
     }
     return res;
 }

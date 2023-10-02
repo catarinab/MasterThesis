@@ -6,4 +6,5 @@ all:
 	$(C++) $(CFLAGS) conjugateGradient.cpp -o $(TARGET)
 
 clean:
-	rm $(TARGET)%
+	rm $(TARGET)
+

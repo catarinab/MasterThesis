@@ -13,15 +13,18 @@ class Vector {
     public:
         int size; //nr colunas
         vector<double> values;
+        bool init = false;
         
 
 
     Vector() : size(0){
         this->values = vector<double>(0);
+        this->init = false;
     }
 
     Vector(int size, bool random) : size(size) {
         this->values = vector<double>(size);
+        this->init = false;
         if(random)
             getRandomVec(size);
     }
@@ -33,6 +36,7 @@ class Vector {
     void resize(int size) {
         this->size = size;
         this->values.resize(size);
+        this->init = false;
     }
 
     //so para testes
@@ -41,6 +45,7 @@ class Vector {
             double val = (rand() % 100);
             this->values[i] = val;
         }
+        this->init = true;
     }
 
     Vector operator* (double x) {
