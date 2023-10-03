@@ -61,6 +61,14 @@ class Vector {
         this->values[col] = value;
     }
 
+    vector<double> getSlice(int begin, int end) {
+        vector<double> res(end - begin);
+        for(int i = begin; i < end; i++) {
+            res[i - begin] = this->values[i];
+        }
+        return res;
+    }
+
     void printAttr(string name) {
         cout << name  << ":" << endl;
         cout << "size: " << this->size << endl;

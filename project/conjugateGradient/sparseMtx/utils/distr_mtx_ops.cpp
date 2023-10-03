@@ -12,20 +12,12 @@
 
 using namespace std;
 
-#define ENDTAG 0
-#define IDLETAG 1
-#define FUNCTAG 2
 
-#define MV 3
-#define VV 4
-#define SUB 6
-#define ADD 7
 
 void sendVectors(Vector a, Vector b, int begin, int helpSize, int dest, int func, int me, int size, int endRow) {
 
     MPI_Send(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD);
     MPI_Send(&func, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
-    MPI_Send(&helpSize, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
 
     if(func == MV){
         MPI_Send(&a.values[0], size, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
@@ -34,7 +26,11 @@ void sendVectors(Vector a, Vector b, int begin, int helpSize, int dest, int func
     }
     else {
         MPI_Send(&a.values[begin], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
-        MPI_Send(&b.values[begin], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        if(func != SUB)
+            MPI_Send(&b.values[begin], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        else
+            MPI_Send(&begin, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        
     }
 }
 

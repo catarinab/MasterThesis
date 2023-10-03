@@ -13,9 +13,6 @@ using namespace std;
 #define epsilon 0.001
 #define MAXITER 10
 
-#define ENDTAG 0
-#define IDLETAG 1
-
 bool debugMtr = false;
 
 
@@ -43,8 +40,6 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     double denom2 = 0;
     double num1 = 0;
     double num2 = 0;
-    int flag=0;
-    bool idle = 0;
     int helpSize = 0;
     double dotProd;
 
@@ -70,7 +65,7 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
                 return x;
             case IDLETAG:
                 if(status.MPI_SOURCE != 0) break;
-                helpProccess(status.MPI_SOURCE, A, b, me, size);
+                helpProccess(status.MPI_SOURCE, A, b, me, size, helpSize);
                 break;
             default:
                 break;
@@ -95,7 +90,7 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
         
 
         //g(t) = Ax(t-1) - b
-        g =  subtractVec(op, b, 0, size);
+        g =  distrSubOp(op, b, size, me, nprocs);
         g.init = true;
 
         if(debugMtr) {
