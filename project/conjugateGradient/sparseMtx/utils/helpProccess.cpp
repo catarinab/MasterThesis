@@ -22,26 +22,21 @@ void helpProccess(int helpDest, CSR_Matrix A, Vector b, int me, int size, int he
 
     MPI_Bcast(&func, 1, MPI_INT, 0, MPI_COMM_WORLD);
     
-
-    if(func == VV || func == ADD) {
-        auxBuf.resize(helpSize);
-        auxBuf2.resize(helpSize);
-        MPI_Scatterv(&auxBuf.values[0], counts, displs, MPI_DOUBLE, &auxBuf.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Scatterv(&auxBuf2.values[0], counts, displs, MPI_DOUBLE, &auxBuf2.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    }
-
-    else if(func == SUB) {
-        auxBuf.resize(helpSize);
-        auxBuf2.resize(helpSize);
-        MPI_Scatterv(&auxBuf.values[0], counts, displs, MPI_DOUBLE, &auxBuf.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        auxBuf2.values = b.getSlice(displs[me], displs[me] + helpSize);
-    }
-    
-    else if(func == MV) {
+    if(func == MV) {
         auxBuf.resize(size);
         MPI_Recv(&auxBuf.values[0], size, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);  
         MPI_Recv(&begin, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
         MPI_Recv(&end, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+    }
+
+    else {
+        auxBuf.resize(helpSize);
+        auxBuf2.resize(helpSize);
+        MPI_Scatterv(&auxBuf.values[0], counts, displs, MPI_DOUBLE, &auxBuf.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        if(func != SUB)
+            MPI_Scatterv(&auxBuf2.values[0], counts, displs, MPI_DOUBLE, &auxBuf2.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        else
+            auxBuf2.values = b.getSlice(displs[me], displs[me] + helpSize);
     }
     
     switch(func) {

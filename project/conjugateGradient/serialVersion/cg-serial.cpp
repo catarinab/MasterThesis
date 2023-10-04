@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define epsilon 0.001
+#define epsilon 0.0000000001
 
 bool debug = false;
 string input_file;
@@ -21,29 +21,22 @@ vector<vector<double>> buildMatrix(string input_file) {
 
 //construir tendo em conta as matrizes do matlab?
 
-vector<double> buildVector(string input_file) {
-    vector<double> b(19);
-    b[0]= 83;
-b[1]= 86;
-b[2]= 77;
-b[3]= 15;
-b[4]= 93;
-b[5]= 35;
-b[6]= 86;
-b[7]= 92;
-b[8]= 49;
-b[9]= 21;
-b[10]= 62;
-b[11]= 27;
-b[12]= 90;
-b[13]= 59;
-b[14]= 63;
-b[15]= 26;
-b[16]= 40;
-b[17]= 26;
-b[18]= 72;
-    return b;
+vector<double> buildVector(string inputFile, int size) {
+    ifstream file(inputFile);
+    string line;
+    vector<double> vec(size);
+    int counter = 0;
+    bool isDefined = false;
+
+    while (getline(file, line)) {
+        if(line[0] == '%') continue;
+        vec[counter++] = stod(line);
+    }
+    file.close();
+
+    return vec;
 }
+
 
 
 double dotProduct(vector<double> a, vector<double> b, int size) {
@@ -151,10 +144,12 @@ vector<double> cg(vector<vector<double>> A, vector<double> b, int size, vector<d
         if(debug){
             cout << "num2: " << num2 << endl;
             cout << "denom2: " << denom2 << endl;
-            cout << "s: " << s << endl;
+            
         }
+        cout << "s: " << s << endl;
         for(int i = 0; i < size; i++) {
-            x[i] = x[i] + s*d[i];
+            x[i] += s*d[i];
+            cout << "x[" << i << "]: " << x[i] << endl;
         }
         if(debug) {
             cout << "x(t): " << endl;
@@ -182,15 +177,15 @@ int main (int argc, char* argv[]) {
     processInput(argc, argv);
 
     vector<vector<double>> A = buildMatrix(input_file);
-    vector<double> b = buildVector(input_file);
+    vector<double> b = buildVector("/home/cat/uni/thesis/project/conjugateGradient/Vec/Vec.txt", 19);
     int size = b.size();
     exec_time = -omp_get_wtime();
     //num max de threads
     vector<double> x = cg(A, b, size, b);
     exec_time += omp_get_wtime();
     fprintf(stdout, "%.10fs\n", exec_time);
-    double sum = 0;
-    for(int i = 0; i < size; i++) sum += x[i];
-    cout << "Sum: " << sum << endl;
+    for(int i = 0; i < size; i++){
+        cout << "x[" << i << "]: " << x[i] << endl;
+    }
     return 0;
 }

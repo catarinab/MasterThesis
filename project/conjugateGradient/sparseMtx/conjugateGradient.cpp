@@ -10,7 +10,7 @@
 
 using namespace std;
 //cg -> krylov subspace method // exp
-#define epsilon 0.001 //10-5
+#define epsilon 0.0000000001 
 
 bool debugMtr = false;
 
@@ -51,7 +51,6 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     if(me == 0) {
         op = distrMatrixVec(A, x, size, me, nprocs);
         d = subtractVec(b, op, 0, size); //initial direction = residue
-        d.init = true;
         if(debugMtr){
             op.printAttr("A*x0");
             d.printAttr("dir0");
@@ -75,7 +74,7 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     }
     
     for(int t = 0; t < maxIter; t++) {
-        cout << "Iteration number: " << t << endl;
+        //cout << "Iteration number: " << t << endl;
 
         
         //nada que possamos guardar para as proxs contas
@@ -93,7 +92,6 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
 
         //g(t) = Ax(t-1) - b
         g =  distrSubOp(op, b, size, me, nprocs);
-        g.init = true;
         if(debugMtr)
             g.printAttr("g");
         
@@ -120,7 +118,6 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
         if(t!= 0){
                 op = d*(num1/denom1);
                 d = subtractVec(op, g, 0, size);
-                d.init = true;
         }
 
         if(debugMtr) {
@@ -199,17 +196,17 @@ int main (int argc, char* argv[]) {
     //para todos terem a matrix e o b
     CSR_Matrix csr = buildMtx(input_file);
     int size = csr.getSize();
-    Vector b(size, true);
+    Vector b(size, readFile_vec("/home/cat/uni/thesis/project/conjugateGradient/Vec/Vec.txt", size));
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     exec_time += omp_get_wtime();
 
-    double sum = 0;
     if(me == 0 && finalIter != size - 1) {
-        for(int i = 0; i < size; i++) sum += x.values[i];
-        cout << "Sum: " << sum << endl;
+        for(int i = 0; i < size; i++){
+            cout << "x[" << i << "]: " << x.values[i] << endl;
+        }
         fprintf(stderr, "%.10fs\n", exec_time);
         cout << "Final iteration: " << finalIter << endl;
     }

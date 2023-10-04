@@ -42,3 +42,20 @@ vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * c
 
     return rowValues;
 }
+
+vector<double> readFile_vec(string inputFile, int size) {
+    //paralelizar ?
+    ifstream file(inputFile);
+    string line;
+    vector<double> vec(size);
+    int counter = 0;
+    bool isDefined = false;
+
+    while (getline(file, line)) {
+        if(line[0] == '%') continue;
+        vec[counter++] = stod(line);
+    }
+    file.close();
+
+    return vec;
+}
