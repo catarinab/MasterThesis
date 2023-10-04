@@ -9,9 +9,8 @@
 #include "utils/helpProccess.cpp"
 
 using namespace std;
-
-#define epsilon 0.001
-#define MAXITER 10
+//cg -> krylov subspace method // exp
+#define epsilon 0.001 //10-5
 
 bool debugMtr = false;
 
@@ -28,9 +27,13 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+    int maxIter = size*size;
+
+    initGatherVars(size, nprocs);
+
     int dest = 0;
 
-    Vector g(size); //gradient, inicializar na primeira iteraçao?
+    Vector g(size); //gradient
     Vector d(size); //direction
     double s; //step size
     
@@ -46,8 +49,7 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     MPI_Status status;
     
     if(me == 0) {
-        op = distrMatrixVec(A, x, size, me, nprocs);    
-        //enviar op    
+        op = distrMatrixVec(A, x, size, me, nprocs);
         d = subtractVec(b, op, 0, size); //initial direction = residue
         d.init = true;
         if(debugMtr){
@@ -65,15 +67,15 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
                 return x;
             case IDLETAG:
                 if(status.MPI_SOURCE != 0) break;
-                helpProccess(status.MPI_SOURCE, A, b, me, size, helpSize);
+                helpProccess(status.MPI_SOURCE, A, b, me, size, helpSize, nprocs, displs, counts);
                 break;
             default:
                 break;
         }
     }
     
-    for(int t = 0; t < MAXITER; t++) {
-        //cout << "Iteration number: " << t << endl;
+    for(int t = 0; t < maxIter; t++) {
+        cout << "Iteration number: " << t << endl;
 
         
         //nada que possamos guardar para as proxs contas
@@ -92,10 +94,9 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
         //g(t) = Ax(t-1) - b
         g =  distrSubOp(op, b, size, me, nprocs);
         g.init = true;
-
-        if(debugMtr) {
+        if(debugMtr)
             g.printAttr("g");
-        }
+        
 
 
         //g(t)^T g(t)
@@ -165,7 +166,8 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
 
     }
     
-    *finalIter = (MAXITER - 1);
+    *finalIter = (maxIter - 1);
+    cout << "Error. Max iterations reached, system did not converge" << endl;
     if(nprocs > 1)
         MPI_Send(&finalIter, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
     return x;
@@ -199,16 +201,13 @@ int main (int argc, char* argv[]) {
     int size = csr.getSize();
     Vector b(size, true);
 
-    //num max de threads
-    omp_set_num_threads(size/nprocs);
-
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     exec_time += omp_get_wtime();
 
     double sum = 0;
-    if(me == 0) {
+    if(me == 0 && finalIter != size - 1) {
         for(int i = 0; i < size; i++) sum += x.values[i];
         cout << "Sum: " << sum << endl;
         fprintf(stderr, "%.10fs\n", exec_time);

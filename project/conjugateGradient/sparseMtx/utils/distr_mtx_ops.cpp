@@ -12,145 +12,112 @@
 
 using namespace std;
 
+int * displs;
+int * counts;
+int helpSize = 0;
 
+void initGatherVars(int size, int nprocs) {
+    displs = (int *)malloc(nprocs*sizeof(int)); 
+    counts = (int *)malloc(nprocs*sizeof(int)); 
+    helpSize = size/nprocs;
 
-void sendVectors(Vector a, Vector b, int begin, int helpSize, int dest, int func, int me, int size, int endRow) {
+    displs[0] = 0;
+    counts[0] = 0; 
 
-    MPI_Send(&helpSize, 1, MPI_DOUBLE, dest, IDLETAG, MPI_COMM_WORLD);
-    MPI_Send(&func, 1, MPI_INT, dest, FUNCTAG, MPI_COMM_WORLD);
-
-    if(func == MV){
-        MPI_Send(&a.values[0], size, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
-        MPI_Send(&begin, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
-        MPI_Send(&endRow, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+    for(int i = 1; i < nprocs; i++) {
+        displs[i] = (i - 1) * helpSize; 
+        counts[i] = helpSize;
     }
+}
+
+
+void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, int nprocs) {
+    int temp = 0;
+
+    for(int i = 1; i < nprocs ; i++)
+        MPI_Send(&helpSize, 1, MPI_DOUBLE, i, IDLETAG, MPI_COMM_WORLD);
+
+    MPI_Bcast(&func, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if(func == MV)
+        for(int proc = 1; proc < nprocs ; proc++){
+            int end = displs[proc] + counts[proc];
+            
+            MPI_Send(&a.values[0], size, MPI_DOUBLE, proc, FUNCTAG, MPI_COMM_WORLD);
+            MPI_Send(&displs[proc], 1, MPI_INT, proc, FUNCTAG, MPI_COMM_WORLD);
+            MPI_Send(&end, 1, MPI_INT, proc, FUNCTAG, MPI_COMM_WORLD);
+        }
+
     else {
-        MPI_Send(&a.values[begin], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         if(func != SUB)
-            MPI_Send(&b.values[begin], helpSize, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
-        else
-            MPI_Send(&begin, 1, MPI_DOUBLE, dest, FUNCTAG, MPI_COMM_WORLD);
+            MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         
     }
 }
 
 double distrDotProduct(Vector a, Vector b, int size, int me, int nprocs) {
+    double dotProd = 0;
+
+    sendVectors(a, b, helpSize, VV, me, size, nprocs);
     
-    int count = 0; 
-    int flag = 0;
-    int helpSize = size/nprocs;
-    int end = 0;
-    int dest = 1;
+    double temp = dotProduct(a, b, (nprocs - 1) * helpSize, size);
 
-    while(count != nprocs - 1) {
-        sendVectors(a, b, count * helpSize, helpSize, dest, VV, me, size, 0);
-        count++; dest++;
-    }
-    
-    double dotProd = dotProduct(a, b, count * helpSize, size);
-
-    double temp = 0;
-    dest = 1;
-
-    while(count > 0) {
-        MPI_Recv(&temp, 1, MPI_DOUBLE, dest, VV, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        dotProd += temp;
-        count--; dest++;
-    }
+    MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     return dotProd;
     
 }
 
 Vector distrSubOp(Vector a, Vector b, int size, int me, int nprocs) {
-    int count = 0;
-    int helpSize = size/nprocs;
-    int end = 0;
-    int dest = 1;
     
     Vector res;
-    Vector finalRes(size);  
+    Vector finalRes(size); 
 
-    while(count != nprocs - 1) {
-        sendVectors(a, b, count * helpSize, helpSize, dest, SUB, me, size, 0);
-        count++; dest++;
-    }
+    sendVectors(a, b, helpSize, SUB, me, size, nprocs);
 
-    res = subtractVec(a, b, count * helpSize, size);
+    res = subtractVec(a, b,  (nprocs - 1) * helpSize, size);
 
-    dest = 1;
-    int index;
-    for(index = 0; count > 0; index++) {
-        MPI_Recv(&finalRes.values[index*helpSize], helpSize, MPI_DOUBLE, dest, SUB, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        dest++; count--;
-    }
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if(res.size != 0)
-        finalRes.values.insert(finalRes.values.begin() + (index*helpSize), res.values.begin(), res.values.end());
+        finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
     
 
     return finalRes;
 }
 
 Vector distrSumOp(Vector a, Vector b, int size, int me, int nprocs) {
-    int count = 0;
-    int helpSize = size/nprocs;
-    int end = 0;
-    int dest = 1;
     
     Vector res;
-    Vector finalRes(size);  
+    Vector finalRes(size); 
 
-    while(count != nprocs - 1) {
-        sendVectors(a, b, count * helpSize, helpSize, dest, ADD, me, size, 0);
-        count++; dest++;
-    }
+    sendVectors(a, b, helpSize, ADD, me, size, nprocs);
 
-    res = addVec(a, b, count * helpSize, size);
+    res = addVec(a, b,  (nprocs - 1) * helpSize, size);
 
-    dest = 1;
-    int index;
-    for(index = 0; count > 0; index++) {
-        MPI_Recv(&finalRes.values[index*helpSize], helpSize, MPI_DOUBLE, dest, ADD, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        dest++; count--;
-    }
+
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if(res.size != 0)
-        finalRes.values.insert(finalRes.values.begin() + (index*helpSize), res.values.begin(), res.values.end());
+        finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
     
     return finalRes;
 }
 
 Vector distrMatrixVec(CSR_Matrix A, Vector vec, int size, int me, int nprocs) {
-    int count = 0;
-    int helpSize = size/nprocs;
-    if(helpSize == 0) helpSize = 1; // caso extremo em que o numero de procs e maior que o tamanho do vetor
-    int dest = 1;
-    int index = 0;
     
     Vector finalRes(size);
 
-    while(count != nprocs - 1 && count != size) {
-        int begin = count * helpSize;
-        int end = begin + helpSize;
+    sendVectors(vec, Vector(0), helpSize, MV, me, size, nprocs);
 
-        sendVectors(vec, Vector(0), begin, helpSize, dest, MV, me, size, end);
-        count++; dest++;
-    }
     Vector res;
+    res = sparseMatrixVector(A, vec, (nprocs - 1) * helpSize, size, size);
 
-    if(count <= size || count == 0)
-        res = sparseMatrixVector(A, vec, count * helpSize, size, size);
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-    
-    dest = 1;
-    for(index = 0; count > 0; index++) {
-        MPI_Recv(&finalRes.values[index*helpSize], helpSize, MPI_DOUBLE, dest, MV, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        dest++; count--;
-    }
-    
-    if(index*helpSize != size){
-        finalRes.values.insert(finalRes.values.begin() + (index*helpSize), res.values.begin(), res.values.end());
+    if((nprocs-1)*helpSize != size){
+        finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
     }
 
     return finalRes;
