@@ -9,11 +9,10 @@
 #include "utils/helpProccess.cpp"
 
 using namespace std;
-//cg -> krylov subspace method // exp
 #define epsilon 0.0000000001 
 
 bool debugMtr = false;
-
+int maxIter;
 
 /* Conjugate Gradient Method: iterative method for efficiently solving linear systems of equations: Ax=b
     Step 1: Compute gradient: g(t) = Ax(t - 1) - b
@@ -27,7 +26,7 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int maxIter = size*size;
+    maxIter = size*size;
 
     initGatherVars(size, nprocs);
 
@@ -58,37 +57,23 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
         
     }      
     while(me != 0) {
-        MPI_Recv(&helpSize, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        switch (status.MPI_TAG) {
-            case ENDTAG:
-                if((me + 1) != nprocs) 
-                    MPI_Send(&me, 1, MPI_DOUBLE, me + 1, ENDTAG, MPI_COMM_WORLD);
-                return x;
-            case IDLETAG:
-                if(status.MPI_SOURCE != 0) break;
-                helpProccess(status.MPI_SOURCE, A, b, me, size, helpSize, nprocs, displs, counts);
-                break;
-            default:
-                break;
-        }
+        MPI_Bcast(&helpSize, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+        if(helpSize == ENDTAG) return x;
+        else if(helpSize > 0)
+            helpProccess(A, b, me, size, helpSize, nprocs, displs, counts);
     }
     
     for(int t = 0; t < maxIter; t++) {
         //cout << "Iteration number: " << t << endl;
 
-        
-        //nada que possamos guardar para as proxs contas
-        //mas podemos usar o g da iteracao anterior
+        //g(t-1)^T g(t-1)
         denom1 = distrDotProduct(g, g, size, me, nprocs);            
-
-        //nada para reutilizar
+        
         op = distrMatrixVec(A, x, size, me, nprocs);
         if(debugMtr){
             op.printAttr("Ax(t-1)");
         }
-            
-
-        
 
         //g(t) = Ax(t-1) - b
         g =  distrSubOp(op, b, size, me, nprocs);
@@ -96,25 +81,20 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
             g.printAttr("g");
         
 
-
         //g(t)^T g(t)
-        //guardar o g para a proxima conta !!
         num1 = distrDotProduct(g, g, size, me, nprocs);
         if(debugMtr)
             cout << "num1: " << num1 << endl;
         
         if (num1 < epsilon) {
             *finalIter = t;
-            if(nprocs > 1){
-                MPI_Send(&me, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
-            }
+            int temp = ENDTAG;
+            MPI_Bcast(&temp, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             return x;
         } 
 
         //step 3
         //d(t) = -g(t) + (g(t)^T g(t))/(g(t-1)^T g(t-1)) * d(t-1)
-        //se estivermos na iteracao 0, a direcao foi ja calculada no inicio da funcao com o residuo
-        //senao, temos de receber a direcao da iteracao anterior e calcular a nova direcao
         if(t!= 0){
                 op = d*(num1/denom1);
                 d = subtractVec(op, g, 0, size);
@@ -126,21 +106,20 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
         }
 
         //d(t)^T g(t)
-        //enviar apenas a direcao
         num2 = distrDotProduct(d, g, size, me, nprocs);
         if(debugMtr)
             cout << "Num2: " << num2 << endl;
 
-        //nao precisamos de enviar nada
+
         op = distrMatrixVec(A, d, size, me, nprocs);
         if(debugMtr)
             op.printAttr("A*d(t)");
         
 
-        //d(t)^T A*d(t)
-        //enviar op
+        //d(t)^T * A*d(t)
         denom2 = distrDotProduct(d, op, size, me, nprocs);
 
+        //s = -(d(t)^T g(t))/(d(t)^T * A*d(t))
         s = -num2/denom2;
         if(debugMtr) {
             cout << "num2: " << num2 << endl;
@@ -203,13 +182,16 @@ int main (int argc, char* argv[]) {
     Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     exec_time += omp_get_wtime();
 
-    if(me == 0 && finalIter != size - 1) {
-        for(int i = 0; i < size; i++){
+    if(me == 0) {
+        for(int i = 0; i < size && finalIter != maxIter; i++){
             cout << "x[" << i << "]: " << x.values[i] << endl;
         }
         fprintf(stderr, "%.10fs\n", exec_time);
         cout << "Final iteration: " << finalIter << endl;
     }
+
+    free(displs);
+    free(counts);
     MPI_Finalize();
     return 0;
 }

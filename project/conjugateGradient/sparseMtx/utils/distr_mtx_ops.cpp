@@ -34,10 +34,9 @@ void initGatherVars(int size, int nprocs) {
 void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, int nprocs) {
     int temp = 0;
 
-    for(int i = 1; i < nprocs ; i++)
-        MPI_Send(&helpSize, 1, MPI_DOUBLE, i, IDLETAG, MPI_COMM_WORLD);
+    MPI_Bcast(&helpSize, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
-    MPI_Bcast(&func, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if(func == MV)
         for(int proc = 1; proc < nprocs ; proc++){
@@ -49,9 +48,9 @@ void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, i
         }
 
     else {
-        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
         if(func != SUB)
-            MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
         
     }
 }
@@ -63,7 +62,7 @@ double distrDotProduct(Vector a, Vector b, int size, int me, int nprocs) {
     
     double temp = dotProduct(a, b, (nprocs - 1) * helpSize, size);
 
-    MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
 
     return dotProd;
     
@@ -78,7 +77,7 @@ Vector distrSubOp(Vector a, Vector b, int size, int me, int nprocs) {
 
     res = subtractVec(a, b,  (nprocs - 1) * helpSize, size);
 
-    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
     if(res.size != 0)
         finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
@@ -97,7 +96,7 @@ Vector distrSumOp(Vector a, Vector b, int size, int me, int nprocs) {
     res = addVec(a, b,  (nprocs - 1) * helpSize, size);
 
 
-    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
     if(res.size != 0)
         finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
@@ -114,9 +113,9 @@ Vector distrMatrixVec(CSR_Matrix A, Vector vec, int size, int me, int nprocs) {
     Vector res;
     res = sparseMatrixVector(A, vec, (nprocs - 1) * helpSize, size, size);
 
-    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(NULL, helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
-    if((nprocs-1)*helpSize != size){
+    if(res.size != 0){
         finalRes.values.insert(finalRes.values.begin() + ((nprocs-1)*helpSize), res.values.begin(), res.values.end());
     }
 
