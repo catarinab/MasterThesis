@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define epsilon 0.0000000001
+#define epsilon 0.00001
 
 bool debug = false;
 string input_file;
@@ -24,7 +24,8 @@ vector<vector<double>> buildMatrix(string input_file) {
 vector<double> buildVector(string inputFile, int size) {
     ifstream file(inputFile);
     string line;
-    vector<double> vec(size);
+    vector<double> b(size);
+    /*
     int counter = 0;
     bool isDefined = false;
 
@@ -33,8 +34,28 @@ vector<double> buildVector(string inputFile, int size) {
         vec[counter++] = stod(line);
     }
     file.close();
+    */
+    b[0]= 83;
+    b[1]= 86;
+    b[2]= 77;
+    b[3]= 15;
+    b[4]= 93;
+    b[5]= 35;
+    b[6]= 86;
+    b[7]= 92;
+    b[8]= 49;
+    b[9]= 21;
+    b[10]= 62;
+    b[11]= 27;
+    b[12]= 90;
+    b[13]= 59;
+    b[14]= 63;
+    b[15]= 26;
+    b[16]= 40;
+    b[17]= 26;
+    b[18]= 72;
 
-    return vec;
+    return b;
 }
 
 

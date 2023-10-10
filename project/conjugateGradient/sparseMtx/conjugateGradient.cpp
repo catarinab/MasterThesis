@@ -5,11 +5,11 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 
-#include "utils/distr_mtx_ops.cpp"
-#include "utils/helpProccess.cpp"
+#include "../../utils/distr_mtx_ops.cpp"
+#include "../../utils/helpProccess.cpp"
 
 using namespace std;
-#define epsilon 0.0000000001 
+#define epsilon 0.00001 
 
 bool debugMtr = false;
 int maxIter;
@@ -144,19 +144,21 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     
     *finalIter = (maxIter - 1);
     cout << "Error. Max iterations reached, system did not converge" << endl;
-    if(nprocs > 1)
-        MPI_Send(&finalIter, 1, MPI_DOUBLE, 1, ENDTAG, MPI_COMM_WORLD);
+    int temp = ENDTAG;
+    MPI_Bcast(&temp, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     return x;
 }
 
-void processInput(int argc, char* argv[], string * inputFile) {
+void processInput(int argc, char* argv[], string * inputFile, string * inputFileVec) {
     for(int i = 0; i < argc; i++) {
 
         if(string(argv[i]) == "-dm") 
             debugMtr = true;
         
-        if(string(argv[i]) == "-f") 
+        if(string(argv[i]) == "-fm") 
             *inputFile = string(argv[i+1]);
+        if(string(argv[i]) == "-fv") 
+            *inputFileVec = string(argv[i+1]);
     }
 }
 
@@ -166,16 +168,17 @@ int main (int argc, char* argv[]) {
     int finalIter = -1;
     double exec_time;
     string input_file;
+    string input_fileVec;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
 
-    processInput(argc, argv, &input_file);
+    processInput(argc, argv, &input_file, &input_fileVec);
     
     //para todos terem a matrix e o b
     CSR_Matrix csr = buildMtx(input_file);
     int size = csr.getSize();
-    Vector b(size, readFile_vec("/home/cat/uni/thesis/project/conjugateGradient/Vec/Vec.txt", size));
+    Vector b(size, readFile_vec(input_fileVec, size));
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
@@ -183,7 +186,7 @@ int main (int argc, char* argv[]) {
     exec_time += omp_get_wtime();
 
     if(me == 0) {
-        for(int i = 0; i < size && finalIter != maxIter; i++){
+        for(int i = 0; i < size && finalIter != (maxIter - 1); i++){
             cout << "x[" << i << "]: " << x.values[i] << endl;
         }
         fprintf(stderr, "%.10fs\n", exec_time);
