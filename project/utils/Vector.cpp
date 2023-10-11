@@ -18,23 +18,17 @@ class Vector {
 
     Vector() : size(0){
         this->values = vector<double>(0);
-    }
-
-    Vector(int size, bool random) : size(size) {
-        this->values = vector<double>(size);
-        if(random)
-            getRandomVec(size);
-    }
-
-    Vector(int size, vector<double> values) : size(size) {
-        this->values = values;
-    }
-
-    
+    }    
 
     Vector(int size) : size(size) {
         this->values = vector<double>(size);
     }
+
+    void setValues(vector<double> values) {
+        this->size = size;
+        this->values = values;
+    }
+
 
     void resize(int size) {
         this->size = size;
@@ -42,8 +36,8 @@ class Vector {
     }
 
     //so para testes
-    void getRandomVec(int size) {
-        for(int i = 0; i < size; i++) {
+    void getRandomVec() {
+        for(int i = 0; i < this->size; i++) {
             double val = (rand() % 100);
             this->values[i] = val;
         }

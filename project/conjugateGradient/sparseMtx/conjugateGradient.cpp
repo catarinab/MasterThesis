@@ -12,6 +12,7 @@ using namespace std;
 #define epsilon 0.00001 
 
 bool debugMtr = false;
+bool vecFile = false;
 int maxIter;
 
 /* Conjugate Gradient Method: iterative method for efficiently solving linear systems of equations: Ax=b
@@ -26,7 +27,9 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    maxIter = size*size;
+    maxIter = size;
+
+    printf("max iter %d\n", maxIter);
 
     initGatherVars(size, nprocs);
 
@@ -157,8 +160,10 @@ void processInput(int argc, char* argv[], string * inputFile, string * inputFile
         
         if(string(argv[i]) == "-fm") 
             *inputFile = string(argv[i+1]);
-        if(string(argv[i]) == "-fv") 
+        if(string(argv[i]) == "-fv") {
             *inputFileVec = string(argv[i+1]);
+            vecFile = true;
+        }
     }
 }
 
@@ -176,19 +181,28 @@ int main (int argc, char* argv[]) {
     processInput(argc, argv, &input_file, &input_fileVec);
     
     //para todos terem a matrix e o b
-    CSR_Matrix csr = buildMtx(input_file);
+    CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/ted_B_unscaled/ted_B_unscaled.mtx");
     int size = csr.getSize();
-    Vector b(size, readFile_vec(input_fileVec, size));
+
+    Vector b(size);
+
+    if(vecFile) {
+        b.setValues(readFile_vec(input_fileVec, size));
+    } else {
+        b.getRandomVec();
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     exec_time += omp_get_wtime();
 
+    double sum = 0;
     if(me == 0) {
-        for(int i = 0; i < size && finalIter != (maxIter - 1); i++){
-            cout << "x[" << i << "]: " << x.values[i] << endl;
+        for(int i = 0; i < size; i++){
+            sum += x.values[i];
         }
+        cout << "Sum: " << sum << endl;
         fprintf(stderr, "%.10fs\n", exec_time);
         cout << "Final iteration: " << finalIter << endl;
     }
