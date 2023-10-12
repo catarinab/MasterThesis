@@ -52,6 +52,15 @@ class Vector {
         return res;
     }
 
+    Vector operator/ (double x) {
+        Vector res(this->size);
+        for(int i = 0; i < this->size; i++) {
+            double newVal = this->values[i] / x;
+            res.insertValue(i, newVal);
+        }
+        return res;
+    }
+
     void insertValue(int col, double value) {
         this->values[col] = value;
     }
@@ -62,6 +71,14 @@ class Vector {
             res[i - begin] = this->values[i];
         }
         return res;
+    }
+
+    double getNorm2() {
+        double res = 0;
+        for(int i = 0; i < this->size; i++) {
+            res += this->values[i] * this->values[i];
+        }
+        return sqrt(res);
     }
 
     void printAttr(string name) {

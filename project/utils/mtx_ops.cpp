@@ -5,8 +5,11 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 #include "csr_matrix.cpp"
-#include "Vector.cpp"
 #include "io_ops.cpp"
+#ifndef VEC
+#define VEC 1
+    #include "Vector.cpp"
+#endif
 
 using namespace std;
 

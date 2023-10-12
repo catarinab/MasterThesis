@@ -31,8 +31,6 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
 
     printf("max iter %d\n", maxIter);
 
-    initGatherVars(size, nprocs);
-
     int dest = 0;
 
     Vector g(size); //gradient
@@ -177,6 +175,8 @@ int main (int argc, char* argv[]) {
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    
 
     processInput(argc, argv, &input_file, &input_fileVec);
     
@@ -192,9 +192,12 @@ int main (int argc, char* argv[]) {
         b.getRandomVec();
     }
 
+    initGatherVars(size, nprocs);
+
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
+    MPI_Barrier(MPI_COMM_WORLD);
     exec_time += omp_get_wtime();
 
     double sum = 0;
