@@ -85,9 +85,11 @@ class Vector {
         cout << name  << ":" << endl;
         cout << "size: " << this->size << endl;
         cout << "values: " << endl;
+        cout << name << " = np.array([";
         for (int i = 0; i < size; i++) {
-            cout << i << ": " << this->values[i] << endl;
+            cout << this->values[i] << ", ";
         }
+        cout << "])" << endl;
     }
 };
 

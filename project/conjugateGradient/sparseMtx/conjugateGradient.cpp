@@ -62,11 +62,11 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
 
         if(helpSize == ENDTAG) return x;
         else if(helpSize > 0)
-            helpProccess(A, b, me, size, helpSize, nprocs, displs, counts);
+            helpProccess(A, me, size, helpSize, nprocs, displs, counts);
     }
     
     for(int t = 0; t < maxIter; t++) {
-        //cout << "Iteration number: " << t << endl;
+        cout << "Iteration number: " << t << endl;
 
         //g(t-1)^T g(t-1)
         denom1 = distrDotProduct(g, g, size, me, nprocs);            
@@ -181,7 +181,7 @@ int main (int argc, char* argv[]) {
     processInput(argc, argv, &input_file, &input_fileVec);
     
     //para todos terem a matrix e o b
-    CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/ted_B_unscaled/ted_B_unscaled.mtx");
+    CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/Trefethen_20b/Trefethen_20b.mtx");
     int size = csr.getSize();
 
     Vector b(size);

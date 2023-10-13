@@ -6,7 +6,7 @@
 #include <bits/stdc++.h>
 
 
-void helpProccess(CSR_Matrix A, Vector b, int me, int size, int helpSize, int nprocs, int * displs, int * counts) {
+void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int * displs, int * counts) {
     int func = -1;
     double dotProd = 0;
     int begin = 0;
@@ -34,10 +34,7 @@ void helpProccess(CSR_Matrix A, Vector b, int me, int size, int helpSize, int np
         auxBuf.resize(helpSize);
         auxBuf2.resize(helpSize);
         MPI_Scatterv(&auxBuf.values[0], counts, displs, MPI_DOUBLE, &auxBuf.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        if(func != SUB)
-            MPI_Scatterv(&auxBuf2.values[0], counts, displs, MPI_DOUBLE, &auxBuf2.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        else
-            auxBuf2.values = b.getSlice(displs[me], displs[me] + helpSize);
+        MPI_Scatterv(&auxBuf2.values[0], counts, displs, MPI_DOUBLE, &auxBuf2.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
     }
     
     switch(func) {

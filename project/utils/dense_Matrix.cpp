@@ -19,8 +19,8 @@ class dense_Matrix {
 
     dense_Matrix(int rows, int cols) : rows(rows), cols(cols) {
         this->columns = new Vector[cols];
-        for(int i = 0; i < rows; i++)
-            this->columns[i].resize(rows);
+        for(int i = 0; i < cols; i++)
+            this->columns[i] = Vector(rows);
     }
 
     void setCol(int col, Vector vec){
@@ -39,13 +39,28 @@ class dense_Matrix {
         return this->columns[col];
     }
 
-    void printAttr() {
+    double getRowVal() {
+        return this->rows;
+    }
+
+    dense_Matrix getSlice(int finalRow, int finalCol) {
+        dense_Matrix res(rows, cols);
+        for(int j = 0; j < finalRow; j++) {
+            for(int i = 0; i < finalCol; i++) {
+                res.setValue(j, i, this->columns[i].values[j]);
+            }
+        }
+        return res;
+    }
+
+    void printAttr(string name) {
+        cout << "dense matrix: " << name << endl;
         cout << "rows: " << this->rows << endl;
         cout << "cols: " << this->cols << endl;
         cout << "columns: " << endl;
-        for (int i = 0; i < this->cols; i++) {
-            cout << "col " << i << ": ";
-            for (int j = 0; j < this->rows; j++) {
+        for(int j = 0; j < this->rows; j++) {
+            cout << "row " << j << ": ";
+            for(int i = 0; i < this->cols; i++) {
                 cout << this->columns[i].values[j] << " ";
             }
             cout << endl;

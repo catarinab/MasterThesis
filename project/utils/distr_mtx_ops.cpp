@@ -42,11 +42,8 @@ void initGatherVars(int size, int nprocs) {
 
 
 void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, int nprocs) {
-    int temp = 0;
-
 
     MPI_Bcast(&helpSize, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
-
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if(func == MV)
@@ -60,8 +57,7 @@ void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, i
 
     else {
         MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        if(func != SUB)
-            MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+        MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
         
     }
 }
