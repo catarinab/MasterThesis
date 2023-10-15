@@ -14,7 +14,7 @@ using namespace std;
 
 bool debugMtr = false;
 bool vecFile = false;
-int maxIter;
+int beta = 1;
 
 /*Compute a basis of the (n + 1)-Krylov subspace of the matrix A.
 
@@ -94,11 +94,7 @@ int main (int argc, char* argv[]) {
 
     Vector b(size);
 
-    if(vecFile) {
-        b.setValues(readFile_vec("/home/cat/uni/thesis/project/Vec/vec_ted_b", size));
-    } else {
-        b.getRandomVec();
-    }
+    b.getOnesVec();
 
     initGatherVars(size, nprocs);
 

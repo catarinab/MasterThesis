@@ -47,18 +47,11 @@ void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, i
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
     if(func == MV)
-        for(int proc = 1; proc < nprocs ; proc++){
-            int end = displs[proc] + counts[proc];
-            
-            MPI_Send(&a.values[0], size, MPI_DOUBLE, proc, FUNCTAG, MPI_COMM_WORLD);
-            MPI_Send(&displs[proc], 1, MPI_INT, proc, FUNCTAG, MPI_COMM_WORLD);
-            MPI_Send(&end, 1, MPI_INT, proc, FUNCTAG, MPI_COMM_WORLD);
-        }
+        MPI_Bcast(&a.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
     else {
         MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
         MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        
     }
 }
 
@@ -82,7 +75,7 @@ Vector distrSubOp(Vector a, Vector b, int size, int me, int nprocs) {
 
     sendVectors(a, b, helpSize, SUB, me, size, nprocs);
 
-    res = subtractVec(a, b,  (nprocs - 1) * helpSize, size);
+    res = subtractVec(a, b, (nprocs - 1) * helpSize, size);
 
     MPI_Gatherv(&finalRes.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
@@ -100,7 +93,7 @@ Vector distrSumOp(Vector a, Vector b, int size, int me, int nprocs) {
 
     sendVectors(a, b, helpSize, ADD, me, size, nprocs);
 
-    res = addVec(a, b,  (nprocs - 1) * helpSize, size);
+    res = addVec(a, b, (nprocs - 1) * helpSize, size);
 
 
     MPI_Gatherv(&finalRes.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);

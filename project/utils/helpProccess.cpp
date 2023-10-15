@@ -25,9 +25,9 @@ void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int 
     
     if(func == MV) {
         auxBuf.resize(size);
-        MPI_Recv(&auxBuf.values[0], size, MPI_DOUBLE, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);  
-        MPI_Recv(&begin, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
-        MPI_Recv(&end, 1, MPI_INT, helpDest, FUNCTAG, MPI_COMM_WORLD, &status);
+        MPI_Bcast(&auxBuf.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+        begin = displs[me];
+        end = begin + counts[me];
     }
 
     else {

@@ -43,6 +43,11 @@ class Vector {
         }
     }
 
+    void getOnesVec() {
+        for(int i = 0; i < this->size; i++) 
+            this->values[i] = 1;
+    }
+
     Vector operator* (double x) {
         Vector res(this->size);
         for(int i = 0; i < this->size; i++) {
