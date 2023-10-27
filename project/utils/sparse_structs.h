@@ -1,7 +1,6 @@
 #define ROOT 0
 
 #define ENDTAG -1
-#define IDLETAG 1
 #define FUNCTAG 2
 
 #define MV 3

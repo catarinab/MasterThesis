@@ -18,17 +18,14 @@ int helpSize = 0;
 
 void initGatherVars(int size, int nprocs) {
     helpSize = size/nprocs;
-    if(nprocs == 1) {
-        displs = (int *)malloc(sizeof(int)); 
-        counts = (int *)malloc(sizeof(int)); 
+    displs = (int *)malloc(nprocs*sizeof(int)); 
+    counts = (int *)malloc(nprocs*sizeof(int)); 
 
+    if(nprocs == 1) {
         displs[0] = 0;
         counts[0] = size;
     }
     else {
-        displs = (int *)malloc(nprocs*sizeof(int)); 
-        counts = (int *)malloc(nprocs*sizeof(int)); 
-
         displs[0] = 0;
         counts[0] = 0; 
 

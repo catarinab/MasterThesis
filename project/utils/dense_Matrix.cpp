@@ -10,7 +10,7 @@ using namespace std;
 //A matrix with dense columns (array of vectors)
 class dense_Matrix {
 
-    private:
+    protected:
         int rows;
         int cols;
         Vector * columns;
@@ -21,6 +21,26 @@ class dense_Matrix {
         this->columns = new Vector[cols];
         for(int i = 0; i < cols; i++)
             this->columns[i] = Vector(rows);
+    }
+
+    dense_Matrix() : rows(0), cols(0) {
+        this->columns = new Vector[0];
+    }
+
+    void setIdentity() {
+        if(this->rows != this->cols) {
+            cout << "Error: matrix is not square" << endl;
+            return;
+        }
+
+        for(int i = 0; i < this->rows; i++)
+            this->setValue(i, i, 1);
+    }
+
+    void setRandomSmall() {
+        for(int i = 0; i < this->rows; i++)
+            for(int j = 0; j < this->cols; j++)
+                this->setValue(i, j, (float) rand()/RAND_MAX);
     }
 
     void setCol(int col, Vector vec){
@@ -39,19 +59,84 @@ class dense_Matrix {
         return this->columns[col];
     }
 
-    double getRowVal() {
-        return this->rows;
+    dense_Matrix power(int power) {
+        return *this;
     }
 
-    dense_Matrix getSlice(int finalRow, int finalCol) {
-        dense_Matrix res(rows, cols);
-        for(int j = 0; j < finalRow; j++) {
-            for(int i = 0; i < finalCol; i++) {
-                res.setValue(j, i, this->columns[i].values[j]);
-            }
+
+    Vector getRow(int row){
+        Vector res(this->cols);
+        #pragma omp parallel for
+        for(int i = 0; i < this->cols; i++)
+            res.insertValue(i, this->columns[i].values[row]);
+        return res;
+    }
+
+    int getRowVal() {
+        return this->rows;
+    }
+    int getColVal() {
+        return this->cols;
+    }
+
+    dense_Matrix transpose() {
+        dense_Matrix res(this->cols, this->rows);
+        #pragma omp parallel for
+        for(int i = 0; i < this->cols; i++)
+            res.setCol(i, this->getRow(i));
+        return res;
+    }
+
+    double getNorm1() {
+        double res = 0;
+        for(int i = 0; i < this->cols; i++) {
+            int currSum = 0;
+            #pragma omp parallel for reduction(+:currSum)
+            for(int j = 0; j < this->rows; j++)
+                currSum += abs(this->columns[i].values[j]);
+            if(currSum > res) res = currSum;
         }
         return res;
     }
+
+    double getNorm2() {
+        double res = 0;
+        for(int i = 0; i < this->cols; i++) {
+            #pragma omp parallel for reduction(+:res)
+            for(int j = 0; j < this->rows; j++)
+                res += pow(this->columns[i].values[j], 2);
+        }
+        return sqrt(res);
+    }
+
+    dense_Matrix operator/ (double x) {
+        dense_Matrix res(this->rows, this->cols);
+        for(int i = 0; i < this->rows; i++) 
+            for(int j = 0; j < this->cols; j++) 
+                res.setValue(i, j, this->columns[j].values[i] / x);
+    
+        return res;
+    }
+
+    dense_Matrix operator* (double x) {
+        dense_Matrix res(this->rows, this->cols);
+        for(int i = 0; i < this->rows; i++) 
+            for(int j = 0; j < this->cols; j++) 
+                res.setValue(i, j, this->columns[j].values[i] * x);
+    
+        return res;
+    }
+
+    // overloaded unary minus (-) operator
+    dense_Matrix operator- () {
+        dense_Matrix res(this->rows, this->cols);
+        for(int i = 0; i < this->rows; i++) 
+            for(int j = 0; j < this->cols; j++) 
+                res.setValue(i, j, -this->columns[j].values[i]);  
+        return res; 
+    }
+
+    
 
     void printAttr(string name) {
         cout << "dense matrix: " << name << endl;
