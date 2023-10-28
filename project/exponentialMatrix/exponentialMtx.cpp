@@ -82,14 +82,14 @@ int arnoldiIteration(CSR_Matrix A, Vector b, int n, int m, int me, int nprocs, d
 
 dense_Matrix padeApprox(dense_Matrix H) {
     vector<dense_Matrix> powers(8);
-    int s = 0, power = 0;
-    int m = definePadeParams(&powers, &power, &s, H);
+    int s = 0, twoPower = 0;
+    int m = definePadeParams(&powers, &twoPower, &s, H);
 
     cout << "m: " << m << endl;
 
     cout << "s: " << s << endl;
 
-    cout << "power: " << power << endl;
+    cout << "power: " << twoPower << endl;
 
 
 
@@ -113,7 +113,7 @@ dense_Matrix padeApprox(dense_Matrix H) {
     }
     //pade approx with scaling and squaring
     if(m == 13){
-        H = H/power;
+        H = H/twoPower;
         H.printAttr("H");
         dense_Matrix op1 = denseMatrixMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
         dense_Matrix op2 = denseMatrixMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);

@@ -99,18 +99,17 @@ dense_Matrix denseMatrixMatrixSub(dense_Matrix A, dense_Matrix b) {
 }
 
 void getCofactor(dense_Matrix A, dense_Matrix * interRes, int p, int q){
-    int rowIndex = 0, colIndex = 0;
     int n = A.getRowVal();
 
+    #pragma omp parallel for
     for (int row = 0; row < n; row++) {
+        if (row == p) continue;
+        int rowIndex = row < p ? row : row - 1;
+        int colIndex = 0;
+
         for (int col = 0; col < n; col++) {
-            if (row != p && col != q) {
+            if (col != q) {
                 interRes->setValue(rowIndex, colIndex++, A.getValue(row, col));
-                
-                if (colIndex == n - 1) {
-                    colIndex = 0;
-                    rowIndex++;
-                }
             }
         }
     }

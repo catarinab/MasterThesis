@@ -37,6 +37,7 @@ class Vector {
 
     //so para testes
     void getRandomVec() {
+        #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double val = (rand() % 100);
             this->values[i] = val;
@@ -44,12 +45,14 @@ class Vector {
     }
 
     void getOnesVec() {
+        #pragma omp parallel for
         for(int i = 0; i < this->size; i++) 
             this->values[i] = 1;
     }
 
     Vector operator* (double x) {
         Vector res(this->size);
+        #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] * x;
             res.insertValue(i, newVal);
@@ -59,6 +62,7 @@ class Vector {
 
     Vector operator/ (double x) {
         Vector res(this->size);
+        #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] / x;
             res.insertValue(i, newVal);
@@ -70,16 +74,10 @@ class Vector {
         this->values[col] = value;
     }
 
-    vector<double> getSlice(int begin, int end) {
-        vector<double> res(end - begin);
-        for(int i = begin; i < end; i++) {
-            res[i - begin] = this->values[i];
-        }
-        return res;
-    }
-
     double getNorm2() {
         double res = 0;
+
+        #pragma omp parallel for reduction(+:res)
         for(int i = 0; i < this->size; i++) {
             res += this->values[i] * this->values[i];
         }

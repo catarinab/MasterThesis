@@ -19,6 +19,8 @@ class dense_Matrix {
 
     dense_Matrix(int rows, int cols) : rows(rows), cols(cols) {
         this->columns = new Vector[cols];
+
+        #pragma omp parallel for
         for(int i = 0; i < cols; i++)
             this->columns[i] = Vector(rows);
     }
@@ -32,12 +34,13 @@ class dense_Matrix {
             cout << "Error: matrix is not square" << endl;
             return;
         }
-
+        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++)
             this->setValue(i, i, 1);
     }
 
     void setRandomSmall() {
+        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++)
             for(int j = 0; j < this->cols; j++)
                 this->setValue(i, j, (float) rand()/RAND_MAX);
@@ -88,14 +91,6 @@ class dense_Matrix {
         this->cols = cols;
     }
 
-    dense_Matrix transpose() {
-        dense_Matrix res(this->cols, this->rows);
-        #pragma omp parallel for
-        for(int i = 0; i < this->cols; i++)
-            res.setCol(i, this->getRow(i));
-        return res;
-    }
-
     double getNorm1() {
         double res = 0;
         for(int i = 0; i < this->cols; i++) {
@@ -120,6 +115,7 @@ class dense_Matrix {
 
     dense_Matrix operator/ (double x) {
         dense_Matrix res(this->rows, this->cols);
+        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 
                 res.setValue(i, j, this->columns[j].values[i] / x);
@@ -129,6 +125,7 @@ class dense_Matrix {
 
     dense_Matrix operator* (double x) {
         dense_Matrix res(this->rows, this->cols);
+        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 
                 res.setValue(i, j, this->columns[j].values[i] * x);
@@ -139,6 +136,7 @@ class dense_Matrix {
     // overloaded unary minus (-) operator
     dense_Matrix operator- () {
         dense_Matrix res(this->rows, this->cols);
+        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 
                 res.setValue(i, j, -this->columns[j].values[i]);  
