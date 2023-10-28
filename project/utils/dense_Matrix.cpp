@@ -75,8 +75,17 @@ class dense_Matrix {
     int getRowVal() {
         return this->rows;
     }
+
     int getColVal() {
         return this->cols;
+    }
+
+    void setRowVal(int rows) {
+        this->rows = rows;
+    }
+
+    void setColVal(int cols) {
+        this->cols = cols;
     }
 
     dense_Matrix transpose() {

@@ -6,5 +6,5 @@ all:
 	$(C++) $(CFLAGS) exponentialMtx.cpp -o $(TARGET)
 
 clean:
-	rm $(TARGET)
+	rm $(TARGET) serial
 

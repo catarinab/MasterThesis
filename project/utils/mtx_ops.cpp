@@ -98,7 +98,7 @@ dense_Matrix denseMatrixMatrixSub(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-void getCofactor(dense_Matrix A, dense_Matrix * interRes ,int p, int q){
+void getCofactor(dense_Matrix A, dense_Matrix * interRes, int p, int q){
     int rowIndex = 0, colIndex = 0;
     int n = A.getRowVal();
 
@@ -114,6 +114,8 @@ void getCofactor(dense_Matrix A, dense_Matrix * interRes ,int p, int q){
             }
         }
     }
+    interRes->setRowVal(n - 1);
+    interRes->setColVal(n - 1);
 }
 
 double getDeterminant(dense_Matrix A) {
@@ -123,17 +125,37 @@ double getDeterminant(dense_Matrix A) {
     if (n == 1)
         return A.getValue(0, 0);
 
-    dense_Matrix interRes(n, n);
-
-    int sign = 1;
-
+    #pragma omp parallel for reduction(+:det)
     for (int f = 0; f < n; f++) {
+        int sign = ((f + 1) % 2 == 0) ? -1 : 1;
+        dense_Matrix interRes(n, n);
         getCofactor(A, &interRes, 0, f);
         det += sign * A.getValue(0, f) * getDeterminant(interRes);
-        sign = -sign;
     }
 
     return det;
+}
+
+dense_Matrix getAdjMatrix(dense_Matrix A) {
+    int n = A.getRowVal();
+    dense_Matrix adj(n, n);
+
+    if (n == 1) {
+        adj.setValue(0, 0, 1);
+        return adj;
+    }
+
+    for (int i = 0; i < n; i++) {
+        #pragma omp parallel for 
+        for (int j = 0; j < n; j++){
+            dense_Matrix interRes(n, n);
+            getCofactor(A, &interRes, i, j);
+            int sign = ((i + j) % 2 == 0) ? 1 : -1;
+            adj.setValue(j, i, (sign) * (getDeterminant(interRes)));
+        }
+    }
+
+    return adj;
 }
 
 dense_Matrix denseMatrixInverse(dense_Matrix A) {
@@ -147,6 +169,9 @@ dense_Matrix denseMatrixInverse(dense_Matrix A) {
     }
 
     double det = getDeterminant(A);
+    dense_Matrix adj = getAdjMatrix(A);
+
+   return adj / det;
 }
 
 Vector sparseMatrixVector(CSR_Matrix matrix, Vector vec, int begin, int end, int size) {
