@@ -27,7 +27,7 @@ CSR_Matrix buildMtx(string input_file) {
     return csr;
 }
 
-dense_Matrix denseMatrixMatrixMult(dense_Matrix A, dense_Matrix b) {
+dense_Matrix denseMatrixMult(dense_Matrix A, dense_Matrix b) {
     int endCols = b.getColVal();
     int endRows = A.getRowVal();
     double resVal = 0;
@@ -54,7 +54,7 @@ dense_Matrix denseMatrixMatrixMult(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-dense_Matrix denseMatrixMatrixAdd(dense_Matrix A, dense_Matrix b) {
+dense_Matrix denseMatrixAdd(dense_Matrix A, dense_Matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
@@ -76,7 +76,7 @@ dense_Matrix denseMatrixMatrixAdd(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-dense_Matrix denseMatrixMatrixSub(dense_Matrix A, dense_Matrix b) {
+dense_Matrix denseMatrixSub(dense_Matrix A, dense_Matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 

@@ -73,12 +73,12 @@ dense_Matrix pade_terms(int p, int q, dense_Matrix A) {
     dense_Matrix res(A.getRowVal(), A.getColVal());
     dense_Matrix prevPower(A.getRowVal(), A.getColVal());
     prevPower.setIdentity();
-    res = denseMatrixMatrixAdd(res, prevPower * pade_coeff(p, q, 0));
+    res = denseMatrixAdd(res, prevPower * pade_coeff(p, q, 0));
 
     for(int j = 1; j <= p; j++) {
         double coeff = pade_coeff(p, q, j);
-        prevPower = denseMatrixMatrixMult(prevPower, A);
-        res = denseMatrixMatrixAdd(res, prevPower * coeff);
+        prevPower = denseMatrixMult(prevPower, A);
+        res = denseMatrixAdd(res, prevPower * coeff);
     }
     return res;
 }

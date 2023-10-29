@@ -40,7 +40,6 @@ class dense_Matrix {
     }
 
     void setRandomSmall() {
-        #pragma omp parallel for
         for(int i = 0; i < this->rows; i++)
             for(int j = 0; j < this->cols; j++)
                 this->setValue(i, j, (float) rand()/RAND_MAX);
@@ -60,10 +59,6 @@ class dense_Matrix {
 
     Vector getCol(int col){
         return this->columns[col];
-    }
-
-    dense_Matrix power(int power) {
-        return *this;
     }
 
 

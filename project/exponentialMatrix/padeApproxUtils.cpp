@@ -42,53 +42,54 @@ vector<double> get_pade_coefficients(int m) {
 }
 
 
-int definePadeParams(vector<dense_Matrix> * powers, int * s, int * power, dense_Matrix A) {
+dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * s, int * power, dense_Matrix A) {
     vector<double> theta = {
-    1.495585217958292e-002, // m_vals = 3
-    2.539398330063230e-001,  // m_vals = 5
-    9.504178996162932e-001,  // m_vals = 7
-    2.097847961257068e+000,  // m_vals = 9
-    5.371920351148152e+000}; // m_vals = 13
+    1.495585217958292e-002, // m_val = 3
+    2.539398330063230e-001,  // m_val = 5
+    9.504178996162932e-001,  // m_val = 7
+    2.097847961257068e+000,  // m_val = 9
+    5.371920351148152e+000}; // m_val = 13
 
+    dense_Matrix resultingMatrix = A;
+
+    *m = 0;
 
     dense_Matrix identity = dense_Matrix(A.getColVal(), A.getRowVal());
     identity.setIdentity();
 
     double normA = A.getNorm2();
 
-    cout << "normA: " << normA << endl;
+    if(normA < theta[0])
+        *m = 3;
+    else if(normA < theta[1])
+        *m = 5;
+    else if(normA < theta[2])
+        *m = 7;
+    else if(normA < theta[3])
+        *m = 9;
+    else if(normA < theta[4])
+        *m = 13;
+
+    if(*m == 0) {
+        *s = findM(normA, theta[4], power);
+        *m = 13;
+        resultingMatrix = A/(*s);
+    }
+    
 
     vector<dense_Matrix>::iterator ptr = powers->begin();
 
     *ptr++ = identity;
-    *ptr++ = A;
-    dense_Matrix A2 = denseMatrixMatrixMult(A, A);
-    *ptr++ = A2;
-    dense_Matrix A4 = denseMatrixMatrixMult(A2, A2);
-    *++ptr = A4;
-    dense_Matrix A6 = denseMatrixMatrixMult(A2, A4);
-    *(ptr + 2) = A6;
+    *ptr++ = resultingMatrix;
+    dense_Matrix res2 = denseMatrixMult(resultingMatrix, resultingMatrix);
+    *ptr++ = res2;
+    dense_Matrix res4 = denseMatrixMult(res2, res2);
+    *++ptr = res4;
+    dense_Matrix res6 = denseMatrixMult(res2, res4);
+    *(ptr + 2) = res6;
+    dense_Matrix res8 = denseMatrixMult(res4, res4);
+    powers->push_back(res8);
 
-
-    if(normA < theta[0])
-        return 3;
-    else if(normA < theta[1])
-        return 5;
-
-
-    dense_Matrix A8 = denseMatrixMatrixMult(A4, A4);
-
-    powers->push_back(A8);
-
-    if(normA < theta[2])
-        return 7;
-    if(normA < theta[3])
-        return 9;
-    if(normA < theta[4])
-        return 13;
-
-    //so neste caso fazemos o scaling!
-    *s = findM(normA, theta[4], power);
-    return 13;
+    return resultingMatrix;
 
 }

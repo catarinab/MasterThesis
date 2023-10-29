@@ -56,7 +56,6 @@ int arnoldiIteration(CSR_Matrix A, Vector b, int n, int m, int me, int nprocs, d
 
         Vector w = distrMatrixVec(A, V->getCol(k-1), m, me, nprocs);
 
-
         for(int j = 0; j < k; j++) {
             H->setValue(j, k-1, distrDotProduct(w, V->getCol(j), m, me, nprocs));
             opResult = V->getCol(j) * H->getValue(j, k-1);
@@ -82,15 +81,15 @@ int arnoldiIteration(CSR_Matrix A, Vector b, int n, int m, int me, int nprocs, d
 
 dense_Matrix padeApprox(dense_Matrix H) {
     vector<dense_Matrix> powers(8);
-    int s = 0, twoPower = 0;
-    int m = definePadeParams(&powers, &twoPower, &s, H);
+    int s = 0, twoPower = 0, m = 0;
+    H = definePadeParams(&powers, &m, &twoPower, &s, H);
+
 
     cout << "m: " << m << endl;
 
     cout << "s: " << s << endl;
 
     cout << "power: " << twoPower << endl;
-
 
 
     dense_Matrix identity = dense_Matrix(H.getColVal(), H.getRowVal());
@@ -101,50 +100,46 @@ dense_Matrix padeApprox(dense_Matrix H) {
 
     vector<double> coeff = get_pade_coefficients(m);
 
-    //normal pade approx
+
     if(m!= 13) {
         U = identity * coeff[1];
         V = identity * coeff[0];
 
         for(int j = m; j >= 3; j-=2) {
-            U = denseMatrixMatrixAdd(U, powers[j-1] * coeff[j]);
-            V = denseMatrixMatrixAdd(V, powers[j-1] * coeff[j-1]);
+            U = denseMatrixAdd(U, powers[j-1] * coeff[j]);
+            V = denseMatrixAdd(V, powers[j-1] * coeff[j-1]);
         }
     }
-    //pade approx with scaling and squaring
     if(m == 13){
-        H = H/twoPower;
-        H.printAttr("H");
-        dense_Matrix op1 = denseMatrixMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
-        dense_Matrix op2 = denseMatrixMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
-        dense_Matrix sum1 = denseMatrixMatrixAdd(op1, op2);
-        op1 = denseMatrixMatrixAdd(powers[6]*coeff[13], powers[4]*coeff[11]);
-        op2 = denseMatrixMatrixAdd(op1, powers[2]*coeff[9]);
-        dense_Matrix sum2 = denseMatrixMatrixMult(powers[6], op2);
-        U = denseMatrixMatrixAdd(sum1, sum2);
+        dense_Matrix op1 = denseMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
+        dense_Matrix op2 = denseMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
+        dense_Matrix sum1 = denseMatrixAdd(op1, op2);
+        op1 = denseMatrixAdd(powers[6]*coeff[13], powers[4]*coeff[11]);
+        op2 = denseMatrixAdd(op1, powers[2]*coeff[9]);
+        dense_Matrix sum2 = denseMatrixMult(powers[6], op2);
+        U = denseMatrixAdd(sum1, sum2);
 
-        op1 = denseMatrixMatrixAdd(powers[6]*coeff[6], powers[4]*coeff[4]);
-        op2 = denseMatrixMatrixAdd(powers[2]*coeff[2], identity*coeff[0]);
-        sum1 = denseMatrixMatrixAdd(op1, op2);
-        op1 = denseMatrixMatrixAdd(powers[6]*coeff[12], powers[4]*coeff[10]);
-        op2 = denseMatrixMatrixAdd(op1, powers[2]*coeff[8]);
-        sum2 = denseMatrixMatrixMult(powers[6], op2);
-        V = denseMatrixMatrixAdd(sum1, sum2);
+        op1 = denseMatrixAdd(powers[6]*coeff[6], powers[4]*coeff[4]);
+        op2 = denseMatrixAdd(powers[2]*coeff[2], identity*coeff[0]);
+        sum1 = denseMatrixAdd(op1, op2);
+        op1 = denseMatrixAdd(powers[6]*coeff[12], powers[4]*coeff[10]);
+        op2 = denseMatrixAdd(op1, powers[2]*coeff[8]);
+        sum2 = denseMatrixMult(powers[6], op2);
+        V = denseMatrixAdd(sum1, sum2);
 
     }
 
-    U = denseMatrixMatrixMult(H, U);
+    U = denseMatrixMult(H, U);
 
-    dense_Matrix num1 = denseMatrixMatrixAdd(V, U);
-    dense_Matrix num2 = denseMatrixMatrixSub(V, U);
+    dense_Matrix num1 = denseMatrixAdd(V, U);
+    dense_Matrix num2 = denseMatrixSub(V, U);
     dense_Matrix num2Inv = denseMatrixInverse(num2);
-    dense_Matrix res = denseMatrixMatrixMult(num2Inv, num1);
-    res.printAttr("res before power");
+    dense_Matrix res = denseMatrixMult(num2Inv, num1);
+
     if(s != 0)
-        for(int i = 0; i < s; i++) {
-            res = denseMatrixMatrixMult(res, res);
-            res.printAttr("res after power "+to_string(i));
-            }
+        for(int i = 0; i < s; i++) 
+            res = denseMatrixMult(res, res);
+
     return res;
 }
 
@@ -181,9 +176,9 @@ int main (int argc, char* argv[]) {
 
 
     if(me == 0) {
-        
-        H.printAttr("H");
 
+        H.setRandomSmall();
+        H.printAttr("H");
         dense_Matrix res = padeApprox(H);
         res.printAttr("expH");
 
