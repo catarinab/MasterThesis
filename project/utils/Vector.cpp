@@ -24,6 +24,10 @@ class Vector {
         this->values = vector<double>(size);
     }
 
+    int getSize() {
+        return this->size;
+    }
+
     void setValues(vector<double> values) {
         this->size = size;
         this->values = values;
@@ -81,18 +85,17 @@ class Vector {
         for(int i = 0; i < this->size; i++) {
             res += this->values[i] * this->values[i];
         }
-        return sqrt(res);
+        return (double) sqrt(res);
     }
 
     void printAttr(string name) {
         cout << name  << ":" << endl;
         cout << "size: " << this->size << endl;
         cout << "values: " << endl;
-        cout << name << " = np.array([";
         for (int i = 0; i < size; i++) {
             cout << this->values[i] << ", ";
         }
-        cout << "])" << endl;
+        cout << "\n" << endl;
     }
 };
 

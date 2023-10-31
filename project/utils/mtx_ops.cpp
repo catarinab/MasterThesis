@@ -27,6 +27,31 @@ CSR_Matrix buildMtx(string input_file) {
     return csr;
 }
 
+dense_Matrix denseMatrixVec(dense_Matrix A, Vector b) {
+    int rows = A.getRowVal();
+    int cols = A.getColVal();
+
+    if(cols != b.getSize()) {
+        cout << "Error: A.getColVal() != b.getSize()" << endl;
+        cout << "A: " << A.getRowVal() << "x" << A.getColVal() << endl;
+        cout << "b: " << b.getSize() << endl;
+        exit(1);
+    }
+
+    dense_Matrix res(rows, 1);
+
+    #pragma omp parallel for
+    for (int i = 0; i < rows; i++) {
+        double resVal = 0;
+        #pragma omp parallel for reduction(+:resVal)
+        for (int j = 0; j < cols; j++) {
+            resVal += A.getValue(i, j) * b.values[j];
+        }
+        res.setValue(i, 0, resVal);
+    }
+    return res;
+}
+
 dense_Matrix denseMatrixMult(dense_Matrix A, dense_Matrix b) {
     int endCols = b.getColVal();
     int endRows = A.getRowVal();
@@ -167,7 +192,9 @@ dense_Matrix denseMatrixInverse(dense_Matrix A) {
         exit(1);
     }
 
+    cout << "Calculating matrix inverse..." << endl;
     double det = getDeterminant(A);
+    cout << "Determinant: " << det << endl;
     dense_Matrix adj = getAdjMatrix(A);
 
    return adj / det;
@@ -205,7 +232,6 @@ Vector sparseMatrixVector(CSR_Matrix matrix, Vector vec, int begin, int end, int
 
     return res;
 }
-
 
 Vector subtractVec(Vector a, Vector b, int begin, int end) {
     Vector res(end - begin);

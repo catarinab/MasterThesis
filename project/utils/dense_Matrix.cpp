@@ -39,10 +39,11 @@ class dense_Matrix {
             this->setValue(i, i, 1);
     }
 
-    void setRandomSmall() {
+    void setRandomVals(int range) {
+        srand(time(0));
         for(int i = 0; i < this->rows; i++)
             for(int j = 0; j < this->cols; j++)
-                this->setValue(i, j, (float) rand()/RAND_MAX);
+                this->setValue(i, j, (float) rand()/RAND_MAX * range);
     }
 
     void setCol(int col, Vector vec){
@@ -152,5 +153,19 @@ class dense_Matrix {
             }
             cout << endl;
         }
+        cout << endl;
+    }
+
+    void printMatlab() {
+        cout << "A = [";
+        for(int j = 0; j < this->rows; j++) {
+            for(int i = 0; i < this->cols; i++) {
+                cout << this->columns[i].values[j] << " ";
+            }
+            if(j != this->rows - 1)
+            cout << ";";
+        }
+        cout << "];\n" << endl;
+
     }
 };

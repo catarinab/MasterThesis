@@ -42,7 +42,7 @@ vector<double> get_pade_coefficients(int m) {
 }
 
 
-dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * s, int * power, dense_Matrix A) {
+dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * power, dense_Matrix A) {
     vector<double> theta = {
     1.495585217958292e-002, // m_val = 3
     2.539398330063230e-001,  // m_val = 5
@@ -71,9 +71,9 @@ dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * s, i
         *m = 13;
 
     if(*m == 0) {
-        *s = findM(normA, theta[4], power);
+        int s = findM(normA, theta[4], power);
         *m = 13;
-        resultingMatrix = A/(*s);
+        resultingMatrix = A/(s);
     }
     
 
