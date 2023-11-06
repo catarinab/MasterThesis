@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
 #include <mpi.h>
 #include <bits/stdc++.h>
@@ -22,7 +21,7 @@ int maxIter;
     Step 4: Compute step size: s(t)
     Step 5: Compute new aproximation: x(t) = x(t-1) + s(t)d(t)
 */
-Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
+DenseVector cg(CSR_Matrix A, DenseVector b, int size, DenseVector x, int * finalIter) {
     int me, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -33,12 +32,12 @@ Vector cg(CSR_Matrix A, Vector b, int size, Vector x, int * finalIter) {
 
     int dest = 0;
 
-    Vector g(size); //gradient
-    Vector d(size); //direction
+    DenseVector g(size); //gradient
+    DenseVector d(size); //direction
     double s; //step size
     
     //auxiliar
-    Vector op(size);
+    DenseVector op(size);
     double denom1 = 0;
     double denom2 = 0;
     double num1 = 0;
@@ -184,7 +183,7 @@ int main (int argc, char* argv[]) {
     CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/Trefethen_20b/Trefethen_20b.mtx");
     int size = csr.getSize();
 
-    Vector b(size);
+    DenseVector b(size);
 
     if(vecFile) {
         b.setValues(readFile_vec(input_fileVec, size));
@@ -196,7 +195,7 @@ int main (int argc, char* argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
-    Vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
+    DenseVector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time += omp_get_wtime();
 

@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
-#include <bits/stdc++.h>
-
+#include <math.h>
 
 using namespace std;
 
@@ -13,20 +11,24 @@ class dense_Matrix {
     protected:
         int rows;
         int cols;
-        Vector * columns;
+        DenseVector * columns;
 
     public:
 
     dense_Matrix(int rows, int cols) : rows(rows), cols(cols) {
-        this->columns = new Vector[cols];
+        this->columns = new DenseVector[cols];
 
         #pragma omp parallel for
         for(int i = 0; i < cols; i++)
-            this->columns[i] = Vector(rows);
+            this->columns[i] = DenseVector(rows);
     }
 
     dense_Matrix() : rows(0), cols(0) {
-        this->columns = new Vector[0];
+        this->columns = new DenseVector[0];
+    }
+
+    void deleteCols() {
+        delete[] columns; // Free the dynamically allocated memory
     }
 
     void setIdentity() {
@@ -46,7 +48,7 @@ class dense_Matrix {
                 this->setValue(i, j, (float) rand()/RAND_MAX * range);
     }
 
-    void setCol(int col, Vector vec){
+    void setCol(int col, DenseVector vec){
         this->columns[col] = vec;
     }
 
@@ -58,13 +60,24 @@ class dense_Matrix {
         return this->columns[col].values[row];
     }
 
-    Vector getCol(int col){
+    double * getValues() {
+        double * values = new double[this->rows * this->cols];
+        for(int i = 0; i < this->cols; i++)
+            #pragma omp parallel for
+            for(int j = 0; j < this->rows; j++){
+                int index = i * this->rows + j;
+                values[index] = this->columns[i].values[j];
+            }
+        return values;
+    }
+
+    DenseVector getCol(int col){
         return this->columns[col];
     }
 
 
-    Vector getRow(int row){
-        Vector res(this->cols);
+    DenseVector getRow(int row){
+        DenseVector res(this->cols);
         #pragma omp parallel for
         for(int i = 0; i < this->cols; i++)
             res.insertValue(i, this->columns[i].values[row]);

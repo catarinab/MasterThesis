@@ -1,13 +1,10 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
 #include <mpi.h>
-#include <bits/stdc++.h>
 
 #include "../utils/distr_mtx_ops.cpp"
 #include "../utils/helpProccess.cpp"
-#include "../utils/scalar_ops.cpp"
 
 int findM(double norm, int theta , int * power) {
     int m = 1; //2^0

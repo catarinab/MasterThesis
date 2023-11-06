@@ -1,8 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
-#include <bits/stdc++.h>
+#include <algorithm> //sort
 #ifndef SPARSE_STRUCT_H
 #define SPARSE_STRUCT_H 1
     #include "sparse_structs.h"

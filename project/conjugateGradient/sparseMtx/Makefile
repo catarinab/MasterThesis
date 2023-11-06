@@ -1,5 +1,5 @@
 C++ = mpic++
-CFLAGS=-fopenmp -std=c++17 -g
+CFLAGS=-fopenmp -std=c++17 -I ../../eigen 
 TARGET=cg
 
 all:

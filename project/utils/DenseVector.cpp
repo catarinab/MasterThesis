@@ -1,14 +1,12 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
-#include <bits/stdc++.h>
-#include <time.h>
+#include <math.h>
 
 using namespace std;
 
 
-class Vector {
+class DenseVector {
 
     public:
         int size; //nr colunas
@@ -16,11 +14,11 @@ class Vector {
         
 
 
-    Vector() : size(0){
+    DenseVector() : size(0){
         this->values = vector<double>(0);
     }    
 
-    Vector(int size) : size(size) {
+    DenseVector(int size) : size(size) {
         this->values = vector<double>(size);
     }
 
@@ -54,8 +52,8 @@ class Vector {
             this->values[i] = 1;
     }
 
-    Vector operator* (double x) {
-        Vector res(this->size);
+    DenseVector operator* (double x) {
+        DenseVector res(this->size);
         #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] * x;
@@ -64,8 +62,8 @@ class Vector {
         return res;
     }
 
-    Vector operator/ (double x) {
-        Vector res(this->size);
+    DenseVector operator/ (double x) {
+        DenseVector res(this->size);
         #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] / x;
@@ -75,6 +73,12 @@ class Vector {
     }
 
     void insertValue(int col, double value) {
+        if(col >= this->size) {
+            cout << "col: " << col << endl;
+            cout << "size: " << this->size << endl;
+            cout << "error: col out of bounds" << endl;
+            exit(1);
+        }
         this->values[col] = value;
     }
 

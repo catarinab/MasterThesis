@@ -1,13 +1,15 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
-#include <bits/stdc++.h>
 #include "csr_matrix.cpp"
 #include "io_ops.cpp"
+
+#include <Eigen/Dense>
+using namespace Eigen;
+
 #ifndef VEC
 #define VEC 1
-    #include "Vector.cpp"
+    #include "DenseVector.cpp"
 #endif
 #ifndef DM
 #define DM 1
@@ -27,7 +29,7 @@ CSR_Matrix buildMtx(string input_file) {
     return csr;
 }
 
-dense_Matrix denseMatrixVec(dense_Matrix A, Vector b) {
+dense_Matrix denseMatrixVec(dense_Matrix A, DenseVector b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
@@ -123,85 +125,40 @@ dense_Matrix denseMatrixSub(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-void getCofactor(dense_Matrix A, dense_Matrix * interRes, int p, int q){
-    int n = A.getRowVal();
-
-    #pragma omp parallel for
-    for (int row = 0; row < n; row++) {
-        if (row == p) continue;
-        int rowIndex = row < p ? row : row - 1;
-        int colIndex = 0;
-
-        for (int col = 0; col < n; col++) {
-            if (col != q) {
-                interRes->setValue(rowIndex, colIndex++, A.getValue(row, col));
-            }
+MatrixXd convertDenseEigenMtx(dense_Matrix A) {
+    MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
+    for(int i = 0; i < A.getRowVal(); i++) {
+        #pragma omp parallel for
+        for(int j = 0; j < A.getColVal(); j++) {
+            eigenMtx(i, j) = A.getValue(i, j);
         }
     }
-    interRes->setRowVal(n - 1);
-    interRes->setColVal(n - 1);
+    return eigenMtx;
 }
 
-double getDeterminant(dense_Matrix A) {
-    int n = A.getRowVal();
-    double det = 0;
-
-    if (n == 1)
-        return A.getValue(0, 0);
-
-    #pragma omp parallel for reduction(+:det)
-    for (int f = 0; f < n; f++) {
-        int sign = ((f + 1) % 2 == 0) ? -1 : 1;
-        dense_Matrix interRes(n, n);
-        getCofactor(A, &interRes, 0, f);
-        det += sign * A.getValue(0, f) * getDeterminant(interRes);
-    }
-
-    return det;
-}
-
-dense_Matrix getAdjMatrix(dense_Matrix A) {
-    int n = A.getRowVal();
-    dense_Matrix adj(n, n);
-
-    if (n == 1) {
-        adj.setValue(0, 0, 1);
-        return adj;
-    }
-
-    for (int i = 0; i < n; i++) {
-        #pragma omp parallel for 
-        for (int j = 0; j < n; j++){
-            dense_Matrix interRes(n, n);
-            getCofactor(A, &interRes, i, j);
-            int sign = ((i + j) % 2 == 0) ? 1 : -1;
-            adj.setValue(j, i, (sign) * (getDeterminant(interRes)));
+dense_Matrix convertEigenDenseMtx(MatrixXd A) {
+    dense_Matrix denseMtx(A.rows(), A.cols());
+    for(int i = 0; i < A.rows(); i++) {
+        #pragma omp parallel for
+        for(int j = 0; j < A.cols(); j++) {
+            denseMtx.setValue(i, j, A(i, j));
         }
     }
+    return denseMtx;
 
-    return adj;
 }
 
-dense_Matrix denseMatrixInverse(dense_Matrix A) {
-    int rows = A.getRowVal();
-    int cols = A.getColVal();
+dense_Matrix solveEq(dense_Matrix A, dense_Matrix b) {
+    MatrixXd eigenMtxA = convertDenseEigenMtx(A);
+    MatrixXd eigenMtxB = convertDenseEigenMtx(b);
 
-    if(rows != cols) {
-        cout << "Error getting matrix inverse -> matrix not square: " << endl;
-        cout << "A: " << A.getRowVal() << "x" << A.getColVal() << endl;
-        exit(1);
-    }
+    MatrixXd res = eigenMtxA.partialPivLu().solve(eigenMtxB);
 
-    cout << "Calculating matrix inverse..." << endl;
-    double det = getDeterminant(A);
-    cout << "Determinant: " << det << endl;
-    dense_Matrix adj = getAdjMatrix(A);
-
-   return adj / det;
+    return convertEigenDenseMtx(res);
 }
 
-Vector sparseMatrixVector(CSR_Matrix matrix, Vector vec, int begin, int end, int size) {
-    Vector res(end - begin);
+DenseVector sparseMatrixVector(CSR_Matrix matrix, DenseVector vec, int begin, int end, int size) {
+    DenseVector res(end - begin);
     int resIndex = 0;
     int mtxPtr = 0;
     double resVal = 0;
@@ -233,8 +190,8 @@ Vector sparseMatrixVector(CSR_Matrix matrix, Vector vec, int begin, int end, int
     return res;
 }
 
-Vector subtractVec(Vector a, Vector b, int begin, int end) {
-    Vector res(end - begin);
+DenseVector subtractVec(DenseVector a, DenseVector b, int begin, int end) {
+    DenseVector res(end - begin);
     int resIndex = 0;
 
     #pragma omp parallel for private(resIndex)
@@ -245,8 +202,8 @@ Vector subtractVec(Vector a, Vector b, int begin, int end) {
     return res;
 }
 
-Vector addVec(Vector a, Vector b, int begin, int end) {
-    Vector res(end - begin);
+DenseVector addVec(DenseVector a, DenseVector b, int begin, int end) {
+    DenseVector res(end - begin);
     int resIndex = 0;
 
     #pragma omp parallel for private(resIndex)
@@ -257,7 +214,7 @@ Vector addVec(Vector a, Vector b, int begin, int end) {
     return res;
 }
 
-double dotProduct(Vector a, Vector b, int begin, int end) {
+double dotProduct(DenseVector a, DenseVector b, int begin, int end) {
 	double dotProd = 0.0;
 
     #pragma omp parallel for reduction(+:dotProd)

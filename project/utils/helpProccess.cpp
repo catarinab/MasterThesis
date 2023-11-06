@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
 #include <mpi.h>
-#include <bits/stdc++.h>
 
 
 void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int * displs, int * counts) {
@@ -18,8 +16,8 @@ void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int 
     MPI_Status status;
     MPI_Request sendIdleReq;
     
-    Vector auxBuf(0);
-    Vector auxBuf2(0);
+    DenseVector auxBuf(0);
+    DenseVector auxBuf2(0);
 
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
     

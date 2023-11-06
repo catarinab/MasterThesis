@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
-#include <cstdlib>
 #include <omp.h>
 #include <mpi.h>
-#include <bits/stdc++.h>
 
 #ifndef MTX_OPS
     #define MTX_OPS 1
@@ -21,24 +19,19 @@ void initGatherVars(int size, int nprocs) {
     displs = (int *)malloc(nprocs*sizeof(int)); 
     counts = (int *)malloc(nprocs*sizeof(int)); 
 
-    if(nprocs == 1) {
-        displs[0] = 0;
-        counts[0] = size;
-    }
-    else {
-        displs[0] = 0;
-        counts[0] = 0; 
+    displs[0] = 0;
+    counts[0] = nprocs == 1 ? size : 0;
 
+    if(nprocs != 1)
         for(int i = 1; i < nprocs; i++) {
             displs[i] = (i - 1) * helpSize; 
             counts[i] = helpSize;
         }
-    }
-    
 }
+    
 
 
-void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, int nprocs) {
+void sendVectors(DenseVector a, DenseVector b, int helpSize, int func, int me, int size, int nprocs) {
 
     MPI_Bcast(&helpSize, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
@@ -52,7 +45,7 @@ void sendVectors(Vector a, Vector b, int helpSize, int func, int me, int size, i
     }
 }
 
-double distrDotProduct(Vector a, Vector b, int size, int me, int nprocs) {
+double distrDotProduct(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     double dotProd = 0;
 
     sendVectors(a, b, helpSize, VV, me, size, nprocs);
@@ -65,10 +58,10 @@ double distrDotProduct(Vector a, Vector b, int size, int me, int nprocs) {
     
 }
 
-Vector distrSubOp(Vector a, Vector b, int size, int me, int nprocs) {
+DenseVector distrSubOp(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     
-    Vector res;
-    Vector finalRes(size); 
+    DenseVector res;
+    DenseVector finalRes(size); 
 
     sendVectors(a, b, helpSize, SUB, me, size, nprocs);
 
@@ -83,10 +76,10 @@ Vector distrSubOp(Vector a, Vector b, int size, int me, int nprocs) {
     return finalRes;
 }
 
-Vector distrSumOp(Vector a, Vector b, int size, int me, int nprocs) {
+DenseVector distrSumOp(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     
-    Vector res;
-    Vector finalRes(size); 
+    DenseVector res;
+    DenseVector finalRes(size); 
 
     sendVectors(a, b, helpSize, ADD, me, size, nprocs);
 
@@ -101,13 +94,13 @@ Vector distrSumOp(Vector a, Vector b, int size, int me, int nprocs) {
     return finalRes;
 }
 
-Vector distrMatrixVec(CSR_Matrix A, Vector vec, int size, int me, int nprocs) {
+DenseVector distrMatrixVec(CSR_Matrix A, DenseVector vec, int size, int me, int nprocs) {
     
-    Vector finalRes(size);
+    DenseVector finalRes(size);
 
-    sendVectors(vec, Vector(0), helpSize, MV, me, size, nprocs);
+    sendVectors(vec, DenseVector(0), helpSize, MV, me, size, nprocs);
 
-    Vector res;
+    DenseVector res;
     res = sparseMatrixVector(A, vec, (nprocs - 1) * helpSize, size, size);
 
     MPI_Gatherv(&finalRes.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
