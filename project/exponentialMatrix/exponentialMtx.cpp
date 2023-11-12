@@ -143,16 +143,12 @@ dense_Matrix padeApprox(dense_Matrix H) {
 
 int main (int argc, char* argv[]) {
     int me, nprocs;
+    double exec_time_pade;
+    double exec_time_arnoldi;
     double exec_time;
     bool vecFile = false;
 
-    int krylovDegree = 6; //default value
-
-    if(argc > 1) {
-        krylovDegree = atoi(argv[1]);
-    }
-
-    cout << "krylovDegree: " << krylovDegree << endl;
+    int krylovDegree = 20; //default value
 
     
     int finalKrylovDegree;
@@ -179,6 +175,7 @@ int main (int argc, char* argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
+    exec_time_arnoldi = -omp_get_wtime();
     //cout << "me: " << me << endl;
     //from this, we get the Orthonormal basis of the Krylov subspace (V) and the upper Hessenberg matrix (H)
     finalKrylovDegree = arnoldiIteration(csr, b, krylovDegree, size, me, nprocs, &V, &H);
@@ -188,29 +185,29 @@ int main (int argc, char* argv[]) {
 
     if(me == 0) {
 
-        //V.printAttr("V");
-        //H.printAttr("H");
+        cout << "krylovDegree: " << krylovDegree << endl;
 
-        //H.printMatlab();
-        
+        exec_time_arnoldi += omp_get_wtime();
+        cout << "exec_time_arnoldi: " << exec_time_arnoldi << endl;
 
-        //cout << "finalKrylovDegree: " << finalKrylovDegree << endl;
+        exec_time_pade = -omp_get_wtime();
 
         dense_Matrix expH = padeApprox(H);
 
+        exec_time_pade += omp_get_wtime();
+        cout << "exec_time_pade: " << exec_time_pade << endl;
+
         dense_Matrix op1 = denseMatrixMult(V*betaVal, expH);
-        dense_Matrix op2 = denseMatrixVec(op1, unitVec);
-        op2.printAttr("e^A * b");
+        dense_Matrix res = denseMatrixVec(op1, unitVec);
         
-        cout << "krylovDegree: " << krylovDegree << endl;
-        cout << "diff: " << abs(7.6513 - op2.getNorm2()) << endl;
+        cout << "diff: " << abs(7.651323841186533 - res.getNorm2()) << endl;
 
         exec_time += omp_get_wtime();
-        //cout << "exec_time: " << exec_time << endl;
+        cout << "exec_time: " << exec_time << endl;
 
         expH.deleteCols();
         op1.deleteCols();
-        op2.deleteCols();
+        res.deleteCols();
 
     }
 

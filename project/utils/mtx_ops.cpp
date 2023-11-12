@@ -180,11 +180,10 @@ DenseVector sparseMatrixVector(CSR_Matrix matrix, DenseVector vec, int begin, in
                 resVal += row[mtxPtr].value * vec.values[j];
                 mtxPtr++;
             }
-            //os restantes elementos de um deles sao zero
+            //os restantes elementos da linha sao zero
             if(mtxPtr == row.size()) break;
         }
-        if(resVal != 0)
-            res.insertValue(resIndex, resVal);
+        res.insertValue(resIndex, resVal);
     }
 
     return res;
