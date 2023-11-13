@@ -8,7 +8,7 @@ using namespace std;
 //A matrix with dense columns (array of vectors)
 class dense_Matrix {
 
-    protected:
+    private:
         int rows;
         int cols;
         DenseVector * columns;

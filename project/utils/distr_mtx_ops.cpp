@@ -33,10 +33,8 @@ void initGatherVars(int size, int nprocs) {
 
 }
 
-void sendVectors(DenseVector a, DenseVector b, int helpSize, int func, int me, int size, int nprocs) {
-
-    MPI_Bcast(&helpSize, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
-    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+void sendVectors(DenseVector a, DenseVector b, int helpSize, int func, int size) {
+    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD); //broadcast need for help in function func
 
     if(func == MV)
         MPI_Bcast(&a.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
@@ -50,7 +48,7 @@ void sendVectors(DenseVector a, DenseVector b, int helpSize, int func, int me, i
 double distrDotProduct(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     double dotProd = 0;
 
-    sendVectors(a, b, helpSize, VV, me, size, nprocs);
+    sendVectors(a, b, helpSize, VV, size);
     
     double temp = dotProduct(a, b, 0, helpSize);
 
@@ -63,7 +61,7 @@ double distrDotProduct(DenseVector a, DenseVector b, int size, int me, int nproc
 DenseVector distrSubOp(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     DenseVector finalRes(size); 
 
-    sendVectors(a, b, helpSize, SUB, me, size, nprocs);
+    sendVectors(a, b, helpSize, SUB, size);
 
     DenseVector res = subtractVec(a, b, 0, helpSize);
 
@@ -75,7 +73,7 @@ DenseVector distrSubOp(DenseVector a, DenseVector b, int size, int me, int nproc
 DenseVector distrSumOp(DenseVector a, DenseVector b, int size, int me, int nprocs) {
     DenseVector finalRes(size); 
 
-    sendVectors(a, b, helpSize, ADD, me, size, nprocs);
+    sendVectors(a, b, helpSize, ADD, size);
 
     DenseVector res = addVec(a, b, 0, helpSize);
 
@@ -88,7 +86,7 @@ DenseVector distrMatrixVec(CSR_Matrix A, DenseVector vec, int size, int me, int 
     
     DenseVector finalRes(size);
 
-    sendVectors(vec, DenseVector(0), helpSize, MV, me, size, nprocs);
+    sendVectors(vec, DenseVector(0), helpSize, MV, size);
 
     DenseVector res = sparseMatrixVector(A, vec, 0, helpSize, size);
 

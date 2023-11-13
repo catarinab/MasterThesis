@@ -14,8 +14,8 @@ using namespace std;
 class CSR_Matrix {
 
     private:
-        int size; //nr rows e de colunas
-        int nz;
+        int size; //number of rows and columns
+        int nz; //number of nonzero entries
         vector<double> nzValues = vector<double>();
         vector<int> colIndex = vector<int>();
         vector<int> rowPtr;

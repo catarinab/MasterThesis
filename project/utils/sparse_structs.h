@@ -1,12 +1,11 @@
 #define ROOT 0
 
 #define ENDTAG -1
-#define FUNCTAG 2
 
 #define MV 3
 #define VV 4
-#define SUB 6
-#define ADD 7
+#define SUB 5
+#define ADD 6
 
 struct SparseTriplet {
     int col;

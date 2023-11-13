@@ -4,28 +4,17 @@
 #include <mpi.h>
 
 
-void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int * displs, int * counts) {
-    int func = -1;
+void helpProccess(CSR_Matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
-    int begin = 0;
-    int end = 0;
-    int savedVec = 0;
     int temp = 0;
-    int helpDest = ROOT;
-
-    MPI_Status status;
-    MPI_Request sendIdleReq;
     
     DenseVector auxBuf(0);
     DenseVector auxBuf2(0);
-
-    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
     
     if(func == MV) {
         auxBuf.resize(size);
         MPI_Bcast(&auxBuf.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
     }
-
     else {
         auxBuf.resize(counts[me]);
         auxBuf2.resize(counts[me]);
@@ -55,7 +44,7 @@ void helpProccess(CSR_Matrix A, int me, int size, int helpSize, int nprocs, int 
             break;
 
         default: 
-            cout << "Proccess number: " << me << " Received wrong function tag from node " << helpDest << endl;
+            cout << "Proccess number: " << me << " Received wrong function tag from node " << ROOT << endl;
             break;
     }
 }

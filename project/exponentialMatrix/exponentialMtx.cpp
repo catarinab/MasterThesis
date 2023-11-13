@@ -32,16 +32,16 @@ double betaVal = 1;
 int arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
                         dense_Matrix * H) {
 
-    int helpSize = 0;
+    int func = 0;
     int sendEnd = ENDTAG;
 
     //helper nodes
     while(me != 0) {
-        MPI_Bcast(&helpSize, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&func, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        if(helpSize == ENDTAG) return 0;
-        else if(helpSize > 0)
-            helpProccess(A, me, m, helpSize, nprocs, displs, counts);
+        if(func == ENDTAG) return 0;
+        else if(func > 0)
+            helpProccess(A, me, m, func, nprocs, displs, counts);
     }
 
     V->setCol(0, b);
