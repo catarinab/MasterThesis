@@ -9,8 +9,6 @@ using namespace std;
 #define epsilon 1e-12 //10^-12
 #define omega 0.0001
 
-bool debugMtr = false;
-bool vecFile = false;
 double betaVal = 1;
 
 /*Compute a basis of the (n + 1)-Krylov subspace of the matrix A.
@@ -141,24 +139,42 @@ dense_Matrix padeApprox(dense_Matrix H) {
     return res;
 }
 
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, double * normVal) {
+    for(int i = 0; i < argc; i++) {
+        if(strcmp(argv[i], "-k") == 0) {
+            *krylovDegree = stoi(argv[i+1]);
+        }
+        else if(strcmp(argv[i], "-m") == 0) {
+            *mtxName = argv[i+1];
+        }
+        else if(strcmp(argv[i], "-n") == 0) {
+            *normVal = stod(argv[i+1]);
+        }
+    }
+}
+
 int main (int argc, char* argv[]) {
     int me, nprocs;
     double exec_time_pade;
     double exec_time_arnoldi;
     double exec_time;
-    bool vecFile = false;
 
-    int krylovDegree = 20; //default value
+    //default values
+    int krylovDegree = 20; 
+    string mtxName = "lap512.mtx";
+    double normVal = 0;
+    processArgs(argc, argv, &krylovDegree, &mtxName, &normVal);
 
-    
     int finalKrylovDegree;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+
     //para todos terem a matrix e o b
-    CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/matlab-laplacian/lapl203D.mtx");
+    string mtxPath = "/home/cat/uni/thesis/project/mtx/matlab-laplacian/"+mtxName;
+    CSR_Matrix csr = buildMtx(mtxPath);
     int size = csr.getSize();
     DenseVector b(size);
     b.getOnesVec();
@@ -198,16 +214,15 @@ int main (int argc, char* argv[]) {
         cout << "exec_time_pade: " << exec_time_pade << endl;
 
         dense_Matrix op1 = denseMatrixMult(V*betaVal, expH);
-        dense_Matrix res = denseMatrixVec(op1, unitVec);
-        
-        cout << "diff: " << abs(7.651323841186533 - res.getNorm2()) << endl;
+        DenseVector res = denseMatrixVec(op1, unitVec);
+
+        cout << "diff: " << abs(normVal - res.getNorm2()) << endl;
 
         exec_time += omp_get_wtime();
         cout << "exec_time: " << exec_time << endl;
 
         expH.deleteCols();
         op1.deleteCols();
-        res.deleteCols();
 
     }
 
@@ -218,6 +233,6 @@ int main (int argc, char* argv[]) {
     free(counts);
 
     MPI_Finalize();
-    
+
     return 0;
 }
