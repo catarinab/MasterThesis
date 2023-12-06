@@ -158,7 +158,7 @@ DenseVector sparseMatrixVector(CSR_Matrix matrix, DenseVector vec, int begin, in
     if(matrix.getNZ() == 0 || vec.values.size() == 0) 
         return res;
 
-    #pragma omp parallel for private(resIndex, mtxPtr, resVal)
+    #pragma omp parallel for private(resIndex, resVal)
     for(int i = begin; i < end; i++) {
         resIndex = i - begin;
         resVal = 0;

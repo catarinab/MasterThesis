@@ -2,6 +2,7 @@
 #include <vector>
 #include <omp.h>
 #include <algorithm> //sort
+#include <math.h> //sqrt
 #ifndef SPARSE_STRUCT_H
 #define SPARSE_STRUCT_H 1
     #include "sparse_structs.h"
@@ -34,30 +35,8 @@ class CSR_Matrix {
         return this->size;
     }
 
-    void printAttr() {
-        cout << "size: " << this->size << endl;
-        cout << "nz: " << this->nz << endl;
-        cout << "nzValues: ";
-        for (int i = 0; i < this->nzValues.size(); i++) {
-            cout << this->nzValues[i] << " ";
-        }
-        cout << endl;
-        cout << "colIndex: ";
-        for (int i = 0; i < this->colIndex.size(); i++) {
-            cout << this->colIndex[i] << " ";
-        }
-        cout << endl;
-        cout << "rowPtr: ";
-        for (int i = 0; i < this->rowPtr.size(); i++) {
-            cout << this->rowPtr[i] << " ";
-        }
-        cout << endl;
-    }
-
     void insertRow(vector<SparseTriplet> row, int rowId) {
-        //implementar parallel sort ?
         sort(row.begin(), row.end());
-        //como paralelizar ?????
         for (int i = 0; i < row.size(); i++) {
             if (row[i].value != 0) {
                 this->nzValues.push_back(row[i].value);
@@ -78,4 +57,33 @@ class CSR_Matrix {
         }
         return rowValues;
     }
+
+    void getNorm2() {
+        double norm = 0;
+        for (int i = 0; i < this->nzValues.size(); i++) {
+            norm += this->nzValues[i] * this->nzValues[i];
+        }
+        cout << "norm: " << norm << endl;
+    }
+
+    void printAttr() {
+        cout << "size: " << this->size << endl;
+        cout << "nz: " << this->nz << endl;
+        cout << "nzValues: ";
+        for (int i = 0; i < this->nzValues.size(); i++) {
+            cout << this->nzValues[i] << " ";
+        }
+        cout << endl;
+        cout << "colIndex: ";
+        for (int i = 0; i < this->colIndex.size(); i++) {
+            cout << this->colIndex[i] << " ";
+        }
+        cout << endl;
+        cout << "rowPtr: ";
+        for (int i = 0; i < this->rowPtr.size(); i++) {
+            cout << this->rowPtr[i] << " ";
+        }
+        cout << endl;
+    }
+
 };
