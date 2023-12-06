@@ -2,6 +2,7 @@
 #include <vector>
 #include <omp.h>
 #include <mpi.h>
+#include <cmath>
 
 #include "../utils/padeApproxUtils.cpp"
 
@@ -27,7 +28,7 @@ double betaVal = 1;
     Q : An m x (n + 1) array (dense_matrix rows:m cols: n+1), where the columns are an orthonormal basis of the Krylov subspace.
     H : An (n + 1) x n array (dense_matrix rows: n+1, cols: n). A on basis Q. It is upper Hessenberg.
     */
-int arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
+DenseVector arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
                         dense_Matrix * H) {
 
     int func = 0;
@@ -68,7 +69,7 @@ int arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, int me, in
             V->setCol(k, w / H->getValue(k, k - 1));
     }
     MPI_Bcast(&sendEnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    return k;
+    return w;
 }
 
 
@@ -153,6 +154,15 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, d
     }
 }
 
+
+void restartedArnoldiProcess(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
+                        dense_Matrix * H) {
+
+    DenseVector b = arnoldiIteration(A, b, k_total/2, m, me, nprocs, V, H);
+    arnoldiIteration(A, b, k_total/2, m, me, nprocs, V, H);
+}
+
+
 int main (int argc, char* argv[]) {
     int me, nprocs;
     double exec_time_pade;
@@ -173,12 +183,21 @@ int main (int argc, char* argv[]) {
 
 
     //para todos terem a matrix e o b
-    string mtxPath = "/home/cat/uni/thesis/project/mtx/matlab-laplacian/"+mtxName;
+    string mtxPath = "/home/cat/uni/thesis/mtx/matlab-laplacian/"+mtxName;
+
+    cout << mtxPath << endl;
+    cout << normVal << endl;
+    cout << krylovDegree << endl;
+
+
     CSR_Matrix csr = buildMtx(mtxPath);
     int size = csr.getSize();
+
+    csr.getNorm2();
     DenseVector b(size);
-    b.getOnesVec();
-    b = b / b.getNorm2();
+    int nx = floor(csr.getSize()/2);
+    cout << "nx: " << nx << endl;
+    b.insertValue(nx, 1);
 
     initGatherVars(size, nprocs);
 
@@ -194,7 +213,7 @@ int main (int argc, char* argv[]) {
     exec_time_arnoldi = -omp_get_wtime();
     //cout << "me: " << me << endl;
     //from this, we get the Orthonormal basis of the Krylov subspace (V) and the upper Hessenberg matrix (H)
-    finalKrylovDegree = arnoldiIteration(csr, b, krylovDegree, size, me, nprocs, &V, &H);
+    arnoldiIteration(csr, b, krylovDegree, size, me, nprocs, &V, &H);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
