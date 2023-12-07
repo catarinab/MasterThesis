@@ -12,7 +12,7 @@
 using namespace std;
 
 
-class CSR_Matrix {
+class csr_matrix {
 
     private:
         int size; //number of rows and columns, only square matrices
@@ -23,7 +23,7 @@ class CSR_Matrix {
 
     public:
 
-    CSR_Matrix(int size) : size(size), nz(0) {
+    csr_matrix(int size) : size(size), nz(0) {
         this->rowPtr = vector<int>(size + 1);
     }
 

@@ -1,10 +1,6 @@
-#include <iostream>
 #include <vector>
-#include <omp.h>
-#include <mpi.h>
 
 #include "../utils/distr_mtx_ops.cpp"
-#include "../utils/helpProccess.cpp"
 
 int findM(double norm, int theta , int * power) {
     int m = 1; //2^0
@@ -39,7 +35,7 @@ vector<double> get_pade_coefficients(int m) {
 }
 
 
-dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * power, dense_Matrix A) {
+dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * power, dense_matrix A) {
     vector<double> theta = {
     1.495585217958292e-002, // m_val = 3
     2.539398330063230e-001,  // m_val = 5
@@ -47,11 +43,11 @@ dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * powe
     2.097847961257068e+000,  // m_val = 9
     5.371920351148152e+000}; // m_val = 13
 
-    dense_Matrix resultingMatrix = A;
+    dense_matrix resultingMatrix = A;
 
     *m = 0;
 
-    dense_Matrix identity = dense_Matrix(A.getColVal(), A.getRowVal());
+    dense_matrix identity = dense_matrix(A.getColVal(), A.getRowVal());
     identity.setIdentity();
 
     double normA = A.getNorm2();
@@ -74,17 +70,17 @@ dense_Matrix definePadeParams(vector<dense_Matrix> * powers, int * m, int * powe
     }
     
 
-    vector<dense_Matrix>::iterator ptr = powers->begin();
+    vector<dense_matrix>::iterator ptr = powers->begin();
 
     *ptr++ = identity;
     *ptr++ = resultingMatrix;
-    dense_Matrix res2 = denseMatrixMult(resultingMatrix, resultingMatrix);
+    dense_matrix res2 = denseMatrixMult(resultingMatrix, resultingMatrix);
     *ptr++ = res2;
-    dense_Matrix res4 = denseMatrixMult(res2, res2);
+    dense_matrix res4 = denseMatrixMult(res2, res2);
     *++ptr = res4;
-    dense_Matrix res6 = denseMatrixMult(res2, res4);
+    dense_matrix res6 = denseMatrixMult(res2, res4);
     *(ptr + 2) = res6;
-    dense_Matrix res8 = denseMatrixMult(res4, res4);
+    dense_matrix res8 = denseMatrixMult(res4, res4);
     powers->push_back(res8);
 
     return resultingMatrix;

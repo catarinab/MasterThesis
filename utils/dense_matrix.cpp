@@ -1,30 +1,29 @@
 #include <iostream>
-#include <vector>
 #include <omp.h>
 #include <math.h>
 
 using namespace std;
 
 //A matrix with dense columns (array of vectors)
-class dense_Matrix {
+class dense_matrix {
 
     private:
         int rows;
         int cols;
-        DenseVector * columns;
+        dense_vector * columns;
 
     public:
 
-    dense_Matrix(int rows, int cols) : rows(rows), cols(cols) {
-        this->columns = new DenseVector[cols];
+    dense_matrix(int rows, int cols) : rows(rows), cols(cols) {
+        this->columns = new dense_vector[cols];
 
         #pragma omp parallel for
         for(int i = 0; i < cols; i++)
-            this->columns[i] = DenseVector(rows);
+            this->columns[i] = dense_vector(rows);
     }
 
-    dense_Matrix() : rows(0), cols(0) {
-        this->columns = new DenseVector[0];
+    dense_matrix() : rows(0), cols(0) {
+        this->columns = new dense_vector[0];
     }
 
     void deleteCols() {
@@ -48,7 +47,7 @@ class dense_Matrix {
                 this->setValue(i, j, (float) rand()/RAND_MAX * range);
     }
 
-    void setCol(int col, DenseVector vec){
+    void setCol(int col, dense_vector vec){
         this->columns[col] = vec;
     }
 
@@ -71,13 +70,13 @@ class dense_Matrix {
         return values;
     }
 
-    DenseVector getCol(int col){
+    dense_vector getCol(int col){
         return this->columns[col];
     }
 
 
-    DenseVector getRow(int row){
-        DenseVector res(this->cols);
+    dense_vector getRow(int row){
+        dense_vector res(this->cols);
         #pragma omp parallel for
         for(int i = 0; i < this->cols; i++)
             res.insertValue(i, this->columns[i].values[row]);
@@ -122,8 +121,8 @@ class dense_Matrix {
         return sqrt(res);
     }
 
-    dense_Matrix operator/ (double x) {
-        dense_Matrix res(this->rows, this->cols);
+    dense_matrix operator/ (double x) {
+        dense_matrix res(this->rows, this->cols);
         #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 
@@ -132,8 +131,8 @@ class dense_Matrix {
         return res;
     }
 
-    dense_Matrix operator* (double x) {
-        dense_Matrix res(this->rows, this->cols);
+    dense_matrix operator* (double x) {
+        dense_matrix res(this->rows, this->cols);
         #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 
@@ -143,8 +142,8 @@ class dense_Matrix {
     }
 
     // overloaded unary minus (-) operator
-    dense_Matrix operator- () {
-        dense_Matrix res(this->rows, this->cols);
+    dense_matrix operator- () {
+        dense_matrix res(this->rows, this->cols);
         #pragma omp parallel for
         for(int i = 0; i < this->rows; i++) 
             for(int j = 0; j < this->cols; j++) 

@@ -21,7 +21,7 @@ int maxIter;
     Step 4: Compute step size: s(t)
     Step 5: Compute new aproximation: x(t) = x(t-1) + s(t)d(t)
 */
-DenseVector cg(CSR_Matrix A, DenseVector b, int size, DenseVector x, int * finalIter) {
+dense_vector cg(csr_matrix A, dense_vector b, int size, dense_vector x, int * finalIter) {
     int me, nprocs;
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -32,12 +32,12 @@ DenseVector cg(CSR_Matrix A, DenseVector b, int size, DenseVector x, int * final
 
     int dest = 0;
 
-    DenseVector g(size); //gradient
-    DenseVector d(size); //direction
+    dense_vector g(size); //gradient
+    dense_vector d(size); //direction
     double s; //step size
     
     //auxiliar
-    DenseVector op(size);
+    dense_vector op(size);
     double denom1 = 0;
     double denom2 = 0;
     double num1 = 0;
@@ -180,10 +180,10 @@ int main (int argc, char* argv[]) {
     processInput(argc, argv, &input_file, &input_fileVec);
     
     //para todos terem a matrix e o b
-    CSR_Matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/Trefethen_20b/Trefethen_20b.mtx");
+    csr_matrix csr = buildMtx("/home/cat/uni/thesis/project/mtx/Trefethen_20b/Trefethen_20b.mtx");
     int size = csr.getSize();
 
-    DenseVector b(size);
+    dense_vector b(size);
 
     if(vecFile) {
         b.setValues(readFile_vec(input_fileVec, size));
@@ -195,7 +195,7 @@ int main (int argc, char* argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
-    DenseVector x = cg(csr, b, size, b, &finalIter); //initial guess: b
+    dense_vector x = cg(csr, b, size, b, &finalIter); //initial guess: b
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time += omp_get_wtime();
 

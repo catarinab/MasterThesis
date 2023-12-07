@@ -4,12 +4,12 @@
 #include <mpi.h>
 
 
-void helpProccess(CSR_Matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
+void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
     int temp = 0;
     
-    DenseVector auxBuf(0);
-    DenseVector auxBuf2(0);
+    dense_vector auxBuf(0);
+    dense_vector auxBuf2(0);
     
     if(func == MV) {
         auxBuf.resize(size);

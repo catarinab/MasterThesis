@@ -4,7 +4,8 @@
 #include <mpi.h>
 #include <cmath>
 
-#include "../utils/padeApproxUtils.cpp"
+#include "../utils/pade_approx_utils.cpp"
+#include "../utils/help_proccess.cpp"
 
 using namespace std;
 #define epsilon 1e-12 //10^-12
@@ -18,8 +19,8 @@ double betaVal = 1;
 
     Parameters
     ----------
-    A : An m × m array. (CSR_Matrix)
-    b : Initial mx1 (DenseVector).
+    A : An m × m array. (csr_matrix)
+    b : Initial mx1 (dense_vector).
     n : One less than the dimension of the Krylov subspace, or equivalently the *degree* of the Krylov space. Must be >= 1 (int)
     m : Dimension of the matrix (int)
 
@@ -28,8 +29,8 @@ double betaVal = 1;
     Q : An m x (n + 1) array (dense_matrix rows:m cols: n+1), where the columns are an orthonormal basis of the Krylov subspace.
     H : An (n + 1) x n array (dense_matrix rows: n+1, cols: n). A on basis Q. It is upper Hessenberg.
     */
-DenseVector arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
-                        dense_Matrix * H) {
+dense_vector arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
+                        dense_matrix * H) {
 
     int func = 0;
     int sendEnd = ENDTAG;
@@ -50,8 +51,8 @@ DenseVector arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, in
     int k = 1;
 
     //auxiliar
-    DenseVector opResult(m);
-    DenseVector w(m);
+    dense_vector opResult(m);
+    dense_vector w(m);
 
     for(k = 1; k < k_total + 1; k++) {
         w = distrMatrixVec(A, V->getCol(k-1), m, me, nprocs);
@@ -73,8 +74,8 @@ DenseVector arnoldiIteration(CSR_Matrix A, DenseVector b, int k_total, int m, in
 }
 
 
-dense_Matrix padeApprox(dense_Matrix H) {
-    vector<dense_Matrix> powers(8);
+dense_matrix padeApprox(dense_matrix H) {
+    vector<dense_matrix> powers(8);
     int s = 0, twoPower = 0, m = 0;
     H = definePadeParams(&powers, &m, &s, H);
 
@@ -84,11 +85,11 @@ dense_Matrix padeApprox(dense_Matrix H) {
     //cout << "s: " << s << endl;
 
 
-    dense_Matrix identity = dense_Matrix(H.getColVal(), H.getRowVal());
+    dense_matrix identity = dense_matrix(H.getColVal(), H.getRowVal());
     identity.setIdentity();
 
-    dense_Matrix U = dense_Matrix(H.getColVal(), H.getRowVal());
-    dense_Matrix V = dense_Matrix(H.getColVal(), H.getRowVal());
+    dense_matrix U = dense_matrix(H.getColVal(), H.getRowVal());
+    dense_matrix V = dense_matrix(H.getColVal(), H.getRowVal());
 
     vector<double> coeff = get_pade_coefficients(m);
 
@@ -103,12 +104,12 @@ dense_Matrix padeApprox(dense_Matrix H) {
         }
     }
     if(m == 13){
-        dense_Matrix op1 = denseMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
-        dense_Matrix op2 = denseMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
-        dense_Matrix sum1 = denseMatrixAdd(op1, op2);
+        dense_matrix op1 = denseMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
+        dense_matrix op2 = denseMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
+        dense_matrix sum1 = denseMatrixAdd(op1, op2);
         op1 = denseMatrixAdd(powers[6]*coeff[13], powers[4]*coeff[11]);
         op2 = denseMatrixAdd(op1, powers[2]*coeff[9]);
-        dense_Matrix sum2 = denseMatrixMult(powers[6], op2);
+        dense_matrix sum2 = denseMatrixMult(powers[6], op2);
         U = denseMatrixAdd(sum1, sum2);
 
         op1 = denseMatrixAdd(powers[6]*coeff[6], powers[4]*coeff[4]);
@@ -124,10 +125,10 @@ dense_Matrix padeApprox(dense_Matrix H) {
 
     U = denseMatrixMult(H, U);
 
-    dense_Matrix num1 = denseMatrixSub(V, U);
-    dense_Matrix num2 = denseMatrixAdd(V, U);
+    dense_matrix num1 = denseMatrixSub(V, U);
+    dense_matrix num2 = denseMatrixAdd(V, U);
 
-    dense_Matrix res = solveEq(num1, num2);
+    dense_matrix res = solveEq(num1, num2);
 
     if(s != 0)
         for(int i = 0; i < s; i++)
@@ -155,11 +156,11 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, d
 }
 
 
-void restartedArnoldiProcess(CSR_Matrix A, DenseVector b, int k_total, int m, int me, int nprocs, dense_Matrix * V,
-                        dense_Matrix * H) {
+void restartedArnoldiProcess(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
+                        dense_matrix * H) {
 
-    DenseVector b = arnoldiIteration(A, b, k_total/2, m, me, nprocs, V, H);
-    arnoldiIteration(A, b, k_total/2, m, me, nprocs, V, H);
+    b = arnoldiIteration(A, b, ceil(k_total/2), m, me, nprocs, V, H);
+    arnoldiIteration(A, b, floor(k_total/2), m, me, nprocs, V, H);
 }
 
 
@@ -185,34 +186,26 @@ int main (int argc, char* argv[]) {
     //para todos terem a matrix e o b
     string mtxPath = "/home/cat/uni/thesis/mtx/matlab-laplacian/"+mtxName;
 
-    cout << mtxPath << endl;
-    cout << normVal << endl;
-    cout << krylovDegree << endl;
 
-
-    CSR_Matrix csr = buildMtx(mtxPath);
+    csr_matrix csr = buildMtx(mtxPath);
     int size = csr.getSize();
 
-    csr.getNorm2();
-    DenseVector b(size);
-    int nx = floor(csr.getSize()/2);
-    cout << "nx: " << nx << endl;
-    b.insertValue(nx, 1);
+    dense_vector b(size);
+    b.insertValue(floor(csr.getSize()/2), 1);
 
     initGatherVars(size, nprocs);
 
 
-    dense_Matrix V(size, krylovDegree);
-    dense_Matrix H(krylovDegree, krylovDegree);
+    dense_matrix V(size, krylovDegree);
+    dense_matrix H(krylovDegree, krylovDegree);
 
-    DenseVector unitVec = DenseVector(krylovDegree);
+    dense_vector unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    //cout << "me: " << me << endl;
-    //from this, we get the Orthonormal basis of the Krylov subspace (V) and the upper Hessenberg matrix (H)
+
     arnoldiIteration(csr, b, krylovDegree, size, me, nprocs, &V, &H);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -220,22 +213,25 @@ int main (int argc, char* argv[]) {
 
     if(me == 0) {
 
-        cout << "krylovDegree: " << krylovDegree << endl;
-
         exec_time_arnoldi += omp_get_wtime();
+
         cout << "exec_time_arnoldi: " << exec_time_arnoldi << endl;
 
         exec_time_pade = -omp_get_wtime();
 
-        dense_Matrix expH = padeApprox(H);
+        dense_matrix expH = padeApprox(H);
 
         exec_time_pade += omp_get_wtime();
         cout << "exec_time_pade: " << exec_time_pade << endl;
 
-        dense_Matrix op1 = denseMatrixMult(V*betaVal, expH);
-        DenseVector res = denseMatrixVec(op1, unitVec);
+        dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
+        dense_vector res = denseMatrixVec(op1, unitVec);
 
-        cout << "diff: " << abs(normVal - res.getNorm2()) << endl;
+        double resNorm = res.getNorm2();
+
+        cout << "diff: " << abs(normVal - resNorm) << endl;
+
+        cout << "2Norm: " << resNorm << endl;
 
         exec_time += omp_get_wtime();
         cout << "exec_time: " << exec_time << endl;

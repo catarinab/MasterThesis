@@ -1,12 +1,12 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
-#include <math.h>
+#include <math.h> //sqrt
 
 using namespace std;
 
 
-class DenseVector {
+class dense_vector {
 
     public:
         int size; //nr colunas
@@ -14,11 +14,11 @@ class DenseVector {
         
 
 
-    DenseVector() : size(0){
+    dense_vector() : size(0){
         this->values = vector<double>(0);
     }    
 
-    DenseVector(int size) : size(size) {
+    dense_vector(int size) : size(size) {
         this->values = vector<double>(size);
     }
 
@@ -52,8 +52,8 @@ class DenseVector {
             this->values[i] = 1;
     }
 
-    DenseVector operator* (double x) {
-        DenseVector res(this->size);
+    dense_vector operator* (double x) {
+        dense_vector res(this->size);
         #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] * x;
@@ -62,8 +62,8 @@ class DenseVector {
         return res;
     }
 
-    DenseVector operator/ (double x) {
-        DenseVector res(this->size);
+    dense_vector operator/ (double x) {
+        dense_vector res(this->size);
         #pragma omp parallel for
         for(int i = 0; i < this->size; i++) {
             double newVal = this->values[i] / x;

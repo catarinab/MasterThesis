@@ -9,20 +9,20 @@ using namespace Eigen;
 
 #ifndef VEC
 #define VEC 1
-    #include "DenseVector.cpp"
+    #include "dense_vector.cpp"
 #endif
 #ifndef DM
 #define DM 1
-    #include "../utils/dense_Matrix.cpp"
+    #include "../utils/dense_matrix.cpp"
 #endif
 
 using namespace std;
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
-CSR_Matrix buildMtx(string input_file) {
+csr_matrix buildMtx(string input_file) {
     int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_mtx(input_file, &rows, &cols, &nz);
-    CSR_Matrix csr(rows);
+    csr_matrix csr(rows);
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
@@ -39,13 +39,13 @@ void checkValues(int a, int b, string func) {
 
 }
 
-DenseVector denseMatrixVec(dense_Matrix A, DenseVector b) {
+dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
     checkValues(cols, b.getSize(), "denseMatrixVec");
 
-    DenseVector res(rows);
+    dense_vector res(rows);
 
     for (int i = 0; i < rows; i++) {
         double resVal = 0;
@@ -58,14 +58,14 @@ DenseVector denseMatrixVec(dense_Matrix A, DenseVector b) {
     return res;
 }
 
-dense_Matrix denseMatrixMult(dense_Matrix A, dense_Matrix b) {
+dense_matrix denseMatrixMult(dense_matrix A, dense_matrix b) {
     int endCols = b.getColVal();
     int endRows = A.getRowVal();
     double resVal = 0;
 
     checkValues(A.getColVal(), b.getRowVal(), "denseMatrixMult");
     
-    dense_Matrix res(endRows, endCols);
+    dense_matrix res(endRows, endCols);
 
     for (int i = 0; i < endRows; i++) {
         for (int j = 0; j < endCols; j++) {
@@ -80,14 +80,14 @@ dense_Matrix denseMatrixMult(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-dense_Matrix denseMatrixAdd(dense_Matrix A, dense_Matrix b) {
+dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
     checkValues(cols, b.getColVal(), "denseMatrixAdd");
     checkValues(rows, b.getRowVal(), "denseMatrixAdd");
 
-    dense_Matrix res(rows, cols);
+    dense_matrix res(rows, cols);
 
     #pragma omp parallel for
     for (int i = 0; i < rows; i++) {
@@ -98,14 +98,14 @@ dense_Matrix denseMatrixAdd(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-dense_Matrix denseMatrixSub(dense_Matrix A, dense_Matrix b) {
+dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
     checkValues(cols, b.getColVal(), "denseMatrixSub");
     checkValues(rows, b.getRowVal(), "denseMatrixSub");
 
-    dense_Matrix res(rows, cols);
+    dense_matrix res(rows, cols);
 
     #pragma omp parallel for
     for (int i = 0; i < rows; i++) {
@@ -116,7 +116,7 @@ dense_Matrix denseMatrixSub(dense_Matrix A, dense_Matrix b) {
     return res;
 }
 
-MatrixXd convertDenseEigenMtx(dense_Matrix A) {
+MatrixXd convertDenseEigenMtx(dense_matrix A) {
     MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
     for(int i = 0; i < A.getRowVal(); i++) {
         #pragma omp parallel for
@@ -127,8 +127,8 @@ MatrixXd convertDenseEigenMtx(dense_Matrix A) {
     return eigenMtx;
 }
 
-dense_Matrix convertEigenDenseMtx(MatrixXd A) {
-    dense_Matrix denseMtx(A.rows(), A.cols());
+dense_matrix convertEigenDenseMtx(MatrixXd A) {
+    dense_matrix denseMtx(A.rows(), A.cols());
     for(int i = 0; i < A.rows(); i++) {
         #pragma omp parallel for
         for(int j = 0; j < A.cols(); j++) {
@@ -139,7 +139,7 @@ dense_Matrix convertEigenDenseMtx(MatrixXd A) {
 
 }
 
-dense_Matrix solveEq(dense_Matrix A, dense_Matrix b) {
+dense_matrix solveEq(dense_matrix A, dense_matrix b) {
     MatrixXd eigenMtxA = convertDenseEigenMtx(A);
     MatrixXd eigenMtxB = convertDenseEigenMtx(b);
 
@@ -148,8 +148,8 @@ dense_Matrix solveEq(dense_Matrix A, dense_Matrix b) {
     return convertEigenDenseMtx(res);
 }
 
-DenseVector sparseMatrixVector(CSR_Matrix matrix, DenseVector vec, int begin, int end, int size) {
-    DenseVector res(end - begin);
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end, int size) {
+    dense_vector res(end - begin);
     int resIndex = 0;
     double resVal = 0;
 
@@ -177,8 +177,8 @@ DenseVector sparseMatrixVector(CSR_Matrix matrix, DenseVector vec, int begin, in
     return res;
 }
 
-DenseVector subtractVec(DenseVector a, DenseVector b, int begin, int end) {
-    DenseVector res(end - begin);
+dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end) {
+    dense_vector res(end - begin);
     int resIndex = 0;
 
     checkValues(a.getSize(), b.getSize(), "subtractVec");
@@ -191,8 +191,8 @@ DenseVector subtractVec(DenseVector a, DenseVector b, int begin, int end) {
     return res;
 }
 
-DenseVector addVec(DenseVector a, DenseVector b, int begin, int end) {
-    DenseVector res(end - begin);
+dense_vector addVec(dense_vector a, dense_vector b, int begin, int end) {
+    dense_vector res(end - begin);
     int resIndex = 0;
 
     checkValues(a.getSize(), b.getSize(), "addVec");
@@ -205,7 +205,7 @@ DenseVector addVec(DenseVector a, DenseVector b, int begin, int end) {
     return res;
 }
 
-double dotProduct(DenseVector a, DenseVector b, int begin, int end) {
+double dotProduct(dense_vector a, dense_vector b, int begin, int end) {
 	double dotProd = 0.0;
 
     checkValues(a.getSize(), b.getSize(), "dotProduct");
