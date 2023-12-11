@@ -47,6 +47,14 @@ void dense_matrix::setValue(int row, int col, double val){
     this->columns[col].insertValue(row, val);
 }
 
+void dense_matrix::setRowVal(int rows) {
+    this->rows = rows;
+}
+
+void dense_matrix::setColVal(int cols) {
+    this->cols = cols;
+}
+
 double dense_matrix::getValue(int row, int col){
     return this->columns[col].values[row];
 }
@@ -81,14 +89,6 @@ int dense_matrix::getRowVal() {
 
 int dense_matrix::getColVal() {
     return this->cols;
-}
-
-void dense_matrix::setRowVal(int rows) {
-    this->rows = rows;
-}
-
-void dense_matrix::setColVal(int cols) {
-    this->cols = cols;
 }
 
 double dense_matrix::getNorm1() {
