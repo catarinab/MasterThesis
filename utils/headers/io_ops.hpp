@@ -8,5 +8,6 @@
 using namespace std;
 
 vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz);
+vector<double> readFile_vec(string inputFile, int size);
 
 #endif // IO_OPS_HPP_HPP
