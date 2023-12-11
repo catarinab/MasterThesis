@@ -4,8 +4,10 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 
-#include "../../utils/distr_mtx_ops.cpp"
-#include "../../utils/helpProccess.cpp"
+#include "../../utils/headers/help_proccess.hpp"
+#include "../../utils/headers/distr_mtx_ops.hpp"
+#include "../../utils/headers/mtx_ops.hpp"
+#include "../../utils/headers/io_ops.hpp"
 
 using namespace std;
 #define epsilon 0.00001 
