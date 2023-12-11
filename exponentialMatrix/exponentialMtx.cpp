@@ -4,8 +4,10 @@
 #include <mpi.h>
 #include <cmath>
 
-#include "../utils/pade_approx_utils.cpp"
-#include "../utils/help_proccess.cpp"
+#include "../utils/headers/pade_approx_utils.hpp"
+#include "../utils/headers/help_proccess.hpp"
+#include "../utils/headers/distr_mtx_ops.hpp"
+#include "../utils/headers/mtx_ops.hpp"
 
 using namespace std;
 #define epsilon 1e-12 //10^-12

@@ -1,20 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
-#include "csr_matrix.cpp"
-#include "io_ops.cpp"
 
 #include <Eigen/Dense>
 using namespace Eigen;
 
-#ifndef VEC
-#define VEC 1
-    #include "dense_vector.cpp"
-#endif
-#ifndef DM
-#define DM 1
-    #include "../utils/dense_matrix.cpp"
-#endif
+#include "headers/dense_vector.hpp"
+#include "headers/dense_matrix.hpp"
+#include "headers/io_ops.hpp"
+#include "headers/csr_matrix.hpp"
 
 using namespace std;
 

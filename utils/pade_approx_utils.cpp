@@ -1,6 +1,9 @@
 #include <vector>
 
-#include "../utils/distr_mtx_ops.cpp"
+#include "headers/mtx_ops.hpp"
+
+using namespace std;
+
 
 int findM(double norm, int theta , int * power) {
     int m = 1; //2^0

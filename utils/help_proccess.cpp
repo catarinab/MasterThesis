@@ -3,6 +3,10 @@
 #include <omp.h>
 #include <mpi.h>
 
+#include "headers/help_proccess.hpp"
+#include "headers/mtx_ops.hpp"
+#include "headers/distr_mtx_ops.hpp"
+
 
 void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;

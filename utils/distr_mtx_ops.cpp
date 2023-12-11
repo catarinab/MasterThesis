@@ -3,10 +3,8 @@
 #include <omp.h>
 #include <mpi.h>
 
-#ifndef MTX_OPS
-    #define MTX_OPS 1
-    #include "mtx_ops.cpp"
-#endif
+#include "headers/distr_mtx_ops.hpp"
+#include "headers/mtx_ops.hpp"
 
 using namespace std;
 

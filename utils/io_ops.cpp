@@ -5,6 +5,8 @@
 #include <sstream>
 #include <vector>
 
+#include "headers/io_ops.hpp" 
+
 using namespace std;
 
 double values[3];

@@ -1,3 +1,6 @@
+#ifndef STRUCTS_HPP
+#define STRUCTS_HPP
+
 #define ROOT 0
 
 #define ENDTAG -1
@@ -15,7 +18,7 @@ struct SparseTriplet {
     SparseTriplet() : row(0), col(0), value(0) {}
 };
 
-bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
+inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
     if(a.row < b.row)
         return true;
     else if(a.row == b.row && a.col < b.col)
@@ -23,3 +26,5 @@ bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
     else
         return false;
 }
+
+#endif // STRUCTS_HPP
