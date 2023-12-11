@@ -81,12 +81,6 @@ dense_matrix padeApprox(dense_matrix H) {
     int s = 0, twoPower = 0, m = 0;
     H = definePadeParams(&powers, &m, &s, H);
 
-
-    //cout << "m: " << m << endl;
-
-    //cout << "s: " << s << endl;
-
-
     dense_matrix identity = dense_matrix(H.getColVal(), H.getRowVal());
     identity.setIdentity();
 
@@ -155,14 +149,6 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, d
             *normVal = stod(argv[i+1]);
         }
     }
-}
-
-
-void restartedArnoldiProcess(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
-                        dense_matrix * H) {
-
-    b = arnoldiIteration(A, b, ceil(k_total/2), m, me, nprocs, V, H);
-    arnoldiIteration(A, b, floor(k_total/2), m, me, nprocs, V, H);
 }
 
 
