@@ -2,7 +2,6 @@
 #include <vector>
 #include <omp.h>
 #include <mpi.h>
-#include <cmath>
 
 #include "../utils/headers/help_proccess.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
