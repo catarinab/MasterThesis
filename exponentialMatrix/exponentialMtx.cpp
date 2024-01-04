@@ -13,21 +13,17 @@ using namespace std;
 
 double betaVal = 1;
 
-/*Compute a basis of the (n + 1)-Krylov subspace of the matrix A.
-
-    This is the space spanned by the vectors {b, Ab, ..., A^n b}.
-
-    Parameters
+/*  Parameters
     ----------
-    A : An m × m array (csr_matrix).
-    b : Initial mx1 vector (dense_vector).
-    n : One less than the dimension of the Krylov subspace, or equivalently the *degree* of the Krylov space. Must be >= 1 (int)
+    A : An m × m array (csr_matrix)
+    b : Initial mx1 vector (dense_vector)
+    n : Degree of the Krylov space (int)
     m : Dimension of the matrix (int)
 
     Returns
     -------
-    V : An m x n array (dense_matrix rows:m cols: n+1), where the columns are an orthonormal basis of the Krylov subspace.
-    H : An n x n array (dense_matrix rows: n+1, cols: n). A on basis Q. It is upper Hessenberg.
+    V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
+    H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
     */
 int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
                         dense_matrix * H) {

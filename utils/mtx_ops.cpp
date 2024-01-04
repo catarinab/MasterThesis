@@ -12,7 +12,7 @@ using namespace Eigen;
 
 using namespace std;
 
-//build dense_matrix from matrix martket file
+//build sparse matrix from matrix martket file
 csr_matrix buildMtx(string input_file) {
     int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_mtx(input_file, &rows, &cols, &nz);
