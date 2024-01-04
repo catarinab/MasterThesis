@@ -4,7 +4,7 @@
 #include "dense_vector.hpp"
 #include "csr_matrix.hpp"
 
-//global variables
+//global variables for scattering and gathering
 extern int *displs;
 extern int *counts;
 extern int helpSize;

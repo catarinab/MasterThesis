@@ -4,7 +4,7 @@
 
 using namespace std;
 
-
+//find suitable m value for pade approximation
 int findM(double norm, int theta , int * power) {
     int m = 1; //2^0
     *power = 0; //2^0
@@ -17,7 +17,7 @@ int findM(double norm, int theta , int * power) {
     return m;
 }
 
-
+//get pade coefficients for m = 3, 5, 7, 9, 13
 vector<double> get_pade_coefficients(int m) {
     vector<double> coeff;
     if(m == 3)
@@ -37,7 +37,7 @@ vector<double> get_pade_coefficients(int m) {
     return coeff;
 }
 
-
+//calculate all necessary parameters for pade approximation
 dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * power, dense_matrix A) {
     vector<double> theta = {
     1.495585217958292e-002, // m_val = 3

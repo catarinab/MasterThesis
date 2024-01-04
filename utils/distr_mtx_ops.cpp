@@ -8,10 +8,17 @@
 
 using namespace std;
 
+/*
+This file contains the functions that are used to distribute the operations of the matrix and vectors
+to all processes. 
+The functions are called from the main file (exponentialMatrix.cpp) by the root node. 
+*/
+
 int * displs;
 int * counts;
 int helpSize = 0;
 
+//initialize variables for MPI_Gatherv and MPI_Scatterv
 void initGatherVars(int size, int nprocs) {
     helpSize = size/nprocs;
     displs = (int *)malloc(nprocs*sizeof(int)); 
@@ -31,6 +38,7 @@ void initGatherVars(int size, int nprocs) {
 
 }
 
+//send necessary vectors to all processes
 void sendVectors(dense_vector a, dense_vector b, int helpSize, int func, int size) {
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD); //broadcast need for help in function func
 
@@ -43,6 +51,7 @@ void sendVectors(dense_vector a, dense_vector b, int helpSize, int func, int siz
     }
 }
 
+//distribut dot product through all nodes
 double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int nprocs) {
     double dotProd = 0;
 
@@ -56,6 +65,7 @@ double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int npr
     
 }
 
+//distribute subtraction between vectors through all nodes
 dense_vector distrSubOp(dense_vector a, dense_vector b, int size, int me, int nprocs) {
     dense_vector finalRes(size); 
 
@@ -68,6 +78,7 @@ dense_vector distrSubOp(dense_vector a, dense_vector b, int size, int me, int np
     return finalRes;
 }
 
+//distribute sum between vectors through all nodes
 dense_vector distrSumOp(dense_vector a, dense_vector b, int size, int me, int nprocs) {
     dense_vector finalRes(size); 
 
@@ -80,6 +91,7 @@ dense_vector distrSumOp(dense_vector a, dense_vector b, int size, int me, int np
     return finalRes;
 }
 
+//distribute matrix-vector multiplication through all nodes
 dense_vector distrMatrixVec(csr_matrix A, dense_vector vec, int size, int me, int nprocs) {
     
     dense_vector finalRes(size);

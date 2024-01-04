@@ -1,5 +1,5 @@
-#ifndef PADE_APPROX_UTILS_HPP
-#define PADE_APPROX_UTILS_HPP
+#ifndef PADE_EXP_APPROX_UTILS_HPP
+#define PADE_EXP_APPROX_UTILS_HPP
 
 #include <vector>
 #include "dense_matrix.hpp"
@@ -13,4 +13,4 @@ vector<double> get_pade_coefficients(int m);
 
 dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * power, dense_matrix A);
 
-#endif // PADE_APPROX_UTILS_HPP
+#endif // PADE_EXP_APPROX_UTILS_HPP

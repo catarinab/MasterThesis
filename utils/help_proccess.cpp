@@ -8,6 +8,11 @@
 #include "headers/distr_mtx_ops.hpp"
 
 
+/*
+When the root node asks for help, this function is executed by all nodes (except the root node).
+Each node receives the necessary vectors and executes the function func for a few values.
+After the function is executed, the result is sent back to the root node.
+*/
 void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
     int temp = 0;
@@ -49,6 +54,6 @@ void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * di
 
         default: 
             cout << "Proccess number: " << me << " Received wrong function tag from node " << ROOT << endl;
-            break;
+            exit(1);
     }
 }

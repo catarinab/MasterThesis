@@ -12,7 +12,7 @@ using namespace Eigen;
 
 using namespace std;
 
-//positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
+//build dense_matrix from matrix martket file
 csr_matrix buildMtx(string input_file) {
     int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_mtx(input_file, &rows, &cols, &nz);
@@ -33,6 +33,7 @@ void checkValues(int a, int b, string func) {
 
 }
 
+//multiply dense matrix and dense vector
 dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
@@ -52,6 +53,7 @@ dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
     return res;
 }
 
+//multiply two dense matrices
 dense_matrix denseMatrixMult(dense_matrix A, dense_matrix b) {
     int endCols = b.getColVal();
     int endRows = A.getRowVal();
@@ -74,6 +76,7 @@ dense_matrix denseMatrixMult(dense_matrix A, dense_matrix b) {
     return res;
 }
 
+//Add two dense matrices
 dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
@@ -92,6 +95,7 @@ dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
     return res;
 }
 
+//Subtract two dense matrices
 dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
@@ -110,6 +114,7 @@ dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
     return res;
 }
 
+//convert dense_matrix to Eigen MatrixXd
 MatrixXd convertDenseEigenMtx(dense_matrix A) {
     MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
     for(int i = 0; i < A.getRowVal(); i++) {
@@ -121,6 +126,7 @@ MatrixXd convertDenseEigenMtx(dense_matrix A) {
     return eigenMtx;
 }
 
+//convert Eigen MatrixXd to dense_matrix
 dense_matrix convertEigenDenseMtx(MatrixXd A) {
     dense_matrix denseMtx(A.rows(), A.cols());
     for(int i = 0; i < A.rows(); i++) {
@@ -133,6 +139,7 @@ dense_matrix convertEigenDenseMtx(MatrixXd A) {
 
 }
 
+//solve linear system using Eigen library and LU decomposition
 dense_matrix solveEq(dense_matrix A, dense_matrix b) {
     MatrixXd eigenMtxA = convertDenseEigenMtx(A);
     MatrixXd eigenMtxB = convertDenseEigenMtx(b);
@@ -142,6 +149,7 @@ dense_matrix solveEq(dense_matrix A, dense_matrix b) {
     return convertEigenDenseMtx(res);
 }
 
+//multiply sparse matrix and dense vector
 dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end, int size) {
     dense_vector res(end - begin);
     int resIndex = 0;
@@ -171,6 +179,7 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, 
     return res;
 }
 
+//subtract two dense vectors
 dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end) {
     dense_vector res(end - begin);
     int resIndex = 0;
@@ -185,6 +194,7 @@ dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end) {
     return res;
 }
 
+//add two dense vectors
 dense_vector addVec(dense_vector a, dense_vector b, int begin, int end) {
     dense_vector res(end - begin);
     int resIndex = 0;
@@ -199,6 +209,7 @@ dense_vector addVec(dense_vector a, dense_vector b, int begin, int end) {
     return res;
 }
 
+//dot product of two dense vectors
 double dotProduct(dense_vector a, dense_vector b, int begin, int end) {
 	double dotProd = 0.0;
 

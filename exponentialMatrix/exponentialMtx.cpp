@@ -4,14 +4,12 @@
 #include <mpi.h>
 #include <cmath>
 
-#include "../utils/headers/pade_approx_utils.hpp"
+#include "../utils/headers/pade_exp_approx_utils.hpp"
 #include "../utils/headers/help_proccess.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
 #include "../utils/headers/mtx_ops.hpp"
 
 using namespace std;
-#define epsilon 1e-12 //10^-12
-#define omega 0.0001
 
 double betaVal = 1;
 
@@ -21,17 +19,17 @@ double betaVal = 1;
 
     Parameters
     ----------
-    A : An m × m array. (csr_matrix)
-    b : Initial mx1 (dense_vector).
+    A : An m × m array (csr_matrix).
+    b : Initial mx1 vector (dense_vector).
     n : One less than the dimension of the Krylov subspace, or equivalently the *degree* of the Krylov space. Must be >= 1 (int)
     m : Dimension of the matrix (int)
 
     Returns
     -------
-    Q : An m x (n + 1) array (dense_matrix rows:m cols: n+1), where the columns are an orthonormal basis of the Krylov subspace.
-    H : An (n + 1) x n array (dense_matrix rows: n+1, cols: n). A on basis Q. It is upper Hessenberg.
+    V : An m x n array (dense_matrix rows:m cols: n+1), where the columns are an orthonormal basis of the Krylov subspace.
+    H : An n x n array (dense_matrix rows: n+1, cols: n). A on basis Q. It is upper Hessenberg.
     */
-dense_vector arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
+int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, int nprocs, dense_matrix * V,
                         dense_matrix * H) {
 
     int func = 0;
@@ -64,6 +62,7 @@ dense_vector arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, 
             opResult = V->getCol(j) * H->getValue(j, k-1);
             w = distrSubOp(w, opResult, m, me, nprocs);
         }
+
         
         if( k == k_total) break;
         H->setValue(k, k - 1, w.getNorm2());
@@ -72,10 +71,10 @@ dense_vector arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, 
             V->setCol(k, w / H->getValue(k, k - 1));
     }
     MPI_Bcast(&sendEnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    return w;
+    return k;
 }
 
-
+//Calculate the Pade approximation of the exponential of matrix H.
 dense_matrix padeApprox(dense_matrix H) {
     vector<dense_matrix> powers(8);
     int s = 0, twoPower = 0, m = 0;
@@ -99,6 +98,7 @@ dense_matrix padeApprox(dense_matrix H) {
             V = denseMatrixAdd(V, powers[j-1] * coeff[j-1]);
         }
     }
+
     if(m == 13){
         dense_matrix op1 = denseMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
         dense_matrix op2 = denseMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
@@ -129,14 +129,11 @@ dense_matrix padeApprox(dense_matrix H) {
     if(s != 0)
         for(int i = 0; i < s; i++)
             res = denseMatrixMult(res, res);
-    
-    U.deleteCols();
-    V.deleteCols();
-    identity.deleteCols();
 
     return res;
 }
 
+//Process input arguments
 void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, double * normVal) {
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
@@ -171,15 +168,15 @@ int main (int argc, char* argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
 
-    //para todos terem a matrix e o b
+    //each node will have matrix A and vector b
     string mtxPath = "/home/cat/uni/thesis/mtx/matlab-laplacian/"+mtxName;
 
 
-    csr_matrix csr = buildMtx(mtxPath);
-    int size = csr.getSize();
+    csr_matrix A = buildMtx(mtxPath);
+    int size = A.getSize();
 
     dense_vector b(size);
-    b.insertValue(floor(csr.getSize()/2), 1);
+    b.insertValue(floor(size/2), 1);
 
     initGatherVars(size, nprocs);
 
@@ -194,11 +191,12 @@ int main (int argc, char* argv[]) {
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
 
-    arnoldiIteration(csr, b, krylovDegree, size, me, nprocs, &V, &H);
+    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
 
+    //root node performs pade approximation and outputs results
     if(me == 0) {
 
         exec_time_arnoldi += omp_get_wtime();
@@ -217,20 +215,14 @@ int main (int argc, char* argv[]) {
 
         double resNorm = res.getNorm2();
 
-        cout << "diff: " << abs(normVal - resNorm) << endl;
+        printf("diff: %.15f\n", abs(normVal - resNorm));
 
-        cout << "2Norm: " << resNorm << endl;
+        printf("2Norm: %.15f\n", resNorm);
 
         exec_time += omp_get_wtime();
         cout << "exec_time: " << exec_time << endl;
 
-        expH.deleteCols();
-        op1.deleteCols();
-
     }
-
-    V.deleteCols();
-    H.deleteCols();
 
     free(displs);
     free(counts);

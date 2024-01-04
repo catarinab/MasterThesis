@@ -19,10 +19,8 @@ class dense_matrix {
 
     dense_matrix(int rows, int cols);
     dense_matrix();
-    void deleteCols();
 
     void setIdentity();
-    void setRandomVals(int range);
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
     void setRowVal(int rows);

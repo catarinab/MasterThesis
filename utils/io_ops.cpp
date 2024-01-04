@@ -1,11 +1,14 @@
-/*File to read Matrix Market ?*/
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 
 #include "headers/io_ops.hpp" 
+
+/*
+    Read Matrix Market file and return a vector of SparseTriplets
+    Each SparseTriplet is a row of the matrix
+*/
 
 using namespace std;
 
@@ -28,8 +31,6 @@ void processLine(string line) {
 }
 
 vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz) {
-    //paralelizar ?
-    
     ifstream file(inputFile);
     string line;
     bool isDefined = false;
@@ -57,21 +58,4 @@ vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * c
     file.close();
 
     return rowValues;
-}
-
-vector<double> readFile_vec(string inputFile, int size) {
-    //paralelizar ?
-    ifstream file(inputFile);
-    string line;
-    vector<double> vec(size);
-    int counter = 0;
-    bool isDefined = false;
-
-    while (getline(file, line)) {
-        if(line[0] == '%') continue;
-        vec[counter++] = stod(line);
-    }
-    file.close();
-
-    return vec;
 }

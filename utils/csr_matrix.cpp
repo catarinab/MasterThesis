@@ -18,6 +18,7 @@ int csr_matrix::getSize() {
     return this->size;
 }
 
+//insert row in the csr matrix, used when initializing the matrix
 void csr_matrix::insertRow(vector<SparseTriplet> row, int rowId) {
     sort(row.begin(), row.end());
     for (int i = 0; i < row.size(); i++) {
@@ -30,6 +31,7 @@ void csr_matrix::insertRow(vector<SparseTriplet> row, int rowId) {
     this->rowPtr[rowId + 1] = this->nz;
 }
 
+//get values from a single row
 vector<SparseTriplet> csr_matrix::getRow(int row) {
     vector<SparseTriplet> rowValues = vector<SparseTriplet>();
     int start = this->rowPtr[row];
@@ -39,32 +41,4 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
         rowValues.push_back(triplet);
     }
     return rowValues;
-}
-
-void csr_matrix::getNorm2() {
-    double norm = 0;
-    for (int i = 0; i < this->nzValues.size(); i++) {
-        norm += this->nzValues[i] * this->nzValues[i];
-    }
-    cout << "norm: " << norm << endl;
-}
-
-void csr_matrix::printAttr() {
-    cout << "size: " << this->size << endl;
-    cout << "nz: " << this->nz << endl;
-    cout << "nzValues: ";
-    for (int i = 0; i < this->nzValues.size(); i++) {
-        cout << this->nzValues[i] << " ";
-    }
-    cout << endl;
-    cout << "colIndex: ";
-    for (int i = 0; i < this->colIndex.size(); i++) {
-        cout << this->colIndex[i] << " ";
-    }
-    cout << endl;
-    cout << "rowPtr: ";
-    for (int i = 0; i < this->rowPtr.size(); i++) {
-        cout << this->rowPtr[i] << " ";
-    }
-    cout << endl;
 }
