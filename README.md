@@ -52,7 +52,6 @@ The Mittag-Leffler function, a special function that has prevalent use in the fi
 Given the importance of the Mittag-Leffler function in fractional calculus, it is essential to have an efficient and accurate method to calculate its value over matrices. In this scenario, Krylov subspace methods are an effective tool for the numerical approximation of that value.
 The solution presented in this project addresses these inherent challenges by developing a parallelized and distributed Krylov Method, tailored for the Mittag-Leffler function. By using parallelism, the solution adopted in the current work has the potential to noticeably enhance the efficiency of matrix-vector computations. Furthermore, it aims to address scalability limitations by fully optimizing the utilization of available computing resources.
 
-
 An initial solution has already been developed, which employs the Krylov Method to compute a matrix's exponential.
 <p align="right"></p>
 
@@ -71,7 +70,7 @@ An initial solution has already been developed, which employs the Krylov Method 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-To get a local copy up and running follow these simple example steps.
+To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
@@ -98,12 +97,13 @@ To get a local copy up and running follow these simple example steps.
     sudo apt-get install openmpi-bin openmpi-common openssh-client openssh-server libopenmpi1.3 libopenmpi-dbg libopenmpi-dev
     ```
 
-### Installation
+### Compilation
 
-If you have followed the steps below, to compile the project you just need to acess the desired folder and use the makefile. For example:
+If you have followed the previous steps, to compile the project you need to access the desired folder and use the makefile. For example:
 
 ```sh
-    cd exponentialMatrix; make
+cd exponentialMatrix
+make
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -113,19 +113,19 @@ If you have followed the steps below, to compile the project you just need to ac
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-To run the program, you will need to give it some arguments.
+After compiling the program, to run it you will need to give it some arguments.
 
-* k: the number of krylov iterations
+* k: the number of Krylov iterations
 * n: the 2norm value of the vector you want to use to compare accuracy
-* m: the matrixPath of a the desired input matrix. The matrix has to be in the matrix market format.
+* m: the matrix path of the desired input matrix. The matrix has to be in the matrix market format.
 
-This project is suitable to run in SLURM Workload Managers. However, if you want to run this project locally, you can follow the following steps:
+This project is suitable to run in SLURM Workload Managers. However, if you want to run this project locally, you can do so by following the following steps:
 
 To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
 ```sh
 export OMP_NUM_THREADS=4
 ```
-As for the number of mpi computational nodes, you can set it when running the project with the -np option when using mpirun to run the project. For example:
+As for the number of mpi computational nodes, you can just set it up when running the project with the -np option when using mpirun to run the project. For example:
 ```sh
   mpirun -np 5 (...)
 ```
@@ -135,6 +135,7 @@ As such, to run the project locally for:
 * Accuracy norm value of 1
 * Matrix path of the input matrix "matrix.mtx"
 * 4 mpi nodes
+  
 You can use the following command:
 ```sh
   mpirun -np 4 ./exp -k 5 -n 1 -m "matrix.mtx"
@@ -156,7 +157,7 @@ exec_time: 0.00901218
 * exec_time_arnoldi: time it took to execute the Arnoldi process step
 * exec_time_pade: time it took to execute the Padé Approximation step
 * diff: difference between the provided 2-norm value and the 2-norm value of the obtained vector
-* 2Norm: 2-norm of the obtained vector
+* 2Norm: 2norm of the obtained vector
 * exec_time: execution time of the whole program 
 
 
