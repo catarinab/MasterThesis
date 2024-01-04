@@ -59,9 +59,9 @@ An initial solution has already been developed, which employs the Krylov Method 
 
 ### Built With
 
-* C++
-* OpenMP
-* OpenMPI
+* [C++](https://cplusplus.com/)
+* [OpenMP](https://www.openmp.org/)
+* [OpenMPI](https://www.open-mpi.org/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
