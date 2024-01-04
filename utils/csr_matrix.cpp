@@ -1,11 +1,3 @@
-#include <iostream>
-#include <vector>
-#include <omp.h>
-#include <algorithm> //sort
-#include <math.h> //sqrt
-
-
-#include "headers/sparse_structs.h"
 #include "headers/csr_matrix.hpp"
 
 using namespace std;

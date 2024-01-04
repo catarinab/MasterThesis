@@ -1,6 +1,7 @@
 #include <vector>
 
 #include "headers/mtx_ops.hpp"
+#include "headers/pade_exp_approx.hpp"
 
 using namespace std;
 
@@ -88,4 +89,63 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
 
     return resultingMatrix;
 
+}
+
+//Calculate the Pade approximation of the exponential of matrix H.
+dense_matrix padeApprox(dense_matrix H) {
+    vector<dense_matrix> powers(8);
+    int s = 0, twoPower = 0, m = 0;
+    H = definePadeParams(&powers, &m, &s, H);
+
+    dense_matrix identity = dense_matrix(H.getColVal(), H.getRowVal());
+    identity.setIdentity();
+
+    dense_matrix U = dense_matrix(H.getColVal(), H.getRowVal());
+    dense_matrix V = dense_matrix(H.getColVal(), H.getRowVal());
+
+    vector<double> coeff = get_pade_coefficients(m);
+
+
+    if(m!= 13) {
+        U = identity * coeff[1];
+        V = identity * coeff[0];
+
+        for(int j = m; j >= 3; j-=2) {
+            U = denseMatrixAdd(U, powers[j-1] * coeff[j]);
+            V = denseMatrixAdd(V, powers[j-1] * coeff[j-1]);
+        }
+    }
+
+    if(m == 13){
+        dense_matrix op1 = denseMatrixAdd(powers[6]*coeff[7], powers[4]*coeff[5]);
+        dense_matrix op2 = denseMatrixAdd(powers[2]*coeff[3], identity*coeff[1]);
+        dense_matrix sum1 = denseMatrixAdd(op1, op2);
+        op1 = denseMatrixAdd(powers[6]*coeff[13], powers[4]*coeff[11]);
+        op2 = denseMatrixAdd(op1, powers[2]*coeff[9]);
+        dense_matrix sum2 = denseMatrixMult(powers[6], op2);
+        U = denseMatrixAdd(sum1, sum2);
+
+        op1 = denseMatrixAdd(powers[6]*coeff[6], powers[4]*coeff[4]);
+        op2 = denseMatrixAdd(powers[2]*coeff[2], identity*coeff[0]);
+        sum1 = denseMatrixAdd(op1, op2);
+        op1 = denseMatrixAdd(powers[6]*coeff[12], powers[4]*coeff[10]);
+        op2 = denseMatrixAdd(op1, powers[2]*coeff[8]);
+        sum2 = denseMatrixMult(powers[6], op2);
+        V = denseMatrixAdd(sum1, sum2);
+
+    }
+
+
+    U = denseMatrixMult(H, U);
+
+    dense_matrix num1 = denseMatrixSub(V, U);
+    dense_matrix num2 = denseMatrixAdd(V, U);
+
+    dense_matrix res = solveEq(num1, num2);
+
+    if(s != 0)
+        for(int i = 0; i < s; i++)
+            res = denseMatrixMult(res, res);
+
+    return res;
 }

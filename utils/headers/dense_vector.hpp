@@ -1,10 +1,7 @@
 #ifndef DENSE_VECTOR_HPP
 #define DENSE_VECTOR_HPP
 
-#include <iostream>
 #include <vector>
-#include <omp.h>
-#include <math.h>
 
 class dense_vector {
 public:
