@@ -157,9 +157,9 @@ int main (int argc, char* argv[]) {
 
     //default values
     int krylovDegree = 20; 
-    string mtxName = "lap512.mtx";
+    string mtxPath;
     double normVal = 0;
-    processArgs(argc, argv, &krylovDegree, &mtxName, &normVal);
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
     int finalKrylovDegree;
 
@@ -169,9 +169,7 @@ int main (int argc, char* argv[]) {
 
 
     //each node will have matrix A and vector b
-    string mtxPath = "/home/cat/uni/thesis/mtx/matlab-laplacian/"+mtxName;
-
-
+    
     csr_matrix A = buildMtx(mtxPath);
     int size = A.getSize();
 
