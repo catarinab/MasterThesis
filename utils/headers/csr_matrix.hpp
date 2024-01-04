@@ -5,7 +5,7 @@
 #include <vector>
 #include <algorithm> //sort
 #include <math.h>    //sqrt
-#include "sparse_structs.h"
+#include "utils.hpp"
 
 using namespace std;
 
