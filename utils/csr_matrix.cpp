@@ -10,6 +10,7 @@ int csr_matrix::getSize() {
     return this->size;
 }
 
+
 //insert row in the csr matrix, used when initializing the matrix
 void csr_matrix::insertRow(vector<SparseTriplet> row, int rowId) {
     sort(row.begin(), row.end());

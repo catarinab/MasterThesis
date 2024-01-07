@@ -4,13 +4,13 @@
 
 using namespace std;
 
-//A matrix with dense columns (array of vectors)
+//A matrix with dense columns (vector of dense vectors)
 class dense_matrix {
 
     private:
         int rows;
         int cols;
-        dense_vector * columns;
+        vector<dense_vector> columns;
 
     public:
 

@@ -1,22 +1,24 @@
 #include <iostream>
 #include <omp.h>
 #include <math.h>
+#include <vector>
 
 #include "headers/dense_matrix.hpp"
 
 using namespace std;
 
-//A matrix with dense columns (array of vectors)
+//A matrix with dense columns (vector of dense vectors)
 dense_matrix::dense_matrix(int rows, int cols) : rows(rows), cols(cols) {
-    this->columns = new dense_vector[cols];
+    this->columns = vector<dense_vector>(cols);
     #pragma omp parallel for
     for(int i = 0; i < cols; i++)
         this->columns[i] = dense_vector(rows);
 }
 
 dense_matrix::dense_matrix() : rows(0), cols(0) {
-    this->columns = new dense_vector[0];
+    this->columns = vector<dense_vector>(cols);
 }
+
 
 int dense_matrix::getRowVal() {
     return this->rows;
