@@ -88,6 +88,7 @@ To get a local copy up and running follow these simple steps.
     <HTML> <br> &#8618; conjugateGradient </HTML>
     <HTML> <br> &#8618; eigen </HTML>
     <HTML> <br> &#8618; exponentialMatrix </HTML>
+    <HTML> <br> &#8618; utils </HTML>
 * OpenMP
   * You will need to install OpenMP on your system.
   * Quick install for Ubuntu:
