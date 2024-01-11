@@ -84,6 +84,11 @@ To get a local copy up and running follow these simple steps.
 * Eigen Library
   * Download the Eigen Library's 3.4.0 [release](https://gitlab.com/libeigen/eigen/-/releases/3.4.0).
   * Place the eigen folder on the project folder.
+  * Your folder should look something like this:
+    <HTML> <br> &#8618; conjugateGradient </HTML>
+    <HTML> <br> &#8618; eigen </HTML>
+    <HTML> <br> &#8618; exponentialMatrix </HTML>
+    <HTML> <br> &#8618; utils </HTML>
 * OpenMP
   * You will need to install OpenMP on your system.
   * Quick install for Ubuntu:
