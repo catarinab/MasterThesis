@@ -54,15 +54,6 @@ dense_vector dense_matrix::getCol(int col){
     return this->columns[col];
 }
 
-//get specific row (as a dense_vector)
-dense_vector dense_matrix::getRow(int row){
-    dense_vector res(this->cols);
-    #pragma omp parallel for
-    for(int i = 0; i < this->cols; i++)
-        res.insertValue(i, this->columns[i].values[row]);
-    return res;
-}
-
 //get matrix norm2
 double dense_matrix::getNorm2() {
     double res = 0;
