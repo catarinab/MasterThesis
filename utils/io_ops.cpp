@@ -20,24 +20,14 @@ void initRows(int rows, int cols) {
     rowValues.resize(rows);
 }
 
-void processLine(string line) {
-    stringstream ss(line);
-    for(int i = 0; i < 3; i++) {
-        getline(ss, line, ' ');
-        values[i] = stod(line);
-    }
-    rowValues[(int) values[0] - 1]
-            .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
-}
-
 vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz) {
     ifstream file(inputFile);
     string line;
     bool isDefined = false;
     while (getline(file, line)) {
         if(line[0] == '%') continue;
+        stringstream ss(line);
         if(!isDefined) {
-            stringstream ss(line);
             for(int i = 0; i < 3; i++) {
                 getline(ss, line, ' ');
                 values[i] = stod(line);
@@ -49,13 +39,16 @@ vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * c
             isDefined = true;
         }
         else {
-            #pragma omp task firstprivate(line)
-                processLine(line);
+            for(int i = 0; i < 3; i++) {
+                getline(ss, line, ' ');
+                values[i] = stod(line);
+            }
+            rowValues[(int) values[0] - 1]
+                    .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
         }
     } 
         
     #pragma omp taskwait
     file.close();
-
     return rowValues;
 }

@@ -42,9 +42,9 @@ dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
 
     dense_vector res(rows);
 
+    #pragma omp parallel for
     for (int i = 0; i < rows; i++) {
         double resVal = 0;
-        #pragma omp parallel for reduction(+:resVal)
         for (int j = 0; j < cols; j++) {
             resVal += A.getValue(i, j) * b.values[j];
         }
@@ -57,16 +57,15 @@ dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
 dense_matrix denseMatrixMult(dense_matrix A, dense_matrix b) {
     int endCols = b.getColVal();
     int endRows = A.getRowVal();
-    double resVal = 0;
 
     checkValues(A.getColVal(), b.getRowVal(), "denseMatrixMult");
     
     dense_matrix res(endRows, endCols);
 
+    #pragma omp parallel for
     for (int i = 0; i < endRows; i++) {
         for (int j = 0; j < endCols; j++) {
-            resVal = 0;
-            #pragma omp parallel for reduction(+:resVal)
+            double resVal = 0;
             for (int k = 0; k < A.getColVal(); k++) {
                 resVal += A.getValue(i, k) * b.getValue(k, j);
             }
@@ -117,8 +116,9 @@ dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
 //convert dense_matrix to Eigen MatrixXd
 MatrixXd convertDenseEigenMtx(dense_matrix A) {
     MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
+
+    #pragma omp parallel for
     for(int i = 0; i < A.getRowVal(); i++) {
-        #pragma omp parallel for
         for(int j = 0; j < A.getColVal(); j++) {
             eigenMtx(i, j) = A.getValue(i, j);
         }
@@ -129,8 +129,9 @@ MatrixXd convertDenseEigenMtx(dense_matrix A) {
 //convert Eigen MatrixXd to dense_matrix
 dense_matrix convertEigenDenseMtx(MatrixXd A) {
     dense_matrix denseMtx(A.rows(), A.cols());
+    
+    #pragma omp parallel for
     for(int i = 0; i < A.rows(); i++) {
-        #pragma omp parallel for
         for(int j = 0; j < A.cols(); j++) {
             denseMtx.setValue(i, j, A(i, j));
         }
@@ -160,7 +161,7 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, 
     if(matrix.getNZ() == 0 || vec.values.size() == 0) 
         return res;
 
-    #pragma omp parallel for private(resIndex, resVal)
+    #pragma omp parallel for private(resIndex, resVal) schedule(dynamic, 1000)
     for(int i = begin; i < end; i++) {
         resIndex = i - begin;
         resVal = 0;
