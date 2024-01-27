@@ -33,7 +33,7 @@ void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * di
     
     switch(func) {
         case MV:
-            auxBuf2 = sparseMatrixVector(A, auxBuf, displs[me], displs[me] + counts[me], size);
+            auxBuf2 = sparseMatrixVector(A, auxBuf, 0, counts[me]);
             MPI_Gatherv(&auxBuf2.values[0], counts[me], MPI_DOUBLE, &auxBuf2.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
             break;
 

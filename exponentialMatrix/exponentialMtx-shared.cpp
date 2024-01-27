@@ -4,7 +4,7 @@
 
 #include "../utils/headers/mtx_ops.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
-#include "../utils/headers/arnoldiIterationNoMPI.hpp"
+#include "../utils/headers/arnoldiIteration-shared.hpp"
 
 using namespace std;
 
@@ -39,13 +39,13 @@ int main (int argc, char* argv[]) {
     double exec_time_pade, exec_time_arnoldi, exec_time;
 
     //input values
-    int krylovDegree; 
+    int krylovDegree;
     string mtxPath;
     double normVal;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
     //initializations of needed matrix and vectors
-    csr_matrix A = buildMtx(mtxPath);
+    csr_matrix A = buildFullMtx(mtxPath);
     int size = A.getSize();
 
     dense_vector b(size);
@@ -66,7 +66,9 @@ int main (int argc, char* argv[]) {
     dense_matrix expH = padeApprox(H);
     exec_time_pade += omp_get_wtime();
 
+
     double resNorm = getApproximation(normVal, V, expH, betaVal, krylovDegree);
+
 
     exec_time += omp_get_wtime();
 

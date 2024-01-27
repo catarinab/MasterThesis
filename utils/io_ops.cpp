@@ -16,11 +16,25 @@ double values[3];
 
 vector<vector<SparseTriplet>> rowValues;
 
-void initRows(int rows, int cols) {
-    rowValues.resize(rows);
+int getMtxSize(string inputFile) {
+    ifstream file(inputFile);
+    string line;
+    
+    while (getline(file, line)) {
+        if(line[0] == '%') continue;
+        stringstream ss(line);
+        for(int i = 0; i < 3; i++) {
+            getline(ss, line, ' ');
+            values[i] = stod(line);
+        }
+        break;
+    } 
+
+    file.close();
+    return values[0];
 }
 
-vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz) {
+vector<vector<SparseTriplet>> readFile_full_mtx(string inputFile, int * rows, int * cols, int * nz) {
     ifstream file(inputFile);
     string line;
     bool isDefined = false;
@@ -35,7 +49,7 @@ vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * c
             *rows = values[0];
             *cols = values[1];
             *nz = values[2];
-            initRows(values[0], values[1]);
+            rowValues.resize(*rows);
             isDefined = true;
         }
         else {
@@ -44,11 +58,48 @@ vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * c
                 values[i] = stod(line);
             }
             rowValues[(int) values[0] - 1]
-                    .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
+                .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
         }
     } 
-        
-    #pragma omp taskwait
+
+    file.close();
+    return rowValues;
+}
+
+
+vector<vector<SparseTriplet>> readFile_part_mtx(string inputFile, int * rows, int * cols, int * nz, int * displs, int * counts, int me) {
+    ifstream file(inputFile);
+    string line;
+    bool isDefined = false;
+    int startRow = 100000;
+    int endRow = -1;
+    while (getline(file, line)) {
+        if(line[0] == '%') continue;
+        stringstream ss(line);
+        if(!isDefined) {
+            for(int i = 0; i < 3; i++) {
+                getline(ss, line, ' ');
+                values[i] = stod(line);
+            }
+            *rows = values[0];
+            *cols = values[1];
+            *nz = values[2];
+            rowValues.resize(counts[me]);
+            isDefined = true;
+        }
+        else {
+            for(int i = 0; i < 3; i++) {
+                getline(ss, line, ' ');
+                values[i] = stod(line);
+            }
+            if((int) values[0] - 1 >= displs[me] && (int) values[0] - 1 < displs[me] + counts[me]) {
+                rowValues[(int) values[0] - 1 - displs[me]]
+                        .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
+            }
+               
+        }
+    } 
+    
     file.close();
     return rowValues;
 }

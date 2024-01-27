@@ -98,7 +98,7 @@ dense_vector distrMatrixVec(csr_matrix A, dense_vector vec, int size, int me, in
 
     sendVectors(vec, dense_vector(0), helpSize, MV, size);
 
-    dense_vector res = sparseMatrixVector(A, vec, 0, helpSize, size);
+    dense_vector res = sparseMatrixVector(A, vec, 0, counts[0]);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 

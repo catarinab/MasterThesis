@@ -6,6 +6,8 @@
 #include "utils.hpp"
 using namespace std;
 
-vector<vector<SparseTriplet>> readFile_mtx(string inputFile, int * rows, int * cols, int * nz);
-
+int getMtxSize(string inputFile);
+vector<vector<SparseTriplet>> readFile_full_mtx(string inputFile, int * rows, int * cols, int * nz);
+vector<vector<SparseTriplet>> readFile_part_mtx(string inputFile, int * rows, int * cols, int * nz
+                                                , int * displs, int * counts, int me);
 #endif // IO_OPS_HPP

@@ -8,6 +8,7 @@
 #include "../utils/headers/mtx_ops.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
 #include "../utils/headers/arnoldiIteration.hpp"
+#include "../utils/headers/io_ops.hpp"
 
 using namespace std;
 
@@ -52,18 +53,22 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
+    int size = getMtxSize(mtxPath);
+    initGatherVars(size, nprocs);
+
     //initializations of needed matrix and vectors
-    csr_matrix A = buildMtx(mtxPath);
-    int size = A.getSize();
+    csr_matrix A = buildPartMatrix(mtxPath, me, displs, counts);
 
     dense_vector b(size);
-    b.insertValue(floor(size/2), 1);
+    b.getOnesVec();
+    b = b / b.getNorm2();
+    //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
 
-    initGatherVars(size, nprocs);
+    
 
 
     MPI_Barrier(MPI_COMM_WORLD);

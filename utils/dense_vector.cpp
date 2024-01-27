@@ -26,7 +26,6 @@ void dense_vector::getOnesVec() {
 dense_vector dense_vector::operator* (double x) {
     dense_vector res(this->size);
 
-    #pragma omp parallel for
     for(int i = 0; i < this->size; i++) {
         double newVal = this->values[i] * x;
         res.insertValue(i, newVal);
@@ -37,8 +36,7 @@ dense_vector dense_vector::operator* (double x) {
 //divide all vector values by x
 dense_vector dense_vector::operator/ (double x) {
     dense_vector res(this->size);
-
-    #pragma omp parallel for
+    
     for(int i = 0; i < this->size; i++) {
         double newVal = this->values[i] / x;
         res.insertValue(i, newVal);
@@ -48,7 +46,6 @@ dense_vector dense_vector::operator/ (double x) {
 
 //insert value in vector
 void dense_vector::insertValue(int col, double value) {
-    
     if(col >= this->size) {
         cout << "col: " << col << endl;
         cout << "size: " << this->size << endl;

@@ -17,6 +17,18 @@ all:
 	$(C++) $(CFLAGS) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_proccess.o io_ops.o pade_exp_approx.o mtx_ops.o -o $(TARGET)
 	rm *.o
 
+shared:
+	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(CFLAGSEigen) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(C++) $(CFLAGSEigen) -c ../utils/mtx_ops.cpp -o mtx_ops.o
+	$(C++) $(CFLAGSEigen) -c exponentialMtx-shared.cpp -o exp-mtx.o
+	$(C++) $(CFLAGS) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops.o -o $(TARGET)-shared
+	rm *.o
+
 clean:
 	rm $(TARGET)
 

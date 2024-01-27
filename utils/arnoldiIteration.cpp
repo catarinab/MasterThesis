@@ -48,7 +48,6 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, i
             w = distrSubOp(w, opResult, m, me, nprocs);
         }
 
-        
         if( k == k_total) break;
         H->setValue(k, k - 1, w.getNorm2());
 

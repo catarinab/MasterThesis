@@ -13,15 +13,27 @@ using namespace Eigen;
 using namespace std;
 
 //build sparse matrix from matrix martket file
-csr_matrix buildMtx(string input_file) {
+csr_matrix buildFullMtx(string input_file) {
     int rows, cols, nz;
-    vector<vector<SparseTriplet>> rowValues = readFile_mtx(input_file, &rows, &cols, &nz);
+    vector<vector<SparseTriplet>> rowValues = readFile_full_mtx(input_file, &rows, &cols, &nz);
     csr_matrix csr(rows);
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
     return csr;
 } 
+
+csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts) {
+    int rows, cols, nz;
+    vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
+    csr_matrix csr(rows);
+    for (int i = 0; i < rowValues.size(); i++) {
+        csr.insertRow(rowValues[i], i);
+    }
+    return csr;
+} 
+
+
 
 void checkValues(int a, int b, string func) {
     if(a != b) {
@@ -151,7 +163,7 @@ dense_matrix solveEq(dense_matrix A, dense_matrix b) {
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end, int size) {
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end) {
     dense_vector res(end - begin);
     int resIndex = 0;
     double resVal = 0;
@@ -161,10 +173,12 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, 
     if(matrix.getNZ() == 0 || vec.values.size() == 0) 
         return res;
 
-    #pragma omp parallel for private(resIndex, resVal) schedule(dynamic, 1000)
+
+    #pragma omp parallel for private(resIndex, resVal) schedule(guided)
     for(int i = begin; i < end; i++) {
         resIndex = i - begin;
         resVal = 0;
+
 
         vector<SparseTriplet> row = matrix.getRow(i);
         if(row.size() == 0) continue;
@@ -176,7 +190,6 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, 
         
         res.insertValue(resIndex, resVal);
     }
-
     return res;
 }
 

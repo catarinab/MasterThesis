@@ -12,7 +12,9 @@ using namespace Eigen;
 using namespace std;
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
-csr_matrix buildMtx(string input_file);
+csr_matrix buildFullMtx(string input_file);
+
+csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts);
 
 void checkValues(int a, int b, string func);
 
@@ -31,7 +33,7 @@ dense_matrix convertEigenDenseMtx(MatrixXd A);
 
 dense_matrix solveEq(dense_matrix A, dense_matrix b) ;
 
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end, int size) ;
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end);
 
 dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end);
 
