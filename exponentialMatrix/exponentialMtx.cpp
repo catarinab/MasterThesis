@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <mpi.h>
 
-#include "../utils/headers/help_proccess.hpp"
+#include "../utils/headers/help_process.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
 #include "../utils/headers/mtx_ops.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
@@ -68,13 +68,10 @@ int main (int argc, char* argv[]) {
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
 
-    
-
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-
     arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
 

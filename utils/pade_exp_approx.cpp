@@ -122,7 +122,9 @@ dense_matrix padeApprox(dense_matrix H) {
         dense_matrix sum1 = denseMatrixAdd(op1, op2);
         op1 = denseMatrixAdd(powers[6]*coeff[13], powers[4]*coeff[11]);
         op2 = denseMatrixAdd(op1, powers[2]*coeff[9]);
+
         dense_matrix sum2 = denseMatrixMult(powers[6], op2);
+
         U = denseMatrixAdd(sum1, sum2);
 
         op1 = denseMatrixAdd(powers[6]*coeff[6], powers[4]*coeff[4]);
@@ -130,7 +132,9 @@ dense_matrix padeApprox(dense_matrix H) {
         sum1 = denseMatrixAdd(op1, op2);
         op1 = denseMatrixAdd(powers[6]*coeff[12], powers[4]*coeff[10]);
         op2 = denseMatrixAdd(op1, powers[2]*coeff[8]);
+
         sum2 = denseMatrixMult(powers[6], op2);
+        
         V = denseMatrixAdd(sum1, sum2);
 
     }

@@ -3,9 +3,8 @@
 #include <omp.h>
 #include <mpi.h>
 
-#include "headers/help_proccess.hpp"
+#include "headers/help_process.hpp"
 #include "headers/mtx_ops.hpp"
-#include "headers/distr_mtx_ops.hpp"
 
 
 /*
@@ -13,7 +12,7 @@ When the root node asks for help, this function is executed by all nodes (except
 Each node receives the necessary vectors and executes the function func for a few values.
 After the function is executed, the result is sent back to the root node.
 */
-void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
+void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
     int temp = 0;
     
@@ -43,7 +42,7 @@ void helpProccess(csr_matrix A, int me, int size, int func, int nprocs, int * di
             break;
 
         case SUB:
-            auxBuf = subtractVec(auxBuf, auxBuf2, 0, counts[me]);
+            auxBuf = addVec(auxBuf, auxBuf2*(-1), 0, counts[me]);
             MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
             break;
 

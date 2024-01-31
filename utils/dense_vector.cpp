@@ -1,19 +1,19 @@
 #include <iostream>
+#include <utility>
 #include <vector>
-#include <omp.h>
-#include <math.h> //sqrt
+#include <cmath> //sqrt
 
 #include "headers/dense_vector.hpp"
 
 using namespace std;
 
-int dense_vector::getSize() {
+int dense_vector::getSize() const {
     return this->size;
 }
 
-void dense_vector::resize(int size) {
-    this->size = size;
-    this->values.resize(size);
+void dense_vector::resize(int newSize) {
+    this->size = newSize;
+    this->values.resize(newSize);
 }
 
 void dense_vector::getOnesVec() {
@@ -42,6 +42,10 @@ dense_vector dense_vector::operator/ (double x) {
         res.insertValue(i, newVal);
     }
     return res;
+}
+
+void dense_vector::setValues(vector<double> newValues) {
+    this->values = std::move(newValues);
 }
 
 //insert value in vector

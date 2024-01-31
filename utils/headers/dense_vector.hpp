@@ -1,6 +1,7 @@
 #ifndef DENSE_VECTOR_HPP
 #define DENSE_VECTOR_HPP
 
+#include <utility>
 #include <vector>
 
 class dense_vector {
@@ -9,22 +10,23 @@ public:
     std::vector<double> values;
 
     inline dense_vector() : size(0), values(std::vector<double>(0)) {}
-    inline dense_vector(int size) : size(size), values(std::vector<double>(size)) {}
+    inline explicit dense_vector(int size) : size(size), values(std::vector<double>(size)) {}
+    dense_vector(int size, std::vector<double> values) : size(size) {
+        this->values = std::move(values);
+    }
 
-    int getSize();
-
-    void setValues(std::vector<double> values);
+    [[nodiscard]] int getSize() const;
+    
     void resize(int size);
-    void getRandomVec();
     void getOnesVec();
     void insertValue(int col, double value);
-
+    void setValues(std::vector<double> values);
+    
     dense_vector operator*(double x);
     dense_vector operator/(double x);
 
     // Member functions
     double getNorm2();
-    void printAttr(std::string name);
 };
 
 #endif // DENSE_VECTOR_HPP

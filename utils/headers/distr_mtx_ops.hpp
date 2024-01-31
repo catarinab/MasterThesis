@@ -13,10 +13,7 @@ void initGatherVars(int size, int nprocs);
 
 void sendVectors(dense_vector a, dense_vector b, int helpSize, int func, int size);
 
-
 double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int nprocs);
-
-dense_vector distrSubOp(dense_vector a, dense_vector b, int size, int me, int nprocs);
 
 dense_vector distrSumOp(dense_vector a, dense_vector b, int size, int me, int nprocs);
 

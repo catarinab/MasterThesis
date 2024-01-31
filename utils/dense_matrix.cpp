@@ -9,16 +9,12 @@ using namespace std;
 
 //A matrix with dense columns (vector of dense vectors)
 dense_matrix::dense_matrix(int rows, int cols) : rows(rows), cols(cols) {
-    this->columns = vector<dense_vector>(cols);
-    #pragma omp parallel for
-    for(int i = 0; i < cols; i++)
-        this->columns[i] = dense_vector(rows);
+    this->values = vector<double>(rows * cols);
 }
 
 dense_matrix::dense_matrix() : rows(0), cols(0) {
-    this->columns = vector<dense_vector>(cols);
+    this->values = vector<double>(rows * cols);
 }
-
 
 int dense_matrix::getRowVal() {
     return this->rows;
@@ -35,23 +31,38 @@ void dense_matrix::setIdentity() {
         this->setValue(i, i, 1);
 }
 
+void dense_matrix::setRandomMatrix() {
+    #pragma omp parallel for
+    for(int i = 0; i < this->rows; i++)
+        for(int j = 0; j < this->cols; j++)
+            this->setValue(i, j, rand() % 10);
+}
+
+double* dense_matrix::getDataPointer() {
+        return this->values.data();
+    }
+
 //insert column in matrix
 void dense_matrix::setCol(int col, dense_vector vec){
-    this->columns[col] = vec;
+    for(int i = 0; i < this->rows; i++)
+        this->values[col * this->rows + i] = vec.values[i];
 }
 
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
-    this->columns[col].insertValue(row, val);
+    this->values[col * this->rows + row] = val;
 }
 
 double dense_matrix::getValue(int row, int col){
-    return this->columns[col].values[row];
+    return this->values[col * this->rows + row];
 }
 
 //get spefic column (as a dense_vector)
 dense_vector dense_matrix::getCol(int col){
-    return this->columns[col];
+    dense_vector res(this->rows);
+    res.setValues(vector<double>(this->values.begin() + col * this->rows, 
+                                this->values.begin() + (col + 1) * this->rows));
+    return res;
 }
 
 //get matrix norm2
@@ -60,7 +71,7 @@ double dense_matrix::getNorm2() {
     for(int i = 0; i < this->cols; i++) {
         #pragma omp parallel for reduction(+:res)
         for(int j = 0; j < this->rows; j++)
-            res += pow(this->columns[i].values[j], 2);
+            res += pow(this->values[i * this->rows + j], 2);
     }
     return sqrt(res);
 }
@@ -71,7 +82,7 @@ dense_matrix dense_matrix::operator/ (double x) {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
         for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, this->columns[j].values[i] / x);
+            res.setValue(i, j, this->values[j * this->rows + i] / x);
 
     return res;
 }
@@ -82,7 +93,7 @@ dense_matrix dense_matrix::operator* (double x) {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
         for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, this->columns[j].values[i] * x);
+            res.setValue(i, j, this->values[j * this->rows + i] * x);
 
     return res;
 }
@@ -93,6 +104,6 @@ dense_matrix dense_matrix::operator- () {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
         for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, -this->columns[j].values[i]);  
+            res.setValue(i, j, -this->values[j * this->rows + i]);  
     return res; 
 }

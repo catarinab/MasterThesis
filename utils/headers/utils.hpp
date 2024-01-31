@@ -11,10 +11,10 @@
 #define ADD 6
 
 struct SparseTriplet {
-    int col;
-    int row;
+    long long int col;
+    long long int row;
     double value;
-    SparseTriplet(int row, int col, double value) : row(row), col(col), value(value) {}
+    SparseTriplet(long long int row, long long int col, double value) : row(row), col(col), value(value) {}
     SparseTriplet() : row(0), col(0), value(0) {}
 };
 

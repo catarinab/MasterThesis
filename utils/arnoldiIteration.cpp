@@ -2,7 +2,7 @@
 
 #include "headers/arnoldiIteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
-#include "headers/help_proccess.hpp"
+#include "headers/help_process.hpp"
 
 /*  Parameters
     ----------
@@ -28,7 +28,7 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, i
 
         if(func == ENDTAG) return 0;
         else if(func > 0)
-            helpProccess(A, me, m, func, nprocs, displs, counts);
+            helpProcess(A, me, m, func, nprocs, displs, counts);
     }
 
     V->setCol(0, b);
@@ -43,9 +43,10 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, i
         w = distrMatrixVec(A, V->getCol(k-1), m, me, nprocs);
 
         for(int j = 0; j < k; j++) {
-            H->setValue(j, k-1, distrDotProduct(w, V->getCol(j), m, me, nprocs));
-            opResult = V->getCol(j) * H->getValue(j, k-1);
-            w = distrSubOp(w, opResult, m, me, nprocs);
+            double dotProd = distrDotProduct(w, V->getCol(j), m, me, nprocs);
+            H->setValue(j, k-1, dotProd);
+            opResult = V->getCol(j) * dotProd;
+            w = distrSumOp(w, opResult*(-1), m, me, nprocs);
         }
 
         if( k == k_total) break;

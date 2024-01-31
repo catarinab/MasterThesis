@@ -4,28 +4,38 @@
 #include <iostream>
 #include <vector>
 #include <algorithm> //sort
-#include <math.h>    //sqrt
+#include <cmath>    //sqrt
+#include <mkl.h>
 #include "utils.hpp"
+
 
 using namespace std;
 
 class csr_matrix {
 
 private:
-    int size; //number of rows and columns, only square matrices
-    int nz;  //number of nonzero entries
+    long long int size; //number of rows and columns, only square matrices
+    long long int nz;  //number of nonzero entries
     vector<double> nzValues;
-    vector<int> colIndex;
-    vector<int> rowPtr;
+    vector<long long int> colIndex;
+    vector<long long int> rowPtr;
+    vector<long long int> pointerB;
+    vector<long long int> pointerE;
+    sparse_matrix_t mklSparseMatrix;
+    matrix_descr mklDescription = {SPARSE_MATRIX_TYPE_GENERAL, SPARSE_FILL_MODE_FULL, SPARSE_DIAG_NON_UNIT};
+    bool mklDefined = false;
 
 public:
-    inline csr_matrix(int size) : size(size), nz(0), rowPtr(vector<int>(size + 1)) {}
-    int getNZ();
-    int getSize();
+    inline explicit csr_matrix(long long int size) : size(size), nz(0), rowPtr(vector<long long int>(size + 1)) {}
+    [[nodiscard]] long long int getNZ() const;
+    [[nodiscard]] long long int getSize() const;
     void insertRow(vector<SparseTriplet> row, int rowId);
     vector<SparseTriplet> getRow(int row);
-    void getNorm2();
     void printAttr();
+
+
+    sparse_matrix_t getMKLSparseMatrix();
+    matrix_descr getMKLDescription();
 };
 
 #endif // CSR_MATRIX_HPP

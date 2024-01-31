@@ -1,8 +1,8 @@
 #include <iostream>
-#include <vector>
 #include <omp.h>
+#include <cstring>
 
-#include "../utils/headers/mtx_ops.hpp"
+#include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
 #include "../utils/headers/arnoldiIteration-shared.hpp"
 
@@ -16,7 +16,7 @@ double getApproximation(double normVal, dense_matrix V, dense_matrix expH, doubl
 
     dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
     dense_vector res = denseMatrixVec(op1, unitVec);
-    return res.getNorm2();
+    return vectorTwoNorm(res);
 }
 
 //Process input arguments
@@ -49,12 +49,13 @@ int main (int argc, char* argv[]) {
     int size = A.getSize();
 
     dense_vector b(size);
-    b.insertValue(floor(size/2), 1);
+    b.getOnesVec();
+    b = b / b.getNorm2();
+    //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
-
 
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();

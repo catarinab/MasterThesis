@@ -1,5 +1,5 @@
 #include "headers/arnoldiIteration.hpp"
-#include "headers/mtx_ops.hpp"
+#include "headers/mtx_ops_mkl.hpp"
 #include <omp.h>
 
 /*  Parameters
@@ -14,10 +14,10 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_matrix * V, dense_matrix * H) {
+int arnoldiIteration(csr_matrix A, dense_vector vec, int k_total, int m, dense_matrix * V, dense_matrix * H) {
 
 
-    V->setCol(0, b);
+    V->setCol(0, vec);
 
     int k = 1;
 
@@ -28,30 +28,14 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_mat
     dense_vector w(m);
 
     for(k = 1; k < k_total + 1; k++) {
-        w = sparseMatrixVector(A, V->getCol(k-1), 0, m, m);
+        w = sparseMatrixVector(A, V->getCol(k-1));
 
         for(int j = 0; j < k; j++) {
             dense_vector b = V->getCol(j);
-            double dotProd = 0;
-            #pragma omp parallel
-            {   
-                //dotprod entre w e V->getCol(j)
-                #pragma omp for reduction(+:dotProd)
-                for (int i = 0; i < m; i++) {
-                    dotProd += (w.values[i] * b.values[i]);
-                }
-
-                #pragma omp barrier
-
-                #pragma omp for
-                for(int i = 0; i < m; i++) {
-                    double newVal = b.values[i] * dotProd;
-                    double prevVal = w.values[i];
-                    w.insertValue(i, prevVal - newVal);
-                }
-            }
-            
+            double dotProd = dotProduct(w,b);
             H->setValue(j, k-1, dotProd);
+            w = addVec(w, b*(-dotProd));
+
         }
 
         

@@ -1,8 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
+#include <mkl.h>
 
 #include <Eigen/Dense>
+
 using namespace Eigen;
 
 #include "headers/dense_vector.hpp"
@@ -13,7 +15,7 @@ using namespace Eigen;
 using namespace std;
 
 //build sparse matrix from matrix market file
-csr_matrix buildFullMtx(string input_file) {
+csr_matrix buildFullMtx(const string& input_file) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_full_mtx(input_file, &rows, &cols, &nz);
     csr_matrix csr(rows);
@@ -21,9 +23,9 @@ csr_matrix buildFullMtx(string input_file) {
         csr.insertRow(rowValues[i], i);
     }
     return csr;
-} 
+}
 
-csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts) {
+csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
     csr_matrix csr(rows);
@@ -31,11 +33,10 @@ csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts
         csr.insertRow(rowValues[i], i);
     }
     return csr;
-} 
+}
 
 
-
-void checkValues(int a, int b, string func) {
+void checkValues(int a, int b, const string& func) {
     if(a != b) {
         cout << "Error: " << func << ": a != b" << endl;
         cout << "a: " << a << endl;
@@ -47,47 +48,23 @@ void checkValues(int a, int b, string func) {
 
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
-    int rows = A.getRowVal();
-    int cols = A.getColVal();
-
-    checkValues(cols, b.getSize(), "denseMatrixVec");
-
-    dense_vector res(rows);
-
-    #pragma omp parallel for
-    for (int i = 0; i < rows; i++) {
-        double resVal = 0;
-        for (int j = 0; j < cols; j++) {
-            resVal += A.getValue(i, j) * b.values[j];
-        }
-        res.insertValue(i, resVal);
-    }
-    return res;
+    dense_vector m(A.getRowVal());
+    cblas_dgemv(CblasColMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0, 
+    A.getDataPointer(), A.getRowVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
+    return m;
 }
 
 //multiply two dense matrices
-dense_matrix denseMatrixMult(dense_matrix A, dense_matrix b) {
-    int endCols = b.getColVal();
-    int endRows = A.getRowVal();
-
-    checkValues(A.getColVal(), b.getRowVal(), "denseMatrixMult");
-    
-    dense_matrix res(endRows, endCols);
-
-    #pragma omp parallel for
-    for (int i = 0; i < endRows; i++) {
-        for (int j = 0; j < endCols; j++) {
-            double resVal = 0;
-            for (int k = 0; k < A.getColVal(); k++) {
-                resVal += A.getValue(i, k) * b.getValue(k, j);
-            }
-            res.setValue(i, j, resVal);
-        }
-    }
-    return res;
+dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B) {
+    dense_matrix C(A.getRowVal(), B.getColVal());
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
+            A.getRowVal(), B.getColVal(), A.getColVal(),
+            1.0, A.getDataPointer(), A.getRowVal(),
+            B.getDataPointer(), B.getColVal(),
+            0.0, C.getDataPointer(), C.getRowVal());
+    return C;
 }
 
-//Add two dense matrices
 dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
@@ -163,75 +140,26 @@ dense_matrix solveEq(dense_matrix A, dense_matrix b) {
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end) {
-    dense_vector res(end - begin);
-    int resIndex = 0;
-    double resVal = 0;
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec) {
+    dense_vector res(vec.getSize());
 
-    checkValues(matrix.getSize(), vec.getSize(), "sparseMatrixVector");
+    mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, matrix.getMKLSparseMatrix(), matrix.getMKLDescription(),
+                    vec.values.data(), 0.0, res.values.data());
 
-    if(matrix.getNZ() == 0 || vec.values.size() == 0) 
-        return res;
-
-
-    #pragma omp parallel for private(resIndex, resVal) schedule(guided)
-    for(int i = 0; i < end; i++) {
-        resIndex = i - begin;
-        resVal = 0;
-
-
-        vector<SparseTriplet> row = matrix.getRow(i);
-        if(row.size() == 0) continue;
-
-        for(int j = 0; j < row.size(); j++) {
-            int col = row[j].col;
-            resVal += row[j].value * vec.values[col];
-        }
-        
-        res.insertValue(resIndex, resVal);
-    }
-    return res;
-}
-
-//subtract two dense vectors
-dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end) {
-    dense_vector res(end - begin);
-    int resIndex = 0;
-
-    checkValues(a.getSize(), b.getSize(), "subtractVec");
-
-    #pragma omp parallel for private(resIndex)
-    for (int i = begin; i < end; i++) {
-        resIndex = i - begin;
-        res.insertValue(resIndex, a.values[i] - b.values[i]);
-    }
     return res;
 }
 
 //add two dense vectors
-dense_vector addVec(dense_vector a, dense_vector b, int begin, int end) {
-    dense_vector res(end - begin);
-    int resIndex = 0;
-
-    checkValues(a.getSize(), b.getSize(), "addVec");
-
-    #pragma omp parallel for private(resIndex)
-    for (int i = begin; i < end; i++) {
-        resIndex = i - begin;
-        res.insertValue(resIndex, a.values[i] + b.values[i]);
-    }
-    return res;
+dense_vector addVec(dense_vector a, dense_vector b) {
+    cblas_daxpy(a.size, 1.0, a.values.data(), 1, b.values.data(), 1);
+    return b;
 }
 
 //dot product of two dense vectors
-double dotProduct(dense_vector a, dense_vector b, int begin, int end) {
-	double dotProd = 0.0;
+double dotProduct(dense_vector a, dense_vector b) {
+    return cblas_ddot(a.size, a.values.data(), 1, b.values.data(), 1);
+}
 
-    checkValues(a.getSize(), b.getSize(), "dotProduct");
-
-    #pragma omp parallel for reduction(+:dotProd)
-	for (int i = begin; i < end; i++) {
-		dotProd += (a.values[i] * b.values[i]);
-	}
-    return dotProd;
+double vectorTwoNorm(dense_vector vec) {
+    return cblas_dnrm2(vec.getSize(), vec.values.data(), 1.0);
 }

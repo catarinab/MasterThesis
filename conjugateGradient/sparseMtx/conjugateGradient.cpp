@@ -4,7 +4,7 @@
 #include <mpi.h>
 #include <bits/stdc++.h>
 
-#include "../../utils/headers/help_proccess.hpp"
+#include "../../utils/headers/help_process.hpp"
 #include "../../utils/headers/distr_mtx_ops.hpp"
 #include "../../utils/headers/mtx_ops.hpp"
 #include "../../utils/headers/io_ops.hpp"

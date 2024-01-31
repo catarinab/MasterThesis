@@ -16,25 +16,25 @@ double values[3];
 
 vector<vector<SparseTriplet>> rowValues;
 
-int getMtxSize(string inputFile) {
+long long int getMtxSize(const string& inputFile) {
     ifstream file(inputFile);
     string line;
     
     while (getline(file, line)) {
         if(line[0] == '%') continue;
         stringstream ss(line);
-        for(int i = 0; i < 3; i++) {
+        for(double & value : values) {
             getline(ss, line, ' ');
-            values[i] = stod(line);
+            value = stod(line);
         }
         break;
     } 
 
     file.close();
-    return values[0];
+    return (long long int) values[0];
 }
 
-vector<vector<SparseTriplet>> readFile_full_mtx(string inputFile, int * rows, int * cols, int * nz) {
+vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz) {
     ifstream file(inputFile);
     string line;
     bool isDefined = false;
@@ -42,23 +42,23 @@ vector<vector<SparseTriplet>> readFile_full_mtx(string inputFile, int * rows, in
         if(line[0] == '%') continue;
         stringstream ss(line);
         if(!isDefined) {
-            for(int i = 0; i < 3; i++) {
+            for(double & value : values) {
                 getline(ss, line, ' ');
-                values[i] = stod(line);
+                value = stod(line);
             }
-            *rows = values[0];
-            *cols = values[1];
-            *nz = values[2];
+            *rows = (long long int) values[0];
+            *cols = (long long int) values[1];
+            *nz = (long long int) values[2];
             rowValues.resize(*rows);
             isDefined = true;
         }
         else {
-            for(int i = 0; i < 3; i++) {
+            for(double & value : values) {
                 getline(ss, line, ' ');
-                values[i] = stod(line);
+                value = stod(line);
             }
-            rowValues[(int) values[0] - 1]
-                .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
+            rowValues[(long long int) values[0] - 1]
+                .emplace_back( (long long int) values[0] - 1, (long long int) values[1] - 1, values[2]);
         }
     } 
 
@@ -67,34 +67,33 @@ vector<vector<SparseTriplet>> readFile_full_mtx(string inputFile, int * rows, in
 }
 
 
-vector<vector<SparseTriplet>> readFile_part_mtx(string inputFile, int * rows, int * cols, int * nz, int * displs, int * counts, int me) {
+vector<vector<SparseTriplet>> readFile_part_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz,
+                                                int * displs, int * counts, int me) {
     ifstream file(inputFile);
     string line;
     bool isDefined = false;
-    int startRow = 100000;
-    int endRow = -1;
     while (getline(file, line)) {
         if(line[0] == '%') continue;
         stringstream ss(line);
         if(!isDefined) {
-            for(int i = 0; i < 3; i++) {
+            for(double & value : values) {
                 getline(ss, line, ' ');
-                values[i] = stod(line);
+                value = stod(line);
             }
-            *rows = values[0];
-            *cols = values[1];
-            *nz = values[2];
+            *rows = (long long int) values[0];
+            *cols = (long long int) values[1];
+            *nz = (long long int) values[2];
             rowValues.resize(counts[me]);
             isDefined = true;
         }
         else {
-            for(int i = 0; i < 3; i++) {
+            for(double & value : values) {
                 getline(ss, line, ' ');
-                values[i] = stod(line);
+                value = stod(line);
             }
-            if((int) values[0] - 1 >= displs[me] && (int) values[0] - 1 < displs[me] + counts[me]) {
-                rowValues[(int) values[0] - 1 - displs[me]]
-                        .push_back(SparseTriplet( (int) values[0] - 1, (int) values[1] - 1, values[2]));
+            if((int) values[0] - 1 >= displs[me] && (long long int) values[0] - 1 < displs[me] + counts[me]) {
+                rowValues[(long long int) values[0] - 1 - displs[me]]
+                        .emplace_back( (long long int) values[0] - 1, (long long int) values[1] - 1, values[2]);
             }
                
         }
