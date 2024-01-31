@@ -5,7 +5,7 @@
 
 #include "../utils/headers/help_process.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
-#include "../utils/headers/mtx_ops.hpp"
+#include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
 #include "../utils/headers/arnoldiIteration.hpp"
 #include "../utils/headers/io_ops.hpp"
@@ -20,7 +20,7 @@ double getApproximation(double normVal, dense_matrix V, dense_matrix expH, doubl
 
     dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
     dense_vector res = denseMatrixVec(op1, unitVec);
-    return res.getNorm2();
+    return vectorTwoNorm(res);
 }
 
 //Process input arguments

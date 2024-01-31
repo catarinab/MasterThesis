@@ -4,7 +4,7 @@
 #include <mpi.h>
 
 #include "headers/help_process.hpp"
-#include "headers/mtx_ops.hpp"
+#include "headers/mtx_ops_mkl.hpp"
 
 
 /*
@@ -32,27 +32,27 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
     
     switch(func) {
         case MV:
-            auxBuf2 = sparseMatrixVector(A, auxBuf, 0, counts[me]);
+            auxBuf2 = sparseMatrixVector(A, auxBuf);
             MPI_Gatherv(&auxBuf2.values[0], counts[me], MPI_DOUBLE, &auxBuf2.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
             break;
 
         case VV:
-            dotProd = dotProduct(auxBuf, auxBuf2, 0, counts[me]);
+            dotProd = dotProduct(auxBuf, auxBuf2);
             MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             break;
 
         case SUB:
-            auxBuf = addVec(auxBuf, auxBuf2*(-1), 0, counts[me]);
+            auxBuf = addVec(auxBuf, auxBuf2*(-1));
             MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
             break;
 
         case ADD:
-            auxBuf = addVec(auxBuf, auxBuf2, 0, counts[me]);
+            auxBuf = addVec(auxBuf, auxBuf2);
             MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
             break;
 
         default: 
-            cout << "Proccess number: " << me << " Received wrong function tag from node " << ROOT << endl;
+            cout << "Process number: " << me << " Received wrong function tag from node " << ROOT << endl;
             exit(1);
     }
 }

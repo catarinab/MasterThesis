@@ -4,7 +4,7 @@
 #include <mpi.h>
 
 #include "headers/distr_mtx_ops.hpp"
-#include "headers/mtx_ops.hpp"
+#include "headers/mtx_ops_mkl.hpp"
 
 using namespace std;
 
@@ -57,12 +57,13 @@ double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int npr
 
     sendVectors(a, b, VV, size);
 
-    vector<double> valuesA = vector<double>(a.values.begin(), a.values.begin() + counts[me]);
-    vector<double> valuesB = vector<double>(b.values.begin(), b.values.begin() + counts[me]);
+    a.size = counts[0];
 
-    double temp = dotProduct(a, b, 0, counts[me]);
+    double temp = dotProduct(a, b);
 
     MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
+
+    a.size = size;
 
     return dotProd;
     
@@ -74,12 +75,13 @@ dense_vector distrSumOp(dense_vector a, dense_vector b, int size, int me, int np
 
     sendVectors(a, b, ADD, size);
 
-    vector<double> valuesA = vector<double>(a.values.begin(), a.values.begin() + counts[me]);
-    vector<double> valuesB = vector<double>(b.values.begin(), b.values.begin() + counts[me]);
+    a.size = counts[0];
 
-    dense_vector res = addVec(a, b, 0, counts[me]);
+    dense_vector res = addVec(a, b);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+
+    a.size = size;
 
     return finalRes;
 }
@@ -91,7 +93,7 @@ dense_vector distrMatrixVec(csr_matrix A, dense_vector vec, int size, int me, in
 
     sendVectors(vec, dense_vector(0), MV, size);
 
-    dense_vector res = sparseMatrixVector(A, vec, 0, counts[me]);
+    dense_vector res = sparseMatrixVector(A, vec);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
