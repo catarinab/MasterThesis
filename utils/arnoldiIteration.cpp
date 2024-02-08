@@ -24,7 +24,7 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, i
 
     //helper nodes
     while(me != 0) {
-        MPI_Bcast(&func, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
         if(func == ENDTAG) return 0;
         else if(func > 0)
@@ -55,6 +55,6 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, int me, i
         if(H->getValue(k, k - 1) != 0) 
             V->setCol(k, w / H->getValue(k, k - 1));
     }
-    MPI_Bcast(&sendEnd, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&sendEnd, 1, MPI_INT, 0, MPI_COMM_WORLD);
     return k;
 }

@@ -42,12 +42,13 @@ void initGatherVars(int size, int nprocs) {
 void sendVectors(dense_vector a, dense_vector b, int func, int size) {
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD); //broadcast need for help in function func
 
+    
     if(func == MV)
         MPI_Bcast(&a.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
     else {
-        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, &a.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, &b.values[0], helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+        MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
     }
 }
 

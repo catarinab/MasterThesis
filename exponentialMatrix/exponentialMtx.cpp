@@ -2,6 +2,7 @@
 #include <vector>
 #include <omp.h>
 #include <mpi.h>
+#include <string.h>
 
 #include "../utils/headers/help_process.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
@@ -94,6 +95,7 @@ int main (int argc, char* argv[]) {
 
     }
 
+    mkl_sparse_destroy(A.getMKLSparseMatrix());
     free(displs);
     free(counts);
 

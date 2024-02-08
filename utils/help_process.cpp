@@ -20,6 +20,7 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
     dense_vector auxBuf2(0);
     
     if(func == MV) {
+        
         auxBuf.resize(size);
         MPI_Bcast(&auxBuf.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
     }

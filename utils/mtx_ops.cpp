@@ -129,25 +129,14 @@ dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
 MatrixXd convertDenseEigenMtx(dense_matrix A) {
     MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
 
-    #pragma omp parallel for
-    for(int i = 0; i < A.getRowVal(); i++) {
-        for(int j = 0; j < A.getColVal(); j++) {
-            eigenMtx(i, j) = A.getValue(i, j);
-        }
-    }
-    return eigenMtx;
+    return Map<MatrixXd>(A.getDataPointer(), A.getRowVal(), A.getColVal());
 }
 
 //convert Eigen MatrixXd to dense_matrix
 dense_matrix convertEigenDenseMtx(MatrixXd A) {
     dense_matrix denseMtx(A.rows(), A.cols());
     
-    #pragma omp parallel for
-    for(int i = 0; i < A.rows(); i++) {
-        for(int j = 0; j < A.cols(); j++) {
-            denseMtx.setValue(i, j, A(i, j));
-        }
-    }
+    denseMtx.setValues(vector<double>(A.data(), A.data() + A.size()));
     return denseMtx;
 
 }

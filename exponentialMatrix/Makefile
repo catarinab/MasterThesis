@@ -1,11 +1,10 @@
-mpi = mpic++
+mpi = mpiicpx
 C++ = g++
-CFLAGS=-fopenmp -std=c++17  -fopenmp -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -g
+CFLAGS= -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
 CFLAGSEigen= -I ../eigen
 TARGET=exp
 TARGETSHARED=exp-shared
-LINK= -m64  -L${MKLROOT}/lib -lmkl_scalapack_ilp64 -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
-LINKMPI= -lmkl_blacs_openmpi_ilp64
+LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 GREEN=\033[0;32m
 RED=\033[0;31m
 NORMAL=\033[0m
@@ -14,7 +13,7 @@ NORMAL=\033[0m
 all: distr shared
 
 distr:
-	@echo "$(GREEN)Making distributed memory version: exp$(NORMAL)"
+	@echo "$(GREEN)Making distributed memory version: $(TARGET) $(NORMAL)"
 	$(mpi) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(mpi) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(mpi) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
@@ -25,11 +24,11 @@ distr:
 	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
 	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
 	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c exponentialMtx.cpp -o exp-mtx.o
-	$(mpi) $(CFLAGS) $(LINK) $(LINKMPI) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_process.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGET)
+	$(mpi) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_process.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGET)
 	rm *.o
 
 shared:
-	@echo "$(GREEN)Making shared memory version: exp-shared$(NORMAL)"
+	@echo "$(GREEN)Making shared memory version: $(TARGETSHARED) $(NORMAL)"
 	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o

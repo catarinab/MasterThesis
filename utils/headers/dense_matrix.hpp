@@ -21,6 +21,7 @@ class dense_matrix {
     void setRandomMatrix();
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
+    void setValues(vector<double> values);
 
     double getValue(int row, int col);
     dense_vector getCol(int col);

@@ -40,7 +40,7 @@ void dense_matrix::setRandomMatrix() {
 
 double* dense_matrix::getDataPointer() {
         return this->values.data();
-    }
+}
 
 //insert column in matrix
 void dense_matrix::setCol(int col, dense_vector vec){
@@ -53,6 +53,11 @@ void dense_matrix::setValue(int row, int col, double val){
     this->values[col * this->rows + row] = val;
 }
 
+void dense_matrix::setValues(vector<double> values) {
+    this->values = values;
+}
+
+
 double dense_matrix::getValue(int row, int col){
     return this->values[col * this->rows + row];
 }
@@ -60,6 +65,7 @@ double dense_matrix::getValue(int row, int col){
 //get spefic column (as a dense_vector)
 dense_vector dense_matrix::getCol(int col){
     dense_vector res(this->rows);
+    
     res.setValues(vector<double>(this->values.begin() + col * this->rows, 
                                 this->values.begin() + (col + 1) * this->rows));
     return res;
