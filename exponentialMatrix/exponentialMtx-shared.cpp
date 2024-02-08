@@ -11,7 +11,7 @@ using namespace std;
 
 //Calculate the approximation of exp(A)*b
 double getApproximation(double normVal, dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
-    dense_vector unitVec = dense_vector(krylovDegree);
+    auto unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
     dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
@@ -79,6 +79,8 @@ int main (int argc, char* argv[]) {
     printf("diff: %.15f\n", abs(normVal - resNorm));
     printf("2Norm: %.15f\n", resNorm);
     printf("exec_time: %f\n", exec_time);
+    
+    mkl_sparse_destroy(A.getMKLSparseMatrix());
 
 
     return 0;
