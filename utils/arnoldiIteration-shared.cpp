@@ -1,7 +1,6 @@
 #include "headers/arnoldiIteration-shared.hpp"
 #include "headers/mtx_ops_mkl.hpp"
 #include <omp.h>
-#include <omp.h>
 
 /*  Parameters
     ----------
@@ -22,20 +21,19 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_mat
 
     int k = 1;
 
-    int threadNum = omp_get_thread_num();
-
     //auxiliar
     dense_vector opResult(m);
     dense_vector w(m);
 
     for(k = 1; k < k_total + 1; k++) {
+
         w = sparseMatrixVector(A, V->getCol(k-1));
 
         for(int j = 0; j < k; j++) {
             dense_vector b = V->getCol(j);
             double dotProd = 0;
             #pragma omp parallel
-            {   
+            {
                 //dotprod entre w e V->getCol(j)
                 #pragma omp for reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {

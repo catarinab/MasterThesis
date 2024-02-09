@@ -1,6 +1,6 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
 CFLAGSEigen= -I ../eigen
 TARGET=exp
 TARGETSHARED=exp-shared
