@@ -1,12 +1,15 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers
+DEBUG = -g
 CFLAGSEigen= -I ../eigen
 TARGET=exp
 TARGETSHARED=exp-shared
+TARGETTEST=test
 LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
 GREEN=\033[0;32m
 RED=\033[0;31m
+YELLOW=\033[0;33m
 NORMAL=\033[0m
 
 
@@ -32,7 +35,7 @@ shared:
 	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/arnoldi-MKL.cpp -o arnoldiIteration-shared.o
 	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
 	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
 	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
@@ -40,8 +43,20 @@ shared:
 	$(C++) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGETSHARED)
 	rm *.o
 
+test:
+	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
+	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/calculate-MLF.cpp -o MLF.o
+	$(C++) $(CFLAGS) $(DEBUG) -c test.cpp -o test.o
+	$(C++) $(CFLAGS) $(DEBUG) $(LINK) test.o MLF.o csr_matrix.o dense_vector.o dense_matrix.o io_ops.o mtx_ops_mkl.o -o $(TARGETTEST)
+	rm *.o
+
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
-	rm *.o $(TARGET) $(TARGETSHARED)
+	rm -f *.o $(TARGET) $(TARGETSHARED) $(TARGETTEST)
 
 

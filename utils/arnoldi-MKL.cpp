@@ -1,4 +1,4 @@
-#include "headers/arnoldiIteration-shared.hpp"
+#include "headers/arnoldi-MKL.hpp"
 #include "headers/mtx_ops_mkl.hpp"
 #include <omp.h>
 
@@ -28,33 +28,13 @@ int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_mat
     for(k = 1; k < k_total + 1; k++) {
 
         w = sparseMatrixVector(A, V->getCol(k-1));
-        double dotProd = 0;
-        #pragma omp parallel shared(V, H, w, dotProd)
-        {
         for(int j = 0; j < k; j++) {
-
             dense_vector b = V->getCol(j);
+            double dotProd = dotProduct(w, b);
 
-            //dotprod entre w e V->getCol(j)
-            #pragma omp for reduction(+:dotProd)
-            for (int i = 0; i < m; i++) {
-                dotProd += (w.values[i] * b.values[i]);
-            }
-
-            #pragma omp for
-            for(int i = 0; i < m; i++) {
-                double newVal = b.values[i] * dotProd;
-                w.insertValue(i, w.values[i] - newVal);
-            }
+            w = addVec(w, b, -dotProd);
             
-            #pragma omp single
-                H->setValue(j, k-1, dotProd);
-            
-            dotProd = 0;
-
-            #pragma omp barrier
-
-        }
+            H->setValue(j, k-1, dotProd);
         }
 
         

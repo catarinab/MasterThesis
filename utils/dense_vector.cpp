@@ -65,8 +65,16 @@ double dense_vector::getNorm2() {
 
     #pragma omp parallel for reduction(+:res)
     for(int i = 0; i < this->size; i++) {
-        res += this->values[i] * this->values[i];
+        res += abs(this->values[i]) * abs(this->values[i]);
     }
     return (double) sqrt(res);
+}
+
+double dense_vector::getValue(int i) {
+    return this->values[i];
+}
+
+void dense_vector::setValue(int i, double value) {
+    this->values[i] = value;
 }
 

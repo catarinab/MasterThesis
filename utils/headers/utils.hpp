@@ -10,6 +10,10 @@
 #define SUB 5
 #define ADD 6
 
+#define EPS 2e-52
+#define EPS16 2e-16
+
+
 struct SparseTriplet {
     long long int col;
     long long int row;
@@ -18,13 +22,11 @@ struct SparseTriplet {
     SparseTriplet() : row(0), col(0), value(0) {}
 };
 
+
 inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
-    if(a.row < b.row)
+    if(a.row < b.row || (a.row == b.row && a.col < b.col))
         return true;
-    else if(a.row == b.row && a.col < b.col)
-        return true;
-    else
-        return false;
+    return false;
 }
 
 #endif // STRUCTS_HPP

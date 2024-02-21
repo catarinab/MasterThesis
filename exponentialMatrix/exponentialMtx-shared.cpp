@@ -4,7 +4,7 @@
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
-#include "../utils/headers/arnoldiIteration-shared.hpp"
+#include "../utils/headers/arnoldi-MKL.hpp"
 
 using namespace std;
 

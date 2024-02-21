@@ -21,6 +21,9 @@ public:
     void getOnesVec();
     void insertValue(int col, double value);
     void setValues(std::vector<double> values);
+    void setValue(int i, double value);
+    
+    double getValue(int i);
     
     dense_vector operator*(double x);
     dense_vector operator/(double x);
