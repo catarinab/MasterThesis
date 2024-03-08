@@ -3,10 +3,6 @@
 #include <omp.h>
 #include <mkl.h>
 
-#include <Eigen/Dense>
-
-using namespace Eigen;
-
 #include "headers/dense_vector.hpp"
 #include "headers/dense_matrix.hpp"
 #include "headers/io_ops.hpp"
@@ -46,8 +42,46 @@ void checkValues(int a, int b, const string& func) {
 
 }
 
+lapack_complex_double lpck_z_sum(lapack_complex_double a, lapack_complex_double b) {
+    lapack_complex_double result;
+    result.real = a.real + b.real;
+    result.imag = a.imag + b.imag;
+    return result;
+}
+
+lapack_complex_double lpck_z_sub(lapack_complex_double a, lapack_complex_double b) {
+    lapack_complex_double result;
+    result.real = a.real - b.real;
+    result.imag = a.imag - b.imag;
+    return result;
+}
+
+lapack_complex_double lpck_z_mult(lapack_complex_double a, lapack_complex_double b) {
+    lapack_complex_double result;
+    result.real = a.real * b.real - a.imag * b.imag;
+    result.imag = a.real * b.imag + a.imag * b.real;
+    return result;
+}
+
+lapack_complex_double lpck_z_div(lapack_complex_double a, lapack_complex_double b) {
+    lapack_complex_double result;
+    double denominator = b.real * b.real + b.imag * b.imag;
+    result.real = (a.real * b.real + a.imag * b.imag) / denominator;
+    result.imag = (a.imag * b.real - a.real * b.imag) / denominator;
+    return result;
+}
+
+ostream& operator << (ostream &os, const lapack_complex_double &a) {
+    return (os << a.real << " + " << a.imag << "i ");
+}
+
+double lpck_abs(lapack_complex_double a) {
+    return sqrt(a.real * a.real + a.imag * a.imag);
+}
+
+
 //multiply dense matrix and dense vector
-dense_vector  denseMatrixVec(dense_matrix  A, dense_vector  b) {
+dense_vector denseMatrixVec(dense_matrix  A, dense_vector  b) {
     dense_vector m(A.getRowVal());
     cblas_dgemv(CblasColMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0, 
     A.getDataPointer(), A.getRowVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
@@ -55,7 +89,7 @@ dense_vector  denseMatrixVec(dense_matrix  A, dense_vector  b) {
 }
 
 //multiply two dense matrices
-dense_matrix  denseMatrixMult(dense_matrix A, dense_matrix B) {
+dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B) {
     dense_matrix C(A.getRowVal(), B.getColVal());
     cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
             A.getRowVal(), B.getColVal(), A.getColVal(),
@@ -65,15 +99,17 @@ dense_matrix  denseMatrixMult(dense_matrix A, dense_matrix B) {
     return C;
 }
 
-dense_vector  vectorElementWiseDivision(dense_vector  a, dense_vector  b) {
-    dense_vector res(a.getSize());
-    for (int i = 0; i < a.getSize(); i++) {
-        res.insertValue(i, a.getValue(i) / b.getValue(i));
+dense_matrix lapackeToDenseMatrix(lapack_complex_double * A, int rows, int cols) {
+    dense_matrix res(rows, cols);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            res.setValue(i, j, A[i * cols + j].real);
+        }
     }
     return res;
 }
 
-dense_matrix  denseMatrixAdd(dense_matrix A, dense_matrix b) {
+dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
@@ -110,35 +146,9 @@ dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
     return res;
 }
 
-//convert dense_matrix to Eigen MatrixXd
-MatrixXd convertDenseEigenMtx(dense_matrix A) {
-    MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
-
-    return Map<MatrixXd>(A.getDataPointer(), A.getRowVal(), A.getColVal());
-}
-
-//convert Eigen MatrixXd to dense_matrix
-dense_matrix convertEigenDenseMtx(MatrixXd A) {
-    dense_matrix denseMtx(A.rows(), A.cols());
-    
-    denseMtx.setValues(vector<double>(A.data(), A.data() + A.size()));
-    return denseMtx;
-
-}
-
-//solve linear system using Eigen library and LU decomposition
-dense_matrix  solveEq(dense_matrix A, dense_matrix b) {
-    MatrixXd eigenMtxA = convertDenseEigenMtx(A);
-    MatrixXd eigenMtxB = convertDenseEigenMtx(b);
-
-    MatrixXd res = eigenMtxA.partialPivLu().solve(eigenMtxB);
-
-    return convertEigenDenseMtx(res);
-}
-
 //multiply sparse matrix and dense vector
-dense_vector  sparseMatrixVector(csr_matrix matrix, dense_vector  vec) {
-    dense_vector  res(vec.getSize());
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector  vec) {
+    dense_vector res(vec.getSize());
 
     mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, matrix.getMKLSparseMatrix(), matrix.getMKLDescription(),
                     vec.values.data(), 0.0, res.values.data());
@@ -146,10 +156,10 @@ dense_vector  sparseMatrixVector(csr_matrix matrix, dense_vector  vec) {
     return res;
 }
 
-//b = a*scalar + b
-dense_vector addVec(dense_vector b, dense_vector a, double scalar) {
-    cblas_daxpy(a.size, scalar, a.values.data(), 1, b.values.data(), 1);
-    return b;
+//y = y + scalar*x
+dense_vector addVec(dense_vector y, dense_vector x, double scalar) {
+    cblas_daxpy(x.size, scalar, x.values.data(), 1, y.values.data(), 1);
+    return y;
 }
 
 //dot product of two dense vectors
