@@ -1,9 +1,9 @@
-#ifndef DENSE_MAdoubleRIX_HPP
-#define  DENSE_MAdoubleRIX_HPP
+#ifndef DENSE_MATRIX_HPP
+#define  DENSE_MATRIX_HPP
 #include "dense_vector.hpp"
-#include <stdlib.h> //srand
+#include <cstdlib> //srand
 #include <string>
-#include <time.h> 
+#include <ctime>
 
 using namespace std;
 
@@ -18,7 +18,7 @@ class dense_matrix {
     public:
 
     dense_matrix(int rows, int cols) : rows(rows), cols(cols) {
-        srand((unsigned) time(NULL));
+        srand((unsigned) time(nullptr));
         this->values = vector<double>(rows * cols);
     }
 
@@ -29,6 +29,7 @@ class dense_matrix {
     void setIdentity();
     void setOnesMatrix();
     void setRandomHessenbergMatrix(int minVal, int maxVal);
+    void setRandomUpperTriangularMatrix(int minVal, int maxVal);
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
     void setValues(vector<double> values);
@@ -44,7 +45,7 @@ class dense_matrix {
     dense_matrix mtxAbs();
 
     void printVals();
-    void printMatlab(std::string name);
+    void printMatlab(const std::string& name);
 
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);

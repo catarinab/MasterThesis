@@ -33,12 +33,14 @@ dense_matrix convertEigenDenseMtx(MatrixXd A);
 
 dense_matrix solveEq(dense_matrix A, dense_matrix b) ;
 
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end);
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, long long int end);
 
 dense_vector subtractVec(dense_vector a, dense_vector b, int begin, int end);
 
 dense_vector addVec(dense_vector a, dense_vector b, int begin, int end);
 
 double dotProduct(dense_vector a, dense_vector b, int begin, int end);
+
+double vectorTwoNorm(dense_vector vec);
 
 #endif // MTX_OPS_HPP

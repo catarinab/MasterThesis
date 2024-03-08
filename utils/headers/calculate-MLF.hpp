@@ -1,7 +1,10 @@
+#ifndef MLF_HPP
+#define MLF_HPP
+
 #include <complex>
 
 #include "dense_matrix.hpp"
 
-dense_matrix calculate_MLF(dense_matrix A, double alpha, double beta);
+dense_matrix calculate_MLF(dense_matrix A, double alpha, double beta, int size);
 
-complex<double> LTI(double lambda, double alpha, double beta);
+#endif

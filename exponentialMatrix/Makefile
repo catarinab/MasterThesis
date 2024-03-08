@@ -1,6 +1,7 @@
 mpi = mpiicpx
 C++ = g++
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers
 DEBUG = -g
 CFLAGSEigen= -I ../eigen
 TARGET=exp
@@ -17,17 +18,17 @@ all: distr shared
 
 distr:
 	@echo "$(GREEN)Making distributed memory version: $(TARGET) $(NORMAL)"
-	$(mpi) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(mpi) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(mpi) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(mpi) $(CFLAGS) -c ../utils/arnoldiIteration.cpp -o arnoldiIteration.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/help_process.cpp -o help_process.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(mpi) $(CFLAGS) $(CFLAGSEigen) -c exponentialMtx.cpp -o exp-mtx.o
-	$(mpi) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_process.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGET)
+	$(mpi) $(CFLAGSDISTR) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(mpi) $(CFLAGSDISTR) -c ../utils/arnoldiIteration.cpp -o arnoldiIteration.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/help_process.cpp -o help_process.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c exponentialMtx.cpp -o exp-mtx.o
+	$(mpi) $(CFLAGSDISTR) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_process.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGET)
 	rm *.o
 
 shared:
@@ -41,18 +42,6 @@ shared:
 	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
 	$(C++) $(CFLAGS) $(CFLAGSEigen) -c exponentialMtx-shared.cpp -o exp-mtx.o
 	$(C++) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGETSHARED)
-	rm *.o
-
-test:
-	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) $(DEBUG) $(CFLAGSEigen) -c ../utils/calculate-MLF.cpp -o MLF.o
-	$(C++) $(CFLAGS) $(DEBUG) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(DEBUG) $(LINK) test.o MLF.o csr_matrix.o dense_vector.o dense_matrix.o io_ops.o mtx_ops_mkl.o -o $(TARGETTEST)
 	rm *.o
 
 clean:
