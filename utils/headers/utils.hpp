@@ -13,6 +13,10 @@
 #define EPS 2e-52
 #define EPS16 2e-16
 
+#include <mkl.h>
+
+using lpck_c = lapack_complex_double;
+
 
 struct SparseTriplet {
     long long int col;
@@ -27,6 +31,22 @@ inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
     if(a.row < b.row || (a.row == b.row && a.col < b.col))
         return true;
     return false;
+}
+
+inline double factorial(int n) {
+    double result = 1;
+    for(int i = 1; i <= n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+inline double falling_factorial(double n, int k) {
+    double result = 1;
+    for(int i = 0; i < k ; i++) {
+        result *= (n - i);
+    }
+    return result;
 }
 
 #endif // STRUCTS_HPP
