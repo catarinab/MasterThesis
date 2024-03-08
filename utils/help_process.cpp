@@ -15,6 +15,7 @@ After the function is executed, the result is sent back to the root node.
 void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
     int temp = 0;
+    double scalar = 0;
     
     dense_vector auxBuf(0);
     dense_vector auxBuf2(0);
@@ -42,13 +43,9 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
             MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             break;
 
-        case SUB:
-            auxBuf = addVec(auxBuf, auxBuf2*(-1));
-            MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
-            break;
-
         case ADD:
-            auxBuf = addVec(auxBuf, auxBuf2);
+            MPI_Bcast(&scalar, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+            auxBuf = addVec(auxBuf, auxBuf2, scalar);
             MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
             break;
 
