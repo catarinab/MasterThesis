@@ -1,6 +1,4 @@
 #include <iostream>
-#include <vector>
-#include <omp.h>
 #include <mpi.h>
 
 #include "headers/distr_mtx_ops.hpp"
@@ -71,14 +69,16 @@ double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int npr
 }
 
 //distribute sum between vectors through all nodes
-dense_vector distrSumOp(dense_vector a, dense_vector b, int size, int me, int nprocs) {
+dense_vector distrSumOp(dense_vector a, dense_vector b, double scalar, int size, int me, int nprocs) {
     dense_vector finalRes(size); 
 
     sendVectors(a, b, ADD, size);
 
+    MPI_Bcast(&scalar, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+
     a.size = counts[0];
 
-    dense_vector res = addVec(a, b);
+    dense_vector res = addVec(a, b, scalar);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
