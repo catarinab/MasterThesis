@@ -152,7 +152,7 @@ dense_matrix solveEq(dense_matrix A, dense_matrix b) {
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, int end) {
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec, int begin, long long int end) {
     dense_vector res(end - begin);
     int resIndex = 0;
     double resVal = 0;
@@ -223,4 +223,13 @@ double dotProduct(dense_vector a, dense_vector b, int begin, int end) {
 		dotProd += (a.values[i] * b.values[i]);
 	}
     return dotProd;
+}
+
+double vectorTwoNorm(dense_vector vec) {
+    double norm = 0.0;
+    #pragma omp parallel for reduction(+:norm)
+    for (int i = 0; i < vec.getSize(); i++) {
+        norm += vec.values[i] * vec.values[i];
+    }
+    return sqrt(norm);
 }

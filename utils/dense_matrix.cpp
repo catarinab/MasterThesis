@@ -16,13 +16,13 @@ using namespace std;
 }
 
 //get identity matrix
- void dense_matrix::setIdentity() {
+void dense_matrix::setIdentity() {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++)
         this->setValue(i, i, 1);
 }
 
- void dense_matrix::setOnesMatrix() {
+void dense_matrix::setOnesMatrix() {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++)
         for(int j = 0; j < this->cols; j++)
@@ -30,7 +30,6 @@ using namespace std;
 }
 
 void dense_matrix::setRandomHessenbergMatrix(int minVal, int maxVal) {
-    #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) {
         for(int j = 0; j < this->cols; j++) {
             if (j + 1 >= i) {
@@ -40,25 +39,41 @@ void dense_matrix::setRandomHessenbergMatrix(int minVal, int maxVal) {
             }
         }
     }
+ }
+
+ //debugging purposes
+void dense_matrix::setRandomUpperTriangularMatrix(int minVal, int maxVal) {
+     int counter = 0;
+    for(int i = 0; i < this->rows; i++) {
+        for(int j = 0; j < this->cols; j++) {
+            if(j == i)
+                this->setValue(i, j, counter++);
+            else if (j >= i) {
+                this->setValue(i, j, minVal + rand() % (maxVal - minVal + 1));
+            } else {
+                this->setValue(i, j, 0);
+            }
+        }
     }
+}
 
 
- double* dense_matrix::getDataPointer() {
+double* dense_matrix::getDataPointer() {
         return this->values.data();
 }
 
 //insert column in matrix
- void dense_matrix::setCol(int col, dense_vector vec){
+void dense_matrix::setCol(int col, dense_vector vec){
     for(int i = 0; i < this->rows; i++)
         this->values[col * this->rows + i] = vec.values[i];
 }
 
 //insert value in matrix
- void dense_matrix::setValue(int row, int col, double val){
+void dense_matrix::setValue(int row, int col, double val){
     this->values[col * this->rows + row] = val;
 }
 
- void dense_matrix::setValues(vector<double> newVals) {
+void dense_matrix::setValues(vector<double> newVals) {
     this->values = newVals;
 }
 
@@ -92,6 +107,7 @@ double dense_matrix::getNorm2() {
 
 void dense_matrix::printVals() {
     for(int row = 0; row < this->rows; row++) {
+        cout << "Row " << row << ": ";
         for(int col = 0; col < this->cols; col++) {
             cout << this->values[col * this->rows + row] << " ";
         }
@@ -99,7 +115,7 @@ void dense_matrix::printVals() {
     }
 }
 
-void dense_matrix::printMatlab(string name) {
+void dense_matrix::printMatlab(const string& name) {
     cout << name << " = [";
     for(int row = 0; row < this->rows; row++) {
         for(int col = 0; col < this->cols; col++) {

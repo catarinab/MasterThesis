@@ -1,6 +1,7 @@
+#include <utility>
+
 #include "headers/arnoldi-MKL.hpp"
 #include "headers/mtx_ops_mkl.hpp"
-#include <omp.h>
 
 /*  Parameters
     ----------
@@ -14,10 +15,10 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_matrix * V, dense_matrix * H) {
+int arnoldiIteration(const csr_matrix& A, dense_vector initVec, int k_total, int m, dense_matrix * V, dense_matrix * H) {
 
 
-    V->setCol(0, b);
+    V->setCol(0, std::move(initVec));
 
     int k = 1;
 
