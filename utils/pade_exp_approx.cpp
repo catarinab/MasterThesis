@@ -1,9 +1,41 @@
 #include <vector>
 
-#include "headers/mtx_ops.hpp"
+#include "headers/mtx_ops_mkl.hpp"
 #include "headers/pade_exp_approx.hpp"
 
+#include <Eigen/Dense>
+
+using namespace Eigen;
+
 using namespace std;
+
+//convert dense_matrix to Eigen MatrixXd
+MatrixXd convertDenseEigenMtx(dense_matrix A) {
+    MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
+
+    return Map<MatrixXd>(A.getDataPointer(), A.getRowVal(), A.getColVal());
+}
+
+//convert Eigen MatrixXd to dense_matrix
+dense_matrix convertEigenDenseMtx(MatrixXd A) {
+    dense_matrix denseMtx(A.rows(), A.cols());
+
+    denseMtx.setValues(vector<double>(A.data(), A.data() + A.size()));
+    return denseMtx;
+
+}
+
+//solve linear system using Eigen library and LU decomposition
+//should use ?getrs
+dense_matrix solveEq(dense_matrix A, dense_matrix b) {
+    MatrixXd eigenMtxA = convertDenseEigenMtx(A);
+    MatrixXd eigenMtxB = convertDenseEigenMtx(b);
+
+    MatrixXd res = eigenMtxA.partialPivLu().solve(eigenMtxB);
+
+    return convertEigenDenseMtx(res);
+}
+
 
 //find suitable m value for pade approximation
 int findM(double norm, int theta , int * power) {
