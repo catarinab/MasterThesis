@@ -5,6 +5,6 @@
 
 #include "dense_matrix.hpp"
 
-dense_matrix calculate_MLF(dense_matrix A, double alpha, double beta, int size);
+double * calculate_MLF(double * A, double alpha, double beta, int size);
 
 #endif
