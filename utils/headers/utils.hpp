@@ -1,22 +1,19 @@
-#ifndef STRUCTS_HPP
-#define STRUCTS_HPP
+#ifndef UTILS_HPP
+#define UTILS_HPP
 
 #define ROOT 0
 
-#define ENDTAG -1
+#define ENDTAG (-1)
 
 #define MV 3
 #define VV 4
-#define SUB 5
 #define ADD 6
 
-#define EPS 2e-52
-#define EPS16 2e-16
+#define EPS16 2.220446049250313e-16
 
-#include <mkl.h>
+#define PI 3.141592653589793238466
 
-using lpck_c = lapack_complex_double;
-
+#define workFolder "compan/1/"
 
 struct SparseTriplet {
     long long int col;
@@ -49,4 +46,5 @@ inline double falling_factorial(double n, int k) {
     return result;
 }
 
-#endif // STRUCTS_HPP
+
+#endif // UTILS_HPP
