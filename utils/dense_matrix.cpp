@@ -1,17 +1,29 @@
 #include <iostream>
 #include <cmath>
+#include <utility>
 #include <vector>
 #include <iomanip>
+#include <fstream>
+#include <random>
+#include <chrono>
 
 #include "headers/dense_matrix.hpp"
+#include "headers/utils.hpp"
+
+string folder(workFolder);
+
 
 using namespace std;
 
- int dense_matrix::getRowVal() {
+dense_matrix::dense_matrix(int rows, int cols): rows(rows), cols(cols) {
+        this->values = vector<double>(rows * cols, 0);
+}
+
+int dense_matrix::getRowVal() const {
     return this->rows;
 }
 
- int dense_matrix::getColVal() {
+int dense_matrix::getColVal() const {
     return this->cols;
 }
 
@@ -22,37 +34,57 @@ void dense_matrix::setIdentity() {
         this->setValue(i, i, 1);
 }
 
-void dense_matrix::setOnesMatrix() {
-    #pragma omp parallel for
-    for(int i = 0; i < this->rows; i++)
-        for(int j = 0; j < this->cols; j++)
-            this->setValue(i, j, 1);
+
+void dense_matrix::setRandomHessenbergMatrix(double minVal, double maxVal) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+
+    //Create a uniform distribution for random numbers between minVal and maxVal
+    uniform_real_distribution<double> distribution(minVal, maxVal);
+    for(int row = 0; row < this->rows; row++)
+        for(int col = 0; col < this->cols; col++)
+            if (row <= col + 1)
+                this->setValue(row, col, distribution(generator));
 }
 
-void dense_matrix::setRandomHessenbergMatrix(int minVal, int maxVal) {
+void dense_matrix::setRandomUpperTriangularMatrix(double minVal, double maxVal) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+
+    //Create a uniform distribution for random numbers between minVal and maxVal
+    uniform_real_distribution<double> distribution(minVal, maxVal);
+    for(int row = 0; row < this->rows; row++)
+        for(int col = 0; col < this->cols; col++)
+            if (row <= col)
+                this->setValue(row, col, distribution(generator));
+
+}
+
+void dense_matrix::setRandomMatrix(double minVal, double maxVal) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+
+    //Create a uniform distribution for random numbers between 0 and 1
+    std::uniform_real_distribution<double> distribution(minVal, maxVal);
     for(int i = 0; i < this->rows; i++) {
         for(int j = 0; j < this->cols; j++) {
-            if (j + 1 >= i) {
-                this->setValue(i, j, minVal + rand() % (maxVal - minVal + 1));
-            } else {
-                this->setValue(i, j, 0);
-            }
+            this->setValue(i, j, distribution(generator));
         }
     }
- }
+}
 
- //debugging purposes
-void dense_matrix::setRandomUpperTriangularMatrix(int minVal, int maxVal) {
-     int counter = 0;
+void dense_matrix::setRandomDiagonalMatrix(double minVal, double maxVal) {
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+
+    // Create a uniform distribution for random numbers between 0 and 1
+    std::uniform_real_distribution<double> distribution(minVal, maxVal);
     for(int i = 0; i < this->rows; i++) {
         for(int j = 0; j < this->cols; j++) {
             if(j == i)
-                this->setValue(i, j, counter++);
-            else if (j >= i) {
-                this->setValue(i, j, minVal + rand() % (maxVal - minVal + 1));
-            } else {
+                this->setValue(i, j, distribution(generator));
+            else
                 this->setValue(i, j, 0);
-            }
         }
     }
 }
@@ -64,22 +96,22 @@ double* dense_matrix::getDataPointer() {
 
 //insert column in matrix
 void dense_matrix::setCol(int col, dense_vector vec){
-    for(int i = 0; i < this->rows; i++)
-        this->values[col * this->rows + i] = vec.values[i];
+    for(int row = 0; row < this->rows; row++)
+        this->values[row * this->cols + col] = vec.values[row];
 }
 
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
-    this->values[col * this->rows + row] = val;
+    this->values[row * this->cols + col] = val;
 }
 
 void dense_matrix::setValues(vector<double> newVals) {
-    this->values = newVals;
+    this->values = std::move(newVals);
 }
 
 
 double dense_matrix::getValue(int row, int col){
-    return this->values[col * this->rows + row];
+    return this->values[row * this->cols + col];
 }
 
 vector<double> dense_matrix::getValues() {
@@ -87,56 +119,68 @@ vector<double> dense_matrix::getValues() {
 }
 
 //get specific column (as a dense_vector)
- dense_vector dense_matrix::getCol(int col){
-    dense_vector res(this->rows);
-    
-    res.setValues(vector<double>(this->values.begin() + col * this->rows, 
-                                this->values.begin() + (col + 1) * this->rows));
-    return res;
+dense_vector dense_matrix::getCol(int col){
+     dense_vector res(this->rows);
+
+     //row major order
+     res.setValues(vector<double>(this->values.begin() + col, this->values.begin() + this->rows * this->cols + col));
+     return res;
 }
 
 //get matrix norm2
-double dense_matrix::getNorm2() {
-    double res = 0;
-    for(int i = 0; i < this->cols; i++) {
-        for(int j = 0; j < this->rows; j++)
-            res += pow(this->values[i * this->rows + j], 2);
+long double dense_matrix::getNorm2() {
+     long double res = 0;
+     for(int i = 0; i < this->rows; i++) {
+         for(int j = 0; j < this->cols; j++)
+             res += pow(this->values[i * this->cols + j], 2);
     }
-    return sqrt(res);
+    return sqrtl(res);
 }
 
-void dense_matrix::printVals() {
-    for(int row = 0; row < this->rows; row++) {
-        cout << "Row " << row << ": ";
-        for(int col = 0; col < this->cols; col++) {
-            cout << this->values[col * this->rows + row] << " ";
+void dense_matrix::printVector() {
+        ofstream myFile;
+        myFile.open(folder+"new_vector.txt");
+        for(double value : this->values) {
+            myFile << std::setprecision (16) << value << endl;
         }
-        cout << endl;
+        myFile.close();
     }
-}
 
-void dense_matrix::printMatlab(const string& name) {
-    cout << name << " = [";
-    for(int row = 0; row < this->rows; row++) {
-        for(int col = 0; col < this->cols; col++) {
-            if(col != 0)
-                cout << ", ";
-            std::cout << std::setprecision (15) << this->values[col * this->rows + row];
+void dense_matrix::readVector() {
+    int count = 0;
+    ifstream inputFile(folder+"vector.txt");
+    if (inputFile) {
+        double value;
+        inputFile >> value;
+        this->rows = (int) value;
+        this->cols = (int) value;
+        this->values = vector<double>(this->rows * this->cols, 0);
+        while (inputFile >> value) {
+            this->values[count++] = value;
         }
-        if(row != this->rows - 1)
-            cout << "; ";
+        inputFile.close();
     }
-    cout << "];" << endl;
+    else {
+        cout << "Error opening file" << endl;
+    }
+
 }
 
-dense_matrix dense_matrix::mtxAbs(){
-    dense_matrix res(this->rows, this->cols);
-    #pragma omp parallel for
-        for(int i = 0; i < this->rows; i++)
-            for(int j = 0; j < this->cols; j++)
-                res.setValue(i, j, abs(this->values[j * this->rows + i]));
-
-        return res;
+void dense_matrix::printMatlabFile(const string& fileName) {
+    this->printVector();
+    ofstream myFile;
+    myFile.open("/mnt/c/Users/catar/Documents/MATLAB/tese/" + fileName);
+    if (myFile) {
+        for (int i = 0; i < this->rows; i++) {
+            for (int j = 0; j < this->cols; j++) {
+                myFile << scientific << std::setprecision(16) << this->values[i * this->cols + j] << ",";
+            }
+            myFile << endl;
+        }
+    }
+    else {
+        cout << "Error opening file" << endl;
+    }
 }
 
 //divide all elements of matrix by x
@@ -145,7 +189,7 @@ dense_matrix dense_matrix::operator/ (double x) {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
         for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, this->values[j * this->rows + i] / x);
+            res.setValue(i, j, this->values[i * this->cols + j] / x);
 
     return res;
 }
@@ -156,17 +200,17 @@ dense_matrix dense_matrix::operator* (double x) {
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
         for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, this->values[j * this->rows + i] * x);
+            res.setValue(i, j, this->values[i * this->cols + j] * x);
 
     return res;
 }
 
 //subtract all elements of matrix by x
-dense_matrix dense_matrix::operator- () {
+dense_matrix dense_matrix::operator- () const {
     dense_matrix res(this->rows, this->cols);
     #pragma omp parallel for
     for(int i = 0; i < this->rows; i++) 
-        for(int j = 0; j < this->cols; j++) 
-            res.setValue(i, j, -this->values[j * this->rows + i]);  
+        for(int j = 0; j < this->cols; j++)
+            res.setValue(i, j, -this->values[i * this->cols + j]);
     return res; 
 }

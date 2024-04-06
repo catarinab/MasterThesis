@@ -17,19 +17,18 @@ class dense_matrix {
 
     public:
 
-    dense_matrix(int rows, int cols) : rows(rows), cols(cols) {
-        srand((unsigned) time(nullptr));
-        this->values = vector<double>(rows * cols);
-    }
+    dense_matrix(int rows, int cols);
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = vector<double>(rows * cols);
+        this->values = vector<double>();
     }
 
     void setIdentity();
     void setOnesMatrix();
-    void setRandomHessenbergMatrix(int minVal, int maxVal);
-    void setRandomUpperTriangularMatrix(int minVal, int maxVal);
+    void setRandomHessenbergMatrix(double minVal, double maxVal);
+    void setRandomUpperTriangularMatrix(double minVal, double maxVal);
+    void setRandomMatrix(double minVal, double maxVal);
+    void setRandomDiagonalMatrix(double minVal, double maxVal);
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
     void setValues(vector<double> values);
@@ -38,18 +37,17 @@ class dense_matrix {
     vector<double> getValues();
     dense_vector getCol(int col);
     double* getDataPointer();
-    int getRowVal();
-    int getColVal();
-    double getNorm2();
+    [[nodiscard]] int getRowVal() const;
+    [[nodiscard]] int getColVal() const;
+    long double getNorm2();
 
-    dense_matrix mtxAbs();
-
-    void printVals();
-    void printMatlab(const std::string& name);
+    void printMatlabFile(const string& fileName);
+    void printVector();
+    void readVector();
 
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
-    dense_matrix operator- ();
+    dense_matrix operator- () const;
 };
 
 #endif
