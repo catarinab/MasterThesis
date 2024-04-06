@@ -13,7 +13,7 @@ using namespace Eigen;
 using namespace std;
 
 //build sparse matrix from matrix market file
-csr_matrix buildFullMtx(string input_file) {
+csr_matrix buildFullMtx(const string& input_file) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_full_mtx(input_file, &rows, &cols, &nz);
     csr_matrix csr(rows);
@@ -23,7 +23,7 @@ csr_matrix buildFullMtx(string input_file) {
     return csr;
 } 
 
-csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts) {
+csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
     csr_matrix csr(rows);
@@ -35,7 +35,7 @@ csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts
 
 
 
-void checkValues(int a, int b, string func) {
+void checkValues(int a, int b, const string& func) {
     if(a != b) {
         cout << "Error: " << func << ": a != b" << endl;
         cout << "a: " << a << endl;
