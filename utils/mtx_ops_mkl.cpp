@@ -1,12 +1,13 @@
 #include <iostream>
 #include <vector>
-#include <omp.h>
 #include <mkl.h>
 
 #include "headers/dense_vector.hpp"
 #include "headers/dense_matrix.hpp"
 #include "headers/io_ops.hpp"
 #include "headers/csr_matrix.hpp"
+#include "headers/mtx_ops_mkl.hpp"
+#include "headers/utils.hpp"
 
 using namespace std;
 
@@ -42,43 +43,6 @@ void checkValues(int a, int b, const string& func) {
 
 }
 
-lapack_complex_double lpck_z_sum(lapack_complex_double a, lapack_complex_double b) {
-    lapack_complex_double result;
-    result.real = a.real + b.real;
-    result.imag = a.imag + b.imag;
-    return result;
-}
-
-lapack_complex_double lpck_z_sub(lapack_complex_double a, lapack_complex_double b) {
-    lapack_complex_double result;
-    result.real = a.real - b.real;
-    result.imag = a.imag - b.imag;
-    return result;
-}
-
-lapack_complex_double lpck_z_mult(lapack_complex_double a, lapack_complex_double b) {
-    lapack_complex_double result;
-    result.real = a.real * b.real - a.imag * b.imag;
-    result.imag = a.real * b.imag + a.imag * b.real;
-    return result;
-}
-
-lapack_complex_double lpck_z_div(lapack_complex_double a, lapack_complex_double b) {
-    lapack_complex_double result;
-    double denominator = b.real * b.real + b.imag * b.imag;
-    result.real = (a.real * b.real + a.imag * b.imag) / denominator;
-    result.imag = (a.imag * b.real - a.real * b.imag) / denominator;
-    return result;
-}
-
-ostream& operator << (ostream &os, const lapack_complex_double &a) {
-    return (os << a.real << " + " << a.imag << "i ");
-}
-
-double lpck_abs(lapack_complex_double a) {
-    return sqrt(a.real * a.real + a.imag * a.imag);
-}
-
 
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(dense_matrix  A, dense_vector  b) {
@@ -97,16 +61,6 @@ dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B) {
             B.getDataPointer(), B.getColVal(),
             0.0, C.getDataPointer(), C.getRowVal());
     return C;
-}
-
-dense_matrix lapackeToDenseMatrix(lapack_complex_double * A, int rows, int cols) {
-    dense_matrix res(rows, cols);
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            res.setValue(i, j, A[i * cols + j].real);
-        }
-    }
-    return res;
 }
 
 dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {

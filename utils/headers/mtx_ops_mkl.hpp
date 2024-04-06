@@ -5,6 +5,7 @@
 #include "dense_vector.hpp"
 #include "dense_matrix.hpp"
 #include "csr_matrix.hpp"
+#include "utils.hpp"
 #include <mkl.h>
 
 using namespace std;
@@ -16,25 +17,11 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
 
 void checkValues(int a, int b, const string& func);
 
-lapack_complex_double lpck_z_sum(lapack_complex_double a, lapack_complex_double b);
-
-lapack_complex_double lpck_z_sub(lapack_complex_double a, lapack_complex_double b);
-
-lapack_complex_double lpck_z_mult(lapack_complex_double a, lapack_complex_double b);
-
-lapack_complex_double lpck_z_div(lapack_complex_double a, lapack_complex_double b);
-
-double lpck_abs(lapack_complex_double a);
-
-ostream& operator << (ostream &os, const lapack_complex_double &a);
-
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(dense_matrix A, dense_vector b);
 
 //multiply two dense matrices
 dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B);
-
-dense_matrix lapackeToDenseMatrix(lapack_complex_double * A, int rows, int cols);
 
 dense_matrix  denseMatrixAdd(dense_matrix A, dense_matrix b);
 
