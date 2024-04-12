@@ -12,15 +12,22 @@ using namespace std;
 //convert dense_matrix to Eigen MatrixXd
 MatrixXd convertDenseEigenMtx(dense_matrix A) {
     MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
-
-    return Map<MatrixXd>(A.getDataPointer(), A.getRowVal(), A.getColVal());
+    for(int i = 0; i < A.getRowVal(); i++) {
+        for(int j = 0; j < A.getColVal(); j++) {
+            eigenMtx(i, j) = A.getValue(i, j);
+        }
+    }
+    return eigenMtx;
 }
 
 //convert Eigen MatrixXd to dense_matrix
 dense_matrix convertEigenDenseMtx(MatrixXd A) {
     dense_matrix denseMtx(A.rows(), A.cols());
-
-    denseMtx.setValues(vector<double>(A.data(), A.data() + A.size()));
+    for(int i = 0; i < A.rows(); i++) {
+        for(int j = 0; j < A.cols(); j++) {
+            denseMtx.setValue(i, j, A(i, j));
+        }
+    }
     return denseMtx;
 
 }
@@ -38,7 +45,7 @@ dense_matrix solveEq(dense_matrix A, dense_matrix b) {
 
 
 //find suitable m value for pade approximation
-int findM(double norm, int theta , int * power) {
+int findM(double norm, double theta , int * power) {
     int m = 1; //2^0
     *power = 0; //2^0
 
@@ -106,7 +113,7 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
     }
     
 
-    vector<dense_matrix>::iterator ptr = powers->begin();
+    auto ptr = powers->begin();
 
     *ptr++ = identity;
     *ptr++ = resultingMatrix;
