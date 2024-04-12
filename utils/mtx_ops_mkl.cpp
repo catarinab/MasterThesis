@@ -47,19 +47,19 @@ void checkValues(int a, int b, const string& func) {
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(dense_matrix  A, dense_vector  b) {
     dense_vector m(A.getRowVal());
-    cblas_dgemv(CblasColMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0, 
-    A.getDataPointer(), A.getRowVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
+    A.getDataPointer(), A.getColVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
     return m;
 }
 
 //multiply two dense matrices
 dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B) {
     dense_matrix C(A.getRowVal(), B.getColVal());
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-            A.getRowVal(), B.getColVal(), A.getColVal(),
-            1.0, A.getDataPointer(), A.getRowVal(),
-            B.getDataPointer(), B.getColVal(),
-            0.0, C.getDataPointer(), C.getRowVal());
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+                A.getRowVal(), B.getColVal(), A.getColVal(), 1.0,
+                A.getDataPointer(), A.getColVal(), B.getDataPointer(), B.getColVal(), 0.0,
+                C.getDataPointer(), C.getColVal());
+
     return C;
 }
 
