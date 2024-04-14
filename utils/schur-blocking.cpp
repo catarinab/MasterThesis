@@ -4,7 +4,6 @@
 #include <numeric> // iota
 #include <complex>
 #include <cmath>
-#include <bits/stdc++.h>
 
 #include "../utils/headers/dense_matrix.hpp"
 #include "../utils/headers/schur-blocking.hpp"
@@ -273,8 +272,8 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
     //real schur form to complex schur form
     rsf2csf(A, U_real, T, U, size, &w);
 
-    printMatlabFileComplex("T-16-before.txt", size, *T);
-    printMatlabFileComplex("U-16-before.txt", size, *U);
+    /*printMatlabFileComplex("T-16-before.txt", size, *T);
+    printMatlabFileComplex("U-16-before.txt", size, *U);*/
 
     vector<int> clusters = blocking(size, w);
 

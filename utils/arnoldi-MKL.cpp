@@ -20,7 +20,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector initVec, int k_total, int
 
     V->setCol(0, std::move(initVec));
 
-    int k = 1;
+    int k;
 
     //auxiliar
     dense_vector opResult(m);

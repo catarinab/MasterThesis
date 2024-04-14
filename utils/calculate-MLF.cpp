@@ -19,7 +19,7 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
-string folderMLF(workFolder);
+string folderMLF("0-1/");
 
 void printMatrixFile(const string& fileName, const string& name, complex<double> * matrix, int size) {
     ofstream myFile;
@@ -314,7 +314,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     return nullptr;
 }
 
-double * calculate_MLF(double * A, double alpha, double beta, int size) {
+pair<double *, vector<vector<int>>> calculate_MLF(double * A, double alpha, double beta, int size) {
 
     auto * T = (complex<double> *) calloc(size * size, sizeof(complex<double>));
     auto * U = (complex<double> *) calloc(size * size, sizeof(complex<double>));
@@ -328,7 +328,7 @@ double * calculate_MLF(double * A, double alpha, double beta, int size) {
     /*printMatrixFile("T-16.txt", "T", T, size);
     printMatrixFile("U-16.txt", "U", U, size);*/
 
-    ofstream myFile;
+    /*ofstream myFile;
     myFile.open(folderMLF + "ind.txt");
     myFile << "ind = cell(" << ind.size() << ", 1);" << endl;
     for (size_t i = 0; i < ind.size(); ++i) {
@@ -341,17 +341,8 @@ double * calculate_MLF(double * A, double alpha, double beta, int size) {
         }
         myFile << "];" << endl;
     }
-    myFile.close();
-    for(int i = 2; i < size; i++){
-        int count = 0;
-        for(const auto & j : ind){
-            if(j.size() == i)
-                count++;
-        }
-        if(count > 0)
-            cout << count << " blocks of size " << i << ", ";
-    }
-    cout << endl;
+    myFile.close();*/
+
     /*for (const auto & i : ind) {
        cout << i.size() << endl;
     }*/
@@ -544,13 +535,13 @@ double * calculate_MLF(double * A, double alpha, double beta, int size) {
         }
     }
 
-    printMatrixFile("F-16.txt", "F", realResult, size);
+    /*printMatrixFile("F-16.txt", "F", realResult, size);*/
 
     free(temp);
     free(fA);
     free(U);
     free(T);
 
-    return realResult;
+    return make_pair(realResult, ind);
 }
 

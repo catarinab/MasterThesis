@@ -24,7 +24,6 @@ class dense_matrix {
     }
 
     void setIdentity();
-    void setOnesMatrix();
     void setRandomHessenbergMatrix(double minVal, double maxVal);
     void setRandomUpperTriangularMatrix(double minVal, double maxVal);
     void setRandomMatrix(double minVal, double maxVal);
@@ -42,8 +41,9 @@ class dense_matrix {
     long double getNorm2();
 
     void printMatlabFile(const string& fileName);
-    void printVector();
-    void readVector();
+    void printVector(const string& filename);
+    void readVector(const string& currFolder);
+    void printMatrix();
 
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);

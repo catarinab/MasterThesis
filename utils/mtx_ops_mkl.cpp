@@ -111,6 +111,7 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector  vec) {
 }
 
 //y = y + scalar*x
+//this function could be used to add or subtract vectors (only the vector x is multiplied by the scalar)
 dense_vector addVec(dense_vector y, dense_vector x, double scalar) {
     cblas_daxpy(x.size, scalar, x.values.data(), 1, y.values.data(), 1);
     return y;

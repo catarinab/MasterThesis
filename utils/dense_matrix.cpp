@@ -10,7 +10,7 @@
 #include "headers/dense_matrix.hpp"
 #include "headers/utils.hpp"
 
-string folder(workFolder);
+string folder("0-1");
 
 
 using namespace std;
@@ -119,12 +119,15 @@ vector<double> dense_matrix::getValues() {
 }
 
 //get specific column (as a dense_vector)
-dense_vector dense_matrix::getCol(int col){
-     dense_vector res(this->rows);
+dense_vector dense_matrix::getCol(int col) {
+    dense_vector res(this->rows);
 
-     //row major order
-     res.setValues(vector<double>(this->values.begin() + col, this->values.begin() + this->rows * this->cols + col));
-     return res;
+    // Row major order
+    for (int row = 0; row < this->rows; row++) {
+        res.setValue(row, this->values[row * this->cols + col]);
+    }
+
+    return res;
 }
 
 //get matrix norm2
@@ -137,18 +140,23 @@ long double dense_matrix::getNorm2() {
     return sqrtl(res);
 }
 
-void dense_matrix::printVector() {
+void dense_matrix::printVector(const string& filename) {
         ofstream myFile;
-        myFile.open(folder+"new_vector.txt");
+        myFile.open(filename);
+        if(!myFile.is_open()) {
+            cout << "Error opening file" << endl;
+            return;
+        }
+        myFile << this->rows << endl;
         for(double value : this->values) {
             myFile << std::setprecision (16) << value << endl;
         }
         myFile.close();
     }
 
-void dense_matrix::readVector() {
+void dense_matrix::readVector(const string& filename) {
     int count = 0;
-    ifstream inputFile(folder+"vector.txt");
+    ifstream inputFile(filename);
     if (inputFile) {
         double value;
         inputFile >> value;
@@ -167,7 +175,7 @@ void dense_matrix::readVector() {
 }
 
 void dense_matrix::printMatlabFile(const string& fileName) {
-    this->printVector();
+    this->printVector(folder+"vector.txt");
     ofstream myFile;
     myFile.open("/mnt/c/Users/catar/Documents/MATLAB/tese/" + fileName);
     if (myFile) {
@@ -213,4 +221,15 @@ dense_matrix dense_matrix::operator- () const {
         for(int j = 0; j < this->cols; j++)
             res.setValue(i, j, -this->values[i * this->cols + j]);
     return res; 
+}
+
+void dense_matrix::printMatrix() {
+    for(int i = 0; i < this->rows; i++) {
+        for(int j = 0; j < this->cols; j++) {
+            cout << this->values[i * this->cols + j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+
 }
