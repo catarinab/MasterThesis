@@ -51,7 +51,7 @@ hess:
 	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/io_ops.cpp -o io_ops.o
 	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/arnoldi-MKL.cpp -o arnoldiIteration-shared.o
+	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
 	$(C++) $(CFLAGS) $(DEBUG) -c ../utils/mmio.cpp -o mmio.o
 	$(C++) $(CFLAGS) $(DEBUG) -c generateHessenberg.cpp -o generateHessenberg.o
 	$(C++) $(CFLAGS) $(DEBUG) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o mtx_ops_mkl.o arnoldiIteration-shared.o generateHessenberg.o mmio.o -o $(TARGETHESS)
