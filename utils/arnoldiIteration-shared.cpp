@@ -30,11 +30,13 @@ int arnoldiIteration(const csr_matrix& A, dense_vector initVec, int k_total, int
 
         w = sparseMatrixVector(A, V->getCol(k-1));
         double dotProd = 0;
-        #pragma omp parallel shared(V, H, w, dotProd)
+        dense_vector b;
+        #pragma omp parallel shared(V, H, w, b, dotProd)
         {
         for(int j = 0; j < k; j++) {
 
-            dense_vector b = V->getCol(j);
+            #pragma omp single
+                b = V->getCol(j);
 
             //dotprod entre w e V->getCol(j)
             #pragma omp for simd reduction(+:dotProd)
@@ -47,13 +49,12 @@ int arnoldiIteration(const csr_matrix& A, dense_vector initVec, int k_total, int
                 double newVal = b.values[i] * dotProd;
                 w.insertValue(i, w.values[i] - newVal);
             }
-            
-            #pragma omp single
-                H->setValue(j, k-1, dotProd);
-            
-            dotProd = 0;
 
-            #pragma omp barrier
+            #pragma omp single
+            {
+                H->setValue(j, k - 1, dotProd);
+                dotProd = 0;
+            }
 
         }
         }

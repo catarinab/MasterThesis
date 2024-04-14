@@ -2,7 +2,7 @@
 #include <string>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
-#include "../utils/headers/arnoldi-MKL.hpp"
+#include "../utils/headers/arnoldiIteration-shared.hpp"
 #include "../utils/headers/mmio.h"
 
 using namespace std;
@@ -13,7 +13,7 @@ int main (int argc, char* argv[]) {
     int krylovDegree = stoi(argv[1]);
     cout << "krylov degree: " << krylovDegree << endl;
     string mtxPath;
-    mtxPath = "../mtx/10609-convect.mtx";
+    mtxPath = "103823.mtx";
 
     cout << mtxPath << endl;
 
