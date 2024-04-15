@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <omp.h>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/arnoldiIteration-shared.hpp"
@@ -10,6 +11,14 @@ using namespace std;
 
 int main (int argc, char* argv[]) {
     //input values
+
+    double exec_time;
+
+    if(argc != 2){
+        cerr << "Usage: " << argv[0] << " <krylov-degree>" << endl;
+        return 1;
+    }
+
     int krylovDegree = stoi(argv[1]);
     cout << "krylov degree: " << krylovDegree << endl;
     string mtxPath;
@@ -31,7 +40,13 @@ int main (int argc, char* argv[]) {
 
     cout << "starting arnoldi iteration..." << endl;
 
+    exec_time = -omp_get_wtime();
+
     arnoldiIteration(A, b, krylovDegree, size, &V, &H);
+
+    exec_time += omp_get_wtime();
+
+    printf("exec_time: %f\n", exec_time);
 
     /*cout << "Hessenberg matrix H: " << endl;
     H.printMatrix();*/

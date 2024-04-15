@@ -1,6 +1,7 @@
 #include <iostream>
 #include <omp.h>
 #include <cstring>
+#include <utility>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
@@ -14,7 +15,7 @@ double getApproximation(double normVal, dense_matrix V, dense_matrix expH, doubl
     auto unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
-    dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
+    dense_matrix op1 = denseMatrixMult(V*betaVal, std::move(expH));
     dense_vector res = denseMatrixVec(op1, unitVec);
     return vectorTwoNorm(res);
 }

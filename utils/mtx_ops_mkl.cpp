@@ -45,7 +45,7 @@ void checkValues(int a, int b, const string& func) {
 
 
 //multiply dense matrix and dense vector
-dense_vector denseMatrixVec(dense_matrix  A, dense_vector  b) {
+dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
     dense_vector m(A.getRowVal());
     cblas_dgemv(CblasRowMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
     A.getDataPointer(), A.getColVal(), b.values.data(), 1, 0.0, m.values.data(), 1);

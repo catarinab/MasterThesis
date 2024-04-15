@@ -2,6 +2,7 @@ mpi = mpiicpx
 C++ = g++
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
 CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
+CFLAGSEigen= -I ../eigen
 DEBUG = -g
 TARGET=MLF-distr
 TARGETSHARED=MLF-shared
@@ -56,6 +57,7 @@ hess:
 	$(C++) $(CFLAGS) $(DEBUG) -c generateHessenberg.cpp -o generateHessenberg.o
 	$(C++) $(CFLAGS) $(DEBUG) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o mtx_ops_mkl.o arnoldiIteration-shared.o generateHessenberg.o mmio.o -o $(TARGETHESS)
 	rm *.o
+
 
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"

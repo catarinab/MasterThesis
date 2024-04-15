@@ -18,19 +18,24 @@ int main (int argc, char* argv[]) {
     double matlabFro;
     double condNumber;
 
+    if(argc != 2){
+        cerr << "Usage: " << argv[0] << " <size>" << endl;
+        return 1;
+    }
+
     int size = stoi(argv[1]);
 
     string folder = string("krylov/"+to_string(size)+"/");
 
-    ofstream yup;
+    ofstream outputFile;
 
-    yup.open(folder+"/cpp.txt");
+    outputFile.open(folder + "/cpp.txt");
 
     dense_matrix A;
 
     A.readVector("krylov/"+to_string(size)+"-vector.txt");
 
-    yup << "Matrix with size " << size << endl;
+    outputFile << "Matrix with size " << size << endl;
 
     ifstream cond(folder + "cond.txt");
 
@@ -66,9 +71,9 @@ int main (int argc, char* argv[]) {
                 count++;
         }
         if(count > 0)
-            yup << count << " blocks of size " << i << ", ";
+            outputFile << count << " blocks of size " << i << ", ";
     }
-    yup << endl;
+    outputFile << endl;
 
     exec_time += omp_get_wtime();
 
@@ -80,21 +85,21 @@ int main (int argc, char* argv[]) {
 
     cout << "Fro Norm: "<< setprecision(16)  << froNorm << endl;
 
-    yup <<"numero de condicionamento: " << condNumber << endl;
-    yup << "norma Infinita c++: " << scientific << infNorm << endl;
-    yup << "norma Frobenius c++: " << scientific << froNorm << endl;
+    outputFile << "numero de condicionamento: " << condNumber << endl;
+    outputFile << "norma Infinita c++: " << scientific << infNorm << endl;
+    outputFile << "norma Frobenius c++: " << scientific << froNorm << endl;
 
     cerr << "Matlab Inf: " << matlabInf << endl;
 
     cerr << "Matlab Fro: " << matlabFro << endl;
 
-    yup << "erro frobenius: " << scientific << (abs(infNorm - matlabInf)/matlabInf)* 100 << "%" << endl;
+    outputFile << "erro frobenius: " << scientific << (abs(infNorm - matlabInf) / matlabInf) * 100 << "%" << endl;
 
-    yup << "erro inf: " << scientific << (abs(froNorm - matlabFro)/matlabFro)* 100 << "%" << endl << endl;
+    outputFile << "erro inf: " << scientific << (abs(froNorm - matlabFro) / matlabFro) * 100 << "%" << endl << endl;
 
     cout << "Execution time: " << exec_time << endl;
 
-    yup.close();
+    outputFile.close();
 
     free(B);
 

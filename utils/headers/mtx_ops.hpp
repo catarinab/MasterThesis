@@ -12,9 +12,9 @@ using namespace Eigen;
 using namespace std;
 
 //positive definite matrix !! (symmetric matrix whose every eigenvalue is positive.)
-csr_matrix buildFullMtx(string input_file);
+csr_matrix buildFullMtx(const string& input_file);
 
-csr_matrix buildPartMatrix(string input_file, int me, int * displs, int * counts);
+csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) ;
 
 void checkValues(int a, int b, string func);
 
