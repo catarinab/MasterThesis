@@ -11,7 +11,7 @@ using namespace std;
 
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(double normVal, dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
+double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
     auto unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
@@ -69,7 +69,7 @@ int main (int argc, char* argv[]) {
     exec_time_pade += omp_get_wtime();
 
 
-    double resNorm = getApproximation(normVal, V, expH, betaVal, krylovDegree);
+    double resNorm = getApproximation(V, expH, betaVal, krylovDegree);
 
 
     exec_time += omp_get_wtime();

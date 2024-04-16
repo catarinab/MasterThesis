@@ -1,8 +1,7 @@
-#include <iostream>
-#include <vector>
 #include <omp.h>
 #include <mpi.h>
-#include <string.h>
+#include <cstring>
+#include <utility>
 
 #include "../utils/headers/help_process.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
@@ -15,11 +14,11 @@ using namespace std;
 
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(double normVal, dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
+double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
     dense_vector unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
-    dense_matrix op1 = denseMatrixMult(V*betaVal, expH);
+    dense_matrix op1 = denseMatrixMult(V*betaVal, std::move(expH));
     dense_vector res = denseMatrixVec(op1, unitVec);
     return vectorTwoNorm(res);
 }
@@ -54,7 +53,7 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int size = getMtxSize(mtxPath);
+    int size = (int) getMtxSize(mtxPath);
     initGatherVars(size, nprocs);
 
     //initializations of needed matrix and vectors
@@ -82,7 +81,7 @@ int main (int argc, char* argv[]) {
         dense_matrix expH = padeApprox(H);
         exec_time_pade += omp_get_wtime();
 
-        double resNorm = getApproximation(normVal, V, expH, betaVal, krylovDegree);
+        double resNorm = getApproximation(V, expH, betaVal, krylovDegree);
 
         exec_time += omp_get_wtime();
 
