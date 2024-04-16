@@ -11,14 +11,16 @@ long long int csr_matrix::getNZ() const {
     return this->nz;
 }
 
+void csr_matrix::defineMKLSparseMatrix() {
+    this->pointerB = vector<long long int>(this->rowPtr.begin(), this->rowPtr.end() - 1);
+    this->pointerE = vector<long long int>(this->rowPtr.begin() + 1, this->rowPtr.end());
+
+    mkl_sparse_d_create_csr(&this->mklSparseMatrix, SPARSE_INDEX_BASE_ZERO, this->size, this->size, this->pointerB.data(),
+                            this->pointerE.data(), this->colIndex.data(), this->nzValues.data());
+}
+
+
 sparse_matrix_t csr_matrix::getMKLSparseMatrix() {
-    if(!this->mklDefined){
-
-        mkl_sparse_d_create_csr(&this->mklSparseMatrix, SPARSE_INDEX_BASE_ZERO, this->size, this->size, this->pointerB.data(),
-                                this->pointerE.data(), this->colIndex.data(), this->nzValues.data());
-
-        this->mklDefined = true;
-    }
     return this->mklSparseMatrix;
 }
 
@@ -38,8 +40,6 @@ void csr_matrix::insertRow(vector<SparseTriplet> row, int rowId) {
         }
     }
     this->rowPtr[rowId + 1] = this->nz;
-    this->pointerB = vector<long long int>(this->rowPtr.begin(), this->rowPtr.end() - 1);
-    this->pointerE = vector<long long int>(this->rowPtr.begin() + 1, this->rowPtr.end());
 }
 
 //get values from a single row

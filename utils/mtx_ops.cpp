@@ -1,14 +1,15 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
-
-#include <Eigen/Dense>
-using namespace Eigen;
+#include <mkl.h>
 
 #include "headers/dense_vector.hpp"
 #include "headers/dense_matrix.hpp"
 #include "headers/io_ops.hpp"
 #include "headers/csr_matrix.hpp"
+
+#include <Eigen/Dense>
+using namespace Eigen;
 
 using namespace std;
 
@@ -20,8 +21,9 @@ csr_matrix buildFullMtx(const string& input_file) {
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
+    csr.defineMKLSparseMatrix();
     return csr;
-} 
+}
 
 csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) {
     long long int rows, cols, nz;
@@ -30,8 +32,9 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
+    csr.defineMKLSparseMatrix();
     return csr;
-} 
+}
 
 
 

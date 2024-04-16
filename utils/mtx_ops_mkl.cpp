@@ -19,6 +19,7 @@ csr_matrix buildFullMtx(const string& input_file) {
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
+    csr.defineMKLSparseMatrix();
     return csr;
 }
 
@@ -26,9 +27,11 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
     csr_matrix csr(rows);
+    cout << nz << endl;
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
+    csr.defineMKLSparseMatrix();
     return csr;
 }
 

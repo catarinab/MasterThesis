@@ -23,7 +23,6 @@ private:
     vector<long long int> pointerE;
     sparse_matrix_t mklSparseMatrix;
     matrix_descr mklDescription = {SPARSE_MATRIX_TYPE_GENERAL, SPARSE_FILL_MODE_FULL, SPARSE_DIAG_NON_UNIT};
-    bool mklDefined = false;
 
 public:
     inline explicit csr_matrix(long long int size) : size(size), nz(0), rowPtr(vector<long long int>(size + 1)) {}
@@ -33,7 +32,7 @@ public:
     vector<SparseTriplet> getRow(int row);
     void printAttr();
 
-
+    void defineMKLSparseMatrix();
     sparse_matrix_t getMKLSparseMatrix();
     matrix_descr getMKLDescription();
 };
