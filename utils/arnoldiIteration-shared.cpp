@@ -1,5 +1,4 @@
 #include "headers/arnoldiIteration-shared.hpp"
-#include "headers/mtx_ops_mkl.hpp"
 
 #include <utility>
 
@@ -25,7 +24,15 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
         cout << stat << endl;
         cerr << "Error in mkl_sparse_set_mv_hint" << endl;
         return 1;
-    }*/
+    }
+
+     stat = mkl_sparse_optimize(A.getMKLSparseMatrix());
+
+    if (stat != SPARSE_STATUS_SUCCESS) {
+        cerr << "Error in mkl_sparse_optimize" << endl;
+        return 1;
+    }
+     */
 
     V->setCol(0, std::move(initVec));
 
@@ -37,7 +44,10 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
 
     for(k = 1; k < k_total + 1; k++) {
 
-        w = sparseMatrixVector(A, V->getCol(k-1));
+        // w = A*V->getCol(k-1)
+        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                        V->getCol(k-1).values.data(), 0.0, w.values.data());
+
         double dotProd;
         dense_vector b;
         #pragma omp parallel shared(V, H, w, b, dotProd)

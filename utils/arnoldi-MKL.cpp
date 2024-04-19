@@ -25,6 +25,13 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
         return 1;
     }
 
+    stat = mkl_sparse_optimize(A.getMKLSparseMatrix());
+
+    if (stat != SPARSE_STATUS_SUCCESS) {
+        cerr << "Error in mkl_sparse_optimize" << endl;
+        return 1;
+    }
+
     V->setCol(0, std::move(initVec));
 
     int k;
@@ -37,11 +44,11 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
 
         w = sparseMatrixVector(A, V->getCol(k-1));
         for(int j = 0; j < k; j++) {
-            dense_vector b = V->getCol(j);
-            double dotProd = dotProduct(w, b);
+            dense_vector Vj = V->getCol(j);
+            double dotProd = dotProduct(w, Vj);
 
-            w = addVec(w, b, -dotProd);
-            
+            w = addVec(w, Vj, -dotProd);
+
             H->setValue(j, k-1, dotProd);
         }
 
