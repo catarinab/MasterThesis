@@ -24,7 +24,7 @@ int main (int argc, char* argv[]) {
     cout << "krylov degree: " << initKrylovDegree << endl;
     cout << "endKrylovDegree" << endKrylovDegree << endl;
     string mtxPath;
-    mtxPath = "10000.mtx";
+    mtxPath = "A.mtx";
 
     cout << mtxPath << endl;
 
@@ -46,6 +46,13 @@ int main (int argc, char* argv[]) {
     if (stat != SPARSE_STATUS_SUCCESS) {
         cout << stat << endl;
         cerr << "Error in mkl_sparse_set_mv_hint" << endl;
+        return 1;
+    }
+
+    stat = mkl_sparse_optimize(A.getMKLSparseMatrix());
+
+    if (stat != SPARSE_STATUS_SUCCESS) {
+        cerr << "Error in mkl_sparse_optimize" << endl;
         return 1;
     }
 
@@ -83,12 +90,12 @@ int main (int argc, char* argv[]) {
         mm_write_mtx_crd_size(mtxmkt, krylovDegree, krylovDegree, nz);
 
 
-        /* NOTE: matrix market files use 1-based indices, i.e. first element
-          of a vector has index 1, not 0. */
+         /*NOTE: matrix market files use 1-based indices, i.e. first element
+          of a vector has index 1, not 0.*/
 
         for (int row = 0; row < krylovDegree; row++) {
             for (int col = 0; col < krylovDegree; col++) {
-                if (row <= col + 1) { ;
+                if (row <= col + 1) {
                     fprintf(mtxmkt, "%d %d %.16e\n", row + 1, col + 1, H.getValue(row, col));
                 }
             }
