@@ -5,10 +5,16 @@
 #include <complex>
 #include <functional>
 #include <bits/stdc++.h>
+#include <omp.h>
 
 #include "headers/utils.hpp"
 #include "headers/Evaluate-Single-ML.hpp"
 #include "mkl.h"
+
+/*
+ * Algorithm based on the paper "Computing the matrix Mittag–Leffler function with applications to fractional calculus"
+by Roberto Garrappa and Marina Popolizio
+ */
 
 
 int maxJArgs;
@@ -395,6 +401,7 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k) {
         c[kk][kk] = 1;
     }
 
+    //#pragma omp parallel for reduction(+:result) schedule(guided) if (k > 1)
     for (int j = 0; j <= k - p; j++) {
         if (abs(c[k - p][j]) > tau) {
             result += c[k - p][j] * calculateLTI(lambda, alpha, (k - p) * alpha + beta - j, p);
