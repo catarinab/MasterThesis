@@ -1,7 +1,7 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O2
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O2
 DEBUG = -g
 CFLAGSEigen= -I ../eigen
 TARGET=exp
@@ -22,7 +22,7 @@ distr:
 	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/arnoldiIteration.cpp -o arnoldiIteration.o
-	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
+	$(mpi) $(CFLAGSDISTR)  $(CFLAGSEigen) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
 	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/help_process.cpp -o help_process.o
 	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
 	$(mpi) $(CFLAGSDISTR) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
