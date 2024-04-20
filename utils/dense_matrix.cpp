@@ -131,13 +131,13 @@ dense_vector dense_matrix::getCol(int col) {
 }
 
 //get matrix norm2
-long double dense_matrix::getNorm2() {
-     long double res = 0;
+double dense_matrix::getNorm2() {
+    double res = 0;
      for(int i = 0; i < this->rows; i++) {
          for(int j = 0; j < this->cols; j++)
              res += pow(this->values[i * this->cols + j], 2);
     }
-    return sqrtl(res);
+    return sqrt(res);
 }
 
 void dense_matrix::printVector(const string& filename) {

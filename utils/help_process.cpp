@@ -1,4 +1,5 @@
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <omp.h>
 #include <mpi.h>
@@ -14,7 +15,7 @@ After the function is executed, the result is sent back to the root node.
 */
 void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
     double dotProd = 0;
-    int temp = 0;
+    double temp = 0;
     double scalar = 0;
     
     dense_vector auxBuf(0);
@@ -34,7 +35,7 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
     
     switch(func) {
         case MV:
-            auxBuf2 = sparseMatrixVector(A, auxBuf);
+            auxBuf2 = sparseMatrixVector(std::move(A), auxBuf);
             MPI_Gatherv(&auxBuf2.values[0], counts[me], MPI_DOUBLE, &auxBuf2.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
             break;
 
