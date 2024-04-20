@@ -38,7 +38,7 @@ class dense_matrix {
     double* getDataPointer();
     [[nodiscard]] int getRowVal() const;
     [[nodiscard]] int getColVal() const;
-    long double getNorm2();
+    double getNorm2();
 
     void printMatlabFile(const string& fileName);
     void printVector(const string& filename);

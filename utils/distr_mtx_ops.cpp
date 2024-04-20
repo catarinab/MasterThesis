@@ -52,7 +52,7 @@ void sendVectors(dense_vector a, dense_vector b, int func, int size) {
 }
 
 //distribute dot product through all nodes
-double distrDotProduct(dense_vector a, dense_vector b, int size, int me, int nprocs) {
+double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me, int nprocs) {
     double dotProd = 0;
 
     sendVectors(a, b, VV, size);
