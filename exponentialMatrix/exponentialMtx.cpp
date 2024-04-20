@@ -18,7 +18,10 @@ double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int k
     dense_vector unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
-    dense_matrix op1 = denseMatrixMult(V*betaVal, std::move(expH));
+    if(betaVal != 1)
+        V = V * betaVal;
+
+    dense_matrix op1 = denseMatrixMult(V, std::move(expH));
     dense_vector res = denseMatrixVec(op1, unitVec);
     return vectorTwoNorm(res);
 }
@@ -53,7 +56,7 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int size = (int) getMtxSize(mtxPath);
+    int size = (int) readHeader(mtxPath).first;
     initGatherVars(size, nprocs);
 
     //initializations of needed matrix and vectors
@@ -62,19 +65,16 @@ int main (int argc, char* argv[]) {
     dense_vector b(size);
     b.getOnesVec();
     b = b / b.getNorm2();
-    //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
-
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
     arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
-
     //root node performs pade approximation and outputs results
     if(me == 0) {
         exec_time_pade = -omp_get_wtime();

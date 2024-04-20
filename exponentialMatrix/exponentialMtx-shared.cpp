@@ -15,6 +15,9 @@ double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int k
     auto unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
+    if(betaVal != 1)
+        V = V * betaVal;
+
     dense_matrix op1 = denseMatrixMult(V*betaVal, std::move(expH));
     dense_vector res = denseMatrixVec(op1, unitVec);
     return vectorTwoNorm(res);
