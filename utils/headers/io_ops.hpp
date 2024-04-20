@@ -6,8 +6,8 @@
 #include "utils.hpp"
 using namespace std;
 
-long long int getMtxSize(const string& inputFile);
+pair<double, double> readHeader(string& inputFile);
 vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long long int *rows, long long int *cols, long long int *nz);
 vector<vector<SparseTriplet>> readFile_part_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz,
-                                                int * displs, int * counts, int me);
+                                                const int * displs, const int * counts, int me);
 #endif // IO_OPS_HPP

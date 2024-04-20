@@ -2,8 +2,10 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <omp.h>
+#include <cstring>
 
-#include "headers/io_ops.hpp" 
+#include "headers/io_ops.hpp"
 
 /*
     Read Matrix Market file and return a vector of SparseTriplets
@@ -12,14 +14,13 @@
 
 using namespace std;
 
-double values[3];
+static constexpr int io_buffer_size = 1 << 20;
 
-vector<vector<SparseTriplet>> rowValues;
-
-long long int getMtxSize(const string& inputFile) {
-    ifstream file(inputFile);
+pair<double, double> readHeader(string& inputFile) {
+    double values[3];
     string line;
-    
+    ifstream file(inputFile);
+
     while (getline(file, line)) {
         if(line[0] == '%') continue;
         stringstream ss(line);
@@ -28,77 +29,140 @@ long long int getMtxSize(const string& inputFile) {
             value = stod(line);
         }
         break;
-    } 
-
+    }
     file.close();
-    return (long long int) values[0];
+    return make_pair(values[0], values[2]);
+
 }
 
-vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz) {
-    ifstream file(inputFile);
+pair<double, double> readHeader(ifstream& file) {
+    double values[3];
     string line;
-    bool isDefined = false;
+
     while (getline(file, line)) {
         if(line[0] == '%') continue;
         stringstream ss(line);
-        if(!isDefined) {
-            for(double & value : values) {
-                getline(ss, line, ' ');
-                value = stod(line);
-            }
-            *rows = (long long int) values[0];
-            *cols = (long long int) values[1];
-            *nz = (long long int) values[2];
-            rowValues.resize(*rows);
-            isDefined = true;
+        for(double & value : values) {
+            getline(ss, line, ' ');
+            value = stod(line);
         }
-        else {
-            for(double & value : values) {
-                getline(ss, line, ' ');
-                value = stod(line);
-            }
-            rowValues[(long long int) values[0] - 1]
-                .emplace_back( (long long int) values[0] - 1, (long long int) values[1] - 1, values[2]);
-        }
-    } 
+        break;
+    }
+    return make_pair(values[0], values[2]);
+}
 
+vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long long int * rows, long long int * cols,
+                                                long long int * nz) {
+    ifstream file(inputFile);
+    vector<vector<SparseTriplet>> rowValues;
+    pair<double, double> header = readHeader(file);
+    *rows = (long long int) header.first;
+    *cols = (long long int) header.first;
+    *nz = (long long int) header.second;
+    rowValues.resize(*rows);
+
+    string line;
+
+    std::vector<char> input(io_buffer_size, '\0');
+
+    while (file)
+    {
+        char* ptr = input.data();
+
+        file.read(ptr, io_buffer_size);
+
+        if (file.gcount() > 0)
+        {
+            input.resize(file.gcount());
+
+            // Find the end of the last complete line
+            char* last = file ? std::strrchr(ptr, '\n') : &input.back();
+            int backtrace = last - &input.back();
+
+            // If the last line is truncated, rewind file pointer
+            // to the beginning of this line, so it can be read again
+            // in the next block.
+            if (backtrace < 0)
+            {
+                file.seekg(backtrace, file.cur);
+                std::fill(last + 1, &input.back(), '\0');
+            }
+
+            // Parse each line and then add to the array;
+            while (ptr < last)
+            {
+
+                long row = strtol(ptr, &ptr, 10) - 1;
+                long col = strtol(ptr, &ptr, 10) - 1;
+                double value = strtod(ptr, &ptr);
+
+                ++ptr;
+
+                SparseTriplet triplet(row, col, value);
+
+                rowValues[row].push_back(triplet);
+            }
+        }
+    }
     file.close();
     return rowValues;
 }
 
 
 vector<vector<SparseTriplet>> readFile_part_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz,
-                                                int * displs, int * counts, int me) {
+                                                const int * displs, const int * counts, int me) {
     ifstream file(inputFile);
+    vector<vector<SparseTriplet>> rowValues;
+    pair<double, double> header = readHeader(file);
+    *rows = (long long int) header.first;
+    *cols = (long long int) header.first;
+    *nz = (long long int) header.second;
+    rowValues.resize(counts[me]);
+
     string line;
-    bool isDefined = false;
-    while (getline(file, line)) {
-        if(line[0] == '%') continue;
-        stringstream ss(line);
-        if(!isDefined) {
-            for(double & value : values) {
-                getline(ss, line, ' ');
-                value = stod(line);
+
+    std::vector<char> input(io_buffer_size, '\0');
+
+    while (file)
+    {
+        char* ptr = input.data();
+
+        file.read(ptr, io_buffer_size);
+
+        if (file.gcount() > 0)
+        {
+            input.resize(file.gcount());
+
+            // Find the end of the last complete line
+            char* last = file ? std::strrchr(ptr, '\n') : &input.back();
+            int backtrace = last - &input.back();
+
+            // If the last line is truncated, rewind file pointer
+            // to the beginning of this line, so it can be read again
+            // in the next block.
+            if (backtrace < 0)
+            {
+                file.seekg(backtrace, file.cur);
+                std::fill(last + 1, &input.back(), '\0');
             }
-            *rows = (long long int) values[0];
-            *cols = (long long int) values[1];
-            *nz = (long long int) values[2];
-            rowValues.resize(counts[me]);
-            isDefined = true;
+
+            // Parse each line and then add to the array;
+            while (ptr < last)
+            {
+                long row = strtol(ptr, &ptr, 10) - 1;
+                long col = strtol(ptr, &ptr, 10) - 1;
+                double value = strtod(ptr, &ptr);
+
+                if((int) row >= displs[me] && (int) row < displs[me] + counts[me]) {
+                    SparseTriplet triplet(row, col, value);
+
+                    rowValues[row - displs[me]].push_back(triplet);
+                }
+
+                ++ptr;
+            }
         }
-        else {
-            for(double & value : values) {
-                getline(ss, line, ' ');
-                value = stod(line);
-            }
-            if((int) values[0] - 1 >= displs[me] && (long long int) values[0] - 1 < displs[me] + counts[me]) {
-                rowValues[(long long int) values[0] - 1 - displs[me]]
-                        .emplace_back( (long long int) values[0] - 1, (long long int) values[1] - 1, values[2]);
-            }
-               
-        }
-    } 
-    
+    }
     file.close();
     return rowValues;
 }
