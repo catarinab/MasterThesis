@@ -26,8 +26,7 @@ csr_matrix buildFullMtx(const string& input_file) {
 csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
-    csr_matrix csr(rows);
-    cout << nz << endl;
+    csr_matrix csr(counts[me]);
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
@@ -104,7 +103,7 @@ dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector  vec) {
+dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec) {
     dense_vector res(vec.getSize());
 
     mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, matrix.getMKLSparseMatrix(), matrix.getMKLDescription(),
