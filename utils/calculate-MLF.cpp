@@ -527,7 +527,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     exec_time += omp_get_wtime();
 
-    cout << "Execution time: " << exec_time << endl;
+    /*cout << "Execution time: " << exec_time << endl;*/
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 

@@ -18,6 +18,9 @@ int main (int argc, char* argv[]) {
     double matlabFro;
     double condNumber;
 
+    omp_set_dynamic(1);
+    omp_set_nested(1);
+
     if(argc != 2){
         cerr << "Usage: " << argv[0] << " <size>" << endl;
         return 1;
