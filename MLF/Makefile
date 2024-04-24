@@ -1,9 +1,10 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -O2
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include"
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O2
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O2
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
+CFLAGSCubature= -I ../cubature
 DEBUG = -g
 TARGET=MLF-distr
 TARGETSHARED=MLF-shared
@@ -11,7 +12,7 @@ TARGETTEST=test.out
 TARGETFRACSHARED=Frac-shared.out
 TARGETTESTEigen=testEigen.out
 TARGETHESS=hess.out
-LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_tbb_thread -lmkl_core -lgomp -lpthread -lm -ldl -ltbb
 GREEN=\033[0;32m
 RED=\033[0;31m
 YELLOW=\033[0;33m
@@ -41,10 +42,11 @@ frac:
 	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
 	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
 	$(C++) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
-	$(C++) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/Frac-Utils.cpp -o Frac-Utils.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) $(CFLAGSAutoDiff) -c FractionalKrylov.cpp -o FractionalKrylov.o
-	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o mtx_ops_mkl.o arnoldiIteration-shared.o Frac-Utils.o FractionalKrylov.o -o $(TARGETFRACSHARED)
+	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o
+	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
+	$(C++) $(CFLAGSCubature) $(CFLAGS) $(LINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
 	rm *.o
 
 testEigen:

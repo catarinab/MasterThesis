@@ -33,15 +33,15 @@ distr:
 
 shared:
 	@echo "$(GREEN)Making shared memory version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) $(CFLAGSEigen) -c exponentialMtx-shared.cpp -o exp-mtx.o
-	$(C++) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGETSHARED)
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSEigen) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSEigen) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSEigen) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSEigen) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSEigen) -c exponentialMtx-shared.cpp -o exp-mtx.o
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGETSHARED)
 	rm *.o
 
 clean:
