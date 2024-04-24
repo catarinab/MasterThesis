@@ -13,6 +13,8 @@
 
 #define PI 3.141592653589793238466
 
+#include <complex>
+
 #define workFolder "compan/1/"
 
 struct SparseTriplet {
@@ -22,6 +24,8 @@ struct SparseTriplet {
     SparseTriplet(long long int row, long long int col, double value) : row(row), col(col), value(value) {}
     SparseTriplet() : row(0), col(0), value(0) {}
 };
+
+#pragma omp declare	reduction(+ : std::complex<double> : omp_out += omp_in ) initializer( omp_priv = omp_orig )
 
 
 inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {

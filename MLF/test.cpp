@@ -25,7 +25,7 @@ int main (int argc, char* argv[]) {
 
     int size = stoi(argv[1]);
 
-    string folder = string("krylov/"+to_string(size)+"/");
+    string folder = string("krylov-784/"+to_string(size)+"/");
 
     ofstream outputFile;
 
@@ -33,7 +33,7 @@ int main (int argc, char* argv[]) {
 
     dense_matrix A;
 
-    A.readVector("krylov/"+to_string(size)+"-vector.txt");
+    A.readVector("krylov-784/"+to_string(size)+"-vector.txt");
 
     outputFile << "Matrix with size " << size << endl;
 
@@ -57,11 +57,9 @@ int main (int argc, char* argv[]) {
 
     double exec_time;
 
-    exec_time = -omp_get_wtime();
+    dense_matrix B = calculate_MLF((double *) A.getDataPointer(), alpha, beta, size);
 
-    pair <double *, vector<vector<int>>> res = calculate_MLF(A.getDataPointer(), alpha, beta, size);
-
-    double * B = res.first;
+    /*double * B = res.first;
     vector<vector<int>> ind = res.second;
 
     for(int i = 2; i < size; i++){
@@ -73,35 +71,31 @@ int main (int argc, char* argv[]) {
         if(count > 0)
             outputFile << count << " blocks of size " << i << ", ";
     }
-    outputFile << endl;
+    outputFile << endl;*/
 
-    exec_time += omp_get_wtime();
 
-    double infNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'I', size, size, B, size);
 
-    cout << "Inf Norm: " << infNorm << setprecision(16) << endl;
+    double infNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'I', size, size, B.getDataPointer(), size);
 
-    double froNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'F', size, size, B, size);
+    /*cerr << "Inf Norm: " << infNorm << setprecision(16) << endl;*/
 
-    cout << "Fro Norm: "<< setprecision(16)  << froNorm << endl;
+    double froNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'F', size, size, B.getDataPointer(), size);
+
+    /*cerr << "Fro Norm: "<< setprecision(16)  << froNorm << endl;*/
 
     outputFile << "numero de condicionamento: " << condNumber << endl;
     outputFile << "norma Infinita c++: " << scientific << infNorm << endl;
     outputFile << "norma Frobenius c++: " << scientific << froNorm << endl;
 
-    cerr << "Matlab Inf: " << matlabInf << endl;
+    /*cerr << "Matlab Inf: " << matlabInf << endl;
 
-    cerr << "Matlab Fro: " << matlabFro << endl;
+    cerr << "Matlab Fro: " << matlabFro << endl;*/
 
     outputFile << "erro frobenius: " << scientific << (abs(infNorm - matlabInf) / matlabInf) * 100 << "%" << endl;
 
     outputFile << "erro inf: " << scientific << (abs(froNorm - matlabFro) / matlabFro) * 100 << "%" << endl << endl;
 
-    cout << "Execution time: " << exec_time << endl;
-
     outputFile.close();
-
-    free(B);
 
     return 0;
 }
