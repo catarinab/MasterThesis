@@ -1,5 +1,4 @@
 #include <iostream>
-#include <utility>
 #include <mpi.h>
 
 #include "headers/distr_mtx_ops.hpp"
@@ -52,14 +51,14 @@ void sendVectors(dense_vector a, dense_vector b, int func, int size) {
 }
 
 //distribute dot product through all nodes
-double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me, int nprocs) {
+double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me) {
     double dotProd = 0;
 
     sendVectors(a, b, VV, size);
 
     a.size = counts[0];
 
-    double temp = dotProduct(a, b);
+    double temp = dotProduct(a, b, counts[me]);
 
     MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
 
@@ -70,7 +69,7 @@ double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me, 
 }
 
 //distribute sum between vectors through all nodes
-dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, int size, int me, int nprocs) {
+dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, int size, int me) {
     dense_vector finalRes(size); 
 
     sendVectors(a, b, ADD, size);
@@ -79,7 +78,7 @@ dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, in
 
     a.size = counts[0];
 
-    dense_vector res = addVec(a, b, scalar);
+    dense_vector res = addVec(a, b, scalar, counts[me]);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
@@ -89,13 +88,13 @@ dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, in
 }
 
 //distribute matrix-vector multiplication through all nodes
-dense_vector distrMatrixVec(csr_matrix A, const dense_vector& vec, int size, int me, int nprocs) {
+dense_vector distrMatrixVec(const csr_matrix& A, const dense_vector& vec, int size) {
     
     dense_vector finalRes(size);
 
     sendVectors(vec, dense_vector(0), MV, size);
 
-    dense_vector res = sparseMatrixVector(std::move(A), vec);
+    dense_vector res = sparseMatrixVector(A, vec);
 
     MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
