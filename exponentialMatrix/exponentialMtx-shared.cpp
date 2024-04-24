@@ -11,16 +11,12 @@ using namespace std;
 
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
-    auto unitVec = dense_vector(krylovDegree);
-    unitVec.insertValue(0, 1);
+double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal) {
 
     if(betaVal != 1)
         V = V * betaVal;
 
-    dense_matrix op1 = denseMatrixMult(V*betaVal, std::move(expH));
-    dense_vector res = denseMatrixVec(op1, unitVec);
-    return vectorTwoNorm(res);
+    return vectorTwoNorm(denseMatrixMult(V, expH).getCol(0));
 }
 
 //Process input arguments
@@ -50,7 +46,7 @@ int main (int argc, char* argv[]) {
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
-    int size = A.getSize();
+    int size = (int) A.getSize();
 
     dense_vector b(size);
     b.getOnesVec();
@@ -63,17 +59,15 @@ int main (int argc, char* argv[]) {
 
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, &V, &H);
+    arnoldiIteration(A, b, krylovDegree, size, &V, &H, 1);
     exec_time_arnoldi += omp_get_wtime();
 
-    //root node performs pade approximation and outputs results
+
     exec_time_pade = -omp_get_wtime();
     dense_matrix expH = padeApprox(H);
     exec_time_pade += omp_get_wtime();
 
-
-    double resNorm = getApproximation(V, expH, betaVal, krylovDegree);
-
+    double resNorm = getApproximation(V, expH, betaVal);
 
     exec_time += omp_get_wtime();
 

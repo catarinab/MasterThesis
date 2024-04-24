@@ -18,8 +18,8 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, int me, int nprocs, dense_matrix * V,
-                     dense_matrix * H) {
+int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_total, int m, int me, int nprocs, dense_matrix * V,
+                     dense_matrix * H, int nu) {
 
 
 
@@ -47,10 +47,10 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, int
 
         if(func == ENDTAG) return 0;
         else if(func > 0)
-            helpProcess(A, me, m, func, nprocs, displs, counts);
+            helpProcess(A, me, m, func, displs, counts);
     }
 
-    V->setCol(0, std::move(initVec));
+    V->setCol(0, initVec);
 
     int k;
 
@@ -59,13 +59,16 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, int
     dense_vector w(m);
 
     for(k = 1; k < k_total + 1; k++) {
-        w = distrMatrixVec(A, V->getCol(k-1), m, me, nprocs);
+
+        w = V->getCol(k-1);
+        for(int mult = 0; mult < nu; mult ++)
+            w = distrMatrixVec(A, w, m);
 
         for(int j = 0; j < k; j++) {
             dense_vector b = V->getCol(j);
-            double dotProd = distrDotProduct(w, b, m, me, nprocs);
+            double dotProd = distrDotProduct(w, b, m, me);
 
-            w = distrSumOp(w, b, -dotProd, m, me, nprocs);
+            w = distrSumOp(w, b, -dotProd, m, me);
 
             H->setValue(j, k-1, dotProd);            
         }

@@ -20,11 +20,11 @@ void csr_matrix::defineMKLSparseMatrix() {
 }
 
 
-sparse_matrix_t csr_matrix::getMKLSparseMatrix() {
+sparse_matrix_t csr_matrix::getMKLSparseMatrix() const{
     return this->mklSparseMatrix;
 }
 
-matrix_descr csr_matrix::getMKLDescription() {
+matrix_descr csr_matrix::getMKLDescription() const {
     return this->mklDescription;
 }
 

@@ -90,7 +90,7 @@ void dense_matrix::setRandomDiagonalMatrix(double minVal, double maxVal) {
 }
 
 
-double* dense_matrix::getDataPointer() {
+const double* dense_matrix::getDataPointer() const {
         return this->values.data();
 }
 
@@ -110,7 +110,7 @@ void dense_matrix::setValues(vector<double> newVals) {
 }
 
 
-double dense_matrix::getValue(int row, int col){
+double dense_matrix::getValue(int row, int col) const{
     return this->values[row * this->cols + col];
 }
 

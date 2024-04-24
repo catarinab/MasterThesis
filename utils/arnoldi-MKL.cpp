@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "headers/arnoldi-MKL.hpp"
 #include "headers/mtx_ops_mkl.hpp"
 
@@ -15,10 +13,11 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, dense_matrix * V, dense_matrix * H) {
+int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_total, int m, dense_matrix * V,
+                     dense_matrix * H, int nu){
 
     int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
-                                      k_total);
+                                      k_total*nu);
 
     if (stat != SPARSE_STATUS_SUCCESS) {
         cerr << "Error in mkl_sparse_set_mv_hint" << endl;
@@ -32,7 +31,7 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
         return 1;
     }
 
-    V->setCol(0, std::move(initVec));
+    V->setCol(0, initVec);
 
     int k;
 
@@ -42,12 +41,15 @@ int arnoldiIteration(csr_matrix A, dense_vector initVec, int k_total, int m, den
 
     for(k = 1; k < k_total + 1; k++) {
 
-        w = sparseMatrixVector(A, V->getCol(k-1));
+        w = V->getCol(k-1);
+        for(int mult = 0; mult < nu; mult++)
+            w = sparseMatrixVector(A, w);
+
         for(int j = 0; j < k; j++) {
             dense_vector Vj = V->getCol(j);
-            double dotProd = dotProduct(w, Vj);
+            double dotProd = dotProduct(w, Vj, m);
 
-            w = addVec(w, Vj, -dotProd);
+            w = addVec(w, Vj, -dotProd, m);
 
             H->setValue(j, k-1, dotProd);
         }

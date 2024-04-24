@@ -6,6 +6,7 @@
 #include "dense_vector.hpp"
 
 
-int arnoldiIteration(csr_matrix A, dense_vector b, int k_total, int m, dense_matrix * V, dense_matrix * H);
+int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_total, int m, dense_matrix * V,
+                     dense_matrix * H, int nu);
 
 #endif // ARNOLDI_MKL_HPP

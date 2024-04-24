@@ -33,8 +33,8 @@ public:
     void printAttr();
 
     void defineMKLSparseMatrix();
-    sparse_matrix_t getMKLSparseMatrix();
-    matrix_descr getMKLDescription();
+    [[nodiscard]] sparse_matrix_t getMKLSparseMatrix() const;
+    [[nodiscard]] matrix_descr getMKLDescription() const;
 };
 
 #endif // CSR_MATRIX_HPP

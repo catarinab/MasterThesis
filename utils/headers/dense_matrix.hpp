@@ -32,10 +32,10 @@ class dense_matrix {
     void setValue(int row, int col, double val);
     void setValues(vector<double> values);
 
-    double getValue(int row, int col);
+    double getValue(int row, int col) const;
     vector<double> getValues();
     dense_vector getCol(int col);
-    double* getDataPointer();
+    [[nodiscard]] const double* getDataPointer() const;
     [[nodiscard]] int getRowVal() const;
     [[nodiscard]] int getColVal() const;
     double getNorm2();

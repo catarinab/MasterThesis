@@ -14,16 +14,14 @@ using namespace std;
 
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(dense_matrix V, dense_matrix expH, double betaVal, int krylovDegree) {
+double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal, int krylovDegree) {
     dense_vector unitVec = dense_vector(krylovDegree);
     unitVec.insertValue(0, 1);
 
     if(betaVal != 1)
         V = V * betaVal;
 
-    dense_matrix op1 = denseMatrixMult(V, std::move(expH));
-    dense_vector res = denseMatrixVec(op1, unitVec);
-    return vectorTwoNorm(res);
+    return vectorTwoNorm(denseMatrixMult(V, expH).getCol(0));
 }
 
 //Process input arguments
@@ -73,7 +71,7 @@ int main (int argc, char* argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
+    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H, 1);
     exec_time_arnoldi += omp_get_wtime();
     //root node performs pade approximation and outputs results
     if(me == 0) {

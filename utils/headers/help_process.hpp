@@ -3,6 +3,6 @@
 
 #include "csr_matrix.hpp"
 
-void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts);
+void helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, int * counts);
 
 #endif // HELP_PROCCESS_HPP

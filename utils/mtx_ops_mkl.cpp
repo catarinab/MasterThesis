@@ -47,7 +47,7 @@ void checkValues(int a, int b, const string& func) {
 
 
 //multiply dense matrix and dense vector
-dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
+dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b) {
     dense_vector m(A.getRowVal());
     cblas_dgemv(CblasRowMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
     A.getDataPointer(), A.getColVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
@@ -55,55 +55,55 @@ dense_vector denseMatrixVec(dense_matrix A, dense_vector b) {
 }
 
 //multiply two dense matrices
-dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B) {
+dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) {
     dense_matrix C(A.getRowVal(), B.getColVal());
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
                 A.getRowVal(), B.getColVal(), A.getColVal(), 1.0,
                 A.getDataPointer(), A.getColVal(), B.getDataPointer(), B.getColVal(), 0.0,
-                C.getDataPointer(), C.getColVal());
+                (double *) C.getDataPointer(), C.getColVal());
 
     return C;
 }
 
-dense_matrix denseMatrixAdd(dense_matrix A, dense_matrix b) {
+dense_matrix denseMatrixAdd(const dense_matrix& A, const dense_matrix& B) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
-    checkValues(cols, b.getColVal(), "denseMatrixAdd");
-    checkValues(rows, b.getRowVal(), "denseMatrixAdd");
+    checkValues(cols, B.getColVal(), "denseMatrixAdd");
+    checkValues(rows, B.getRowVal(), "denseMatrixAdd");
 
     dense_matrix res(rows, cols);
 
     #pragma omp parallel for
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            res.setValue(i, j, A.getValue(i, j) + b.getValue(i, j));
+            res.setValue(i, j, A.getValue(i, j) + B.getValue(i, j));
         }
     }
     return res;
 }
 
 //Subtract two dense matrices
-dense_matrix denseMatrixSub(dense_matrix A, dense_matrix b) {
+dense_matrix denseMatrixSub(const dense_matrix& A, const dense_matrix& B) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
-    checkValues(cols, b.getColVal(), "denseMatrixSub");
-    checkValues(rows, b.getRowVal(), "denseMatrixSub");
+    checkValues(cols, B.getColVal(), "denseMatrixSub");
+    checkValues(rows, B.getRowVal(), "denseMatrixSub");
 
     dense_matrix res(rows, cols);
 
     #pragma omp parallel for
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            res.setValue(i, j, A.getValue(i, j) - b.getValue(i, j));
+            res.setValue(i, j, A.getValue(i, j) - B.getValue(i, j));
         }
     }
     return res;
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec) {
+dense_vector sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec) {
     dense_vector res(vec.getSize());
 
     mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, matrix.getMKLSparseMatrix(), matrix.getMKLDescription(),
@@ -112,18 +112,18 @@ dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec) {
     return res;
 }
 
-//y = y + scalar*x
+//a = a + scalar*x
 //this function could be used to add or subtract vectors (only the vector x is multiplied by the scalar)
-dense_vector addVec(dense_vector y, dense_vector x, double scalar) {
-    cblas_daxpy(x.size, scalar, x.values.data(), 1, y.values.data(), 1);
-    return y;
+dense_vector addVec(dense_vector a, const dense_vector& b, double scalar, int size) {
+    cblas_daxpy(size, scalar, b.values.data(), 1, a.values.data(), 1);
+    return a;
 }
 
 //dot product of two dense vectors
-double dotProduct(dense_vector a, dense_vector b) {
-    return cblas_ddot(a.size, a.values.data(), 1, b.values.data(), 1);
+double dotProduct(const dense_vector& a, const dense_vector& b, int size) {
+    return cblas_ddot(size, a.values.data(), 1, b.values.data(), 1);
 }
 
-double vectorTwoNorm(dense_vector  vec) {
+double vectorTwoNorm(const dense_vector& vec) {
     return cblas_dnrm2(vec.getSize(), vec.values.data(), 1.0);
 }

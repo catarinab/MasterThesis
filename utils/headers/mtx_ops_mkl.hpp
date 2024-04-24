@@ -18,28 +18,25 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
 void checkValues(int a, int b, const string& func);
 
 //multiply dense matrix and dense vector
-dense_vector denseMatrixVec(dense_matrix A, dense_vector b);
+dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b);
 
 //multiply two dense matrices
-dense_matrix denseMatrixMult(dense_matrix A, dense_matrix B);
+dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) ;
 
-dense_matrix  denseMatrixAdd(dense_matrix A, dense_matrix b);
+dense_matrix denseMatrixAdd(const dense_matrix& A, const dense_matrix& B);
 
 //Subtract two dense matrices
-dense_matrix  denseMatrixSub(dense_matrix A, dense_matrix b);
-
-//solve linear system using Eigen library and LU decomposition
-dense_matrix  solveEq(dense_matrix  A, dense_matrix  b);
+dense_matrix  denseMatrixSub(const dense_matrix& A, const dense_matrix& B);
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(csr_matrix matrix, dense_vector vec);
+dense_vector sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec);
 
 //add two dense vectors
-dense_vector addVec(dense_vector a, dense_vector b, double scalar);
+dense_vector addVec(dense_vector y, const dense_vector& x, double scalar, int size);
 
 //dot product of two dense vectors
-double dotProduct(dense_vector a, dense_vector b);
+double dotProduct(const dense_vector& a, const dense_vector& b, int size);
 
-double vectorTwoNorm(dense_vector vec);
+double vectorTwoNorm(const dense_vector& vec);
 
 #endif

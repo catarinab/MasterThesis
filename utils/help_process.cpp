@@ -13,7 +13,7 @@ When the root node asks for help, this function is executed by all nodes (except
 Each node receives the necessary vectors and executes the function func for a few values.
 After the function is executed, the result is sent back to the root node.
 */
-void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * displs, int * counts) {
+void helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, int * counts) {
     double dotProd = 0;
     double temp = 0;
     double scalar = 0;
@@ -22,7 +22,6 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
     dense_vector auxBuf2(0);
     
     if(func == MV) {
-        
         auxBuf.resize(size);
         MPI_Bcast(&auxBuf.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
     }
@@ -35,18 +34,18 @@ void helpProcess(csr_matrix A, int me, int size, int func, int nprocs, int * dis
     
     switch(func) {
         case MV:
-            auxBuf2 = sparseMatrixVector(std::move(A), auxBuf);
+            auxBuf2 = sparseMatrixVector(A, auxBuf);
             MPI_Gatherv(&auxBuf2.values[0], counts[me], MPI_DOUBLE, &auxBuf2.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
             break;
 
         case VV:
-            dotProd = dotProduct(auxBuf, auxBuf2);
+            dotProd = dotProduct(auxBuf, auxBuf2, counts[me]);
             MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
             break;
 
         case ADD:
             MPI_Bcast(&scalar, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-            auxBuf = addVec(auxBuf, auxBuf2, scalar);
+            auxBuf = addVec(auxBuf, auxBuf2, scalar, counts[me]);
             MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD); 
             break;
 
