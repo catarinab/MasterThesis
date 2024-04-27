@@ -130,6 +130,16 @@ dense_vector dense_matrix::getCol(int col) {
     return res;
 }
 
+//get specific column (in an existing dense_vector)
+void dense_matrix::getCol(int col, dense_vector * res) {
+
+#pragma omp parallel for
+    for (int row = 0; row < this->rows; row++) {
+        res->setValue(row, this->values[row * this->cols + col]);
+    }
+
+}
+
 //get matrix norm2
 double dense_matrix::getNorm2() {
     double res = 0;

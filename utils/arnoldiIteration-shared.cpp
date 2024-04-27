@@ -1,5 +1,4 @@
 #include "headers/arnoldiIteration-shared.hpp"
-#include "headers/mtx_ops_mkl.hpp"
 
 /*  Parameters
     ----------
@@ -36,53 +35,42 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     int k;
 
     //auxiliary
-    dense_vector opResult(m);
     dense_vector w(m);
+    dense_vector aux(m);
 
     for(k = 1; k < k_total + 1; k++) {
-
-        // w = A^nu *V->getCol(k-1)
-        w = V->getCol(k-1);
-        for(int mult = 0; mult < nu; mult ++) {
-            w = sparseMatrixVector(A, w);
-        }
-
+        V->getCol(k-1, &aux);
+        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                        aux.values.data(), 0.0, w.values.data());
 
         double dotProd;
-        dense_vector b;
-        #pragma omp parallel shared(V, H, w, b, dotProd)
+        #pragma omp parallel shared(V, H, w, dotProd)
         {
-        for(int j = 0; j < k; j++) {
+            for(int j = 0; j < k; j++) {
+                //dotprod entre w e V->getCol(j)
+                #pragma omp for reduction(+:dotProd)
+                for (int i = 0; i < m; i++) {
+                    dotProd += (w.values[i] * V->getValue(i, j));
+                }
 
-            #pragma omp single
-            {
-                dotProd = 0;
-                b = V->getCol(j);
+                #pragma omp for
+                for(int i = 0; i < m; i++) {
+                    w.insertValue(i, w.values[i] - V->getValue(i, j) * dotProd);
+                }
+
+                #pragma omp single
+                {
+                    H->setValue(j, k - 1, dotProd);
+                    dotProd = 0;
+                }
             }
-
-            //dotprod entre w e V->getCol(j)
-            #pragma omp for simd reduction(+:dotProd)
-            for (int i = 0; i < m; i++) {
-                dotProd += (w.values[i] * b.values[i]);
-            }
-
-            #pragma omp for simd nowait
-            for(int i = 0; i < m; i++) {
-                double newVal = b.values[i] * dotProd;
-                w.insertValue(i, w.values[i] - newVal);
-            }
-
-            #pragma omp single
-                H->setValue(j, k - 1, dotProd);
-
-        }
         }
 
-        
+
         if( k == k_total) break;
         H->setValue(k, k - 1, w.getNorm2());
 
-        if(H->getValue(k, k - 1) != 0) 
+        if(H->getValue(k, k - 1) != 0)
             V->setCol(k, w / H->getValue(k, k - 1));
     }
     return k;

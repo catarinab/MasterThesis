@@ -34,6 +34,7 @@ class dense_matrix {
 
     [[nodiscard]] double getValue(int row, int col) const;
     vector<double> getValues();
+    void getCol(int col, dense_vector * res);
     dense_vector getCol(int col);
     [[nodiscard]] const double* getDataPointer() const;
     [[nodiscard]] int getRowVal() const;
