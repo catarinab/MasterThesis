@@ -87,3 +87,8 @@ std::vector<double> dense_vector::getValues() const {
     return this->values;
 }
 
+void dense_vector::getMaxValVec() {
+    for(int i = 0; i < this->size; i++)
+        this->values[i] = std::numeric_limits<double>::max() / 10;
+}
+
