@@ -76,7 +76,7 @@ int main (int argc, char* argv[]) {
     //root node performs pade approximation and outputs results
     if(me == 0) {
         exec_time_pade = -omp_get_wtime();
-        dense_matrix expH = padeApprox(H);
+        dense_matrix expH = scalingAndSquaring(H);
         exec_time_pade += omp_get_wtime();
 
         double resNorm = getApproximation(V, expH, betaVal, krylovDegree);

@@ -3,46 +3,8 @@
 #include "headers/mtx_ops_mkl.hpp"
 #include "headers/pade_exp_approx.hpp"
 
-#include <Eigen/Dense>
-
-using namespace Eigen;
 
 using namespace std;
-
-//convert dense_matrix to Eigen MatrixXd
-MatrixXd convertDenseEigenMtx(dense_matrix A) {
-    MatrixXd eigenMtx(A.getRowVal(), A.getColVal());
-    for(int i = 0; i < A.getRowVal(); i++) {
-        for(int j = 0; j < A.getColVal(); j++) {
-            eigenMtx(i, j) = A.getValue(i, j);
-        }
-    }
-    return eigenMtx;
-}
-
-//convert Eigen MatrixXd to dense_matrix
-dense_matrix convertEigenDenseMtx(MatrixXd A) {
-    dense_matrix denseMtx(A.rows(), A.cols());
-    for(int i = 0; i < A.rows(); i++) {
-        for(int j = 0; j < A.cols(); j++) {
-            denseMtx.setValue(i, j, A(i, j));
-        }
-    }
-    return denseMtx;
-
-}
-
-//solve linear system using Eigen library and LU decomposition
-//should use ?getrs
-dense_matrix solveEq(dense_matrix A, dense_matrix b) {
-    MatrixXd eigenMtxA = convertDenseEigenMtx(A);
-    MatrixXd eigenMtxB = convertDenseEigenMtx(b);
-
-    MatrixXd res = eigenMtxA.partialPivLu().solve(eigenMtxB);
-
-    return convertEigenDenseMtx(res);
-}
-
 
 //find suitable m value for pade approximation
 int findM(double norm, double theta , int * power) {
@@ -70,7 +32,7 @@ vector<double> get_pade_coefficients(int m) {
         coeff = {17643225600, 8821612800, 2075673600, 302702400, 30270240,
                 2162160, 110880, 3960, 90, 1};
     else if (m == 13)
-        coeff = {64764752532480000, 32382376266240000, 7771770303897600,
+        coeff = {6.476475253248e16, 3.238237626624e16, 7771770303897600,
                 1187353796428800,  129060195264000,   10559470521600,
                 670442572800,      33522128640,       1323241920,
                 40840800,          960960,            16380,  182,  1};
@@ -131,7 +93,7 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
 }
 
 //Calculate the Pade approximation of the exponential of matrix H.
-dense_matrix padeApprox(dense_matrix H) {
+dense_matrix scalingAndSquaring(dense_matrix H) {
     vector<dense_matrix> powers(8);
     int s = 0, m = 0;
     H = definePadeParams(&powers, &m, &s, H);
@@ -187,7 +149,7 @@ dense_matrix padeApprox(dense_matrix H) {
     dense_matrix res = solveEq(num1, num2);
 
     if(s != 0)
-        for(int i = 0; i < s; i++)
+        for (int i = 0; i < s; i++)
             res = denseMatrixMult(res, res);
 
     return res;

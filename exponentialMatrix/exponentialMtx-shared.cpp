@@ -64,7 +64,7 @@ int main (int argc, char* argv[]) {
 
 
     exec_time_pade = -omp_get_wtime();
-    dense_matrix expH = padeApprox(H);
+    dense_matrix expH = scalingAndSquaring(H);
     exec_time_pade += omp_get_wtime();
 
     double resNorm = getApproximation(V, expH, betaVal);
