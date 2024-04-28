@@ -42,6 +42,8 @@ class dense_matrix {
     [[nodiscard]] int getColVal() const;
     double getNorm2();
 
+    bool hasNanorInf();
+
     void printMatlabFile(const string& fileName);
     void printVector(const string& filename);
     void readVector(const string& currFolder);
@@ -50,8 +52,6 @@ class dense_matrix {
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
     dense_matrix operator- () const;
-
-    void getCol(int col, double **res);
 };
 
 #endif

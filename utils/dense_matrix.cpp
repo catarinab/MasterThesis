@@ -249,3 +249,13 @@ void dense_matrix::printMatrix() {
     cout << endl;
 
 }
+
+bool dense_matrix::hasNanorInf() {
+    for(int i = 0; i < this->rows; i++) {
+        for(int j = 0; j < this->cols; j++) {
+            if(isnan(this->values[i * this->cols + j]) || isinf(this->values[i * this->cols + j]))
+                return true;
+        }
+    }
+    return false;
+}
