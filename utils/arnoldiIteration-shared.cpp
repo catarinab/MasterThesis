@@ -36,33 +36,37 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
     //auxiliary
     dense_vector w(m);
-    dense_vector aux(m);
+    vector<double> vCol(m);
 
     for(k = 1; k < k_total + 1; k++) {
-        V->getCol(k-1, &aux);
+        #pragma omp parallel
+            V->getCol(k-1, &vCol);
+
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        aux.values.data(), 0.0, w.values.data());
+                        vCol.data(), 0.0, w.values.data());
 
         double dotProd;
-        #pragma omp parallel shared(V, H, w, dotProd)
+        #pragma omp parallel shared(dotProd, aux)
         {
             for(int j = 0; j < k; j++) {
                 //dotprod entre w e V->getCol(j)
-                #pragma omp for reduction(+:dotProd)
+                #pragma omp single nowait
+                    dotProd = 0;
+
+                V->getCol(j, &vCol);
+
+                #pragma omp for simd reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
-                    dotProd += (w.values[i] * V->getValue(i, j));
+                    dotProd += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for
+                #pragma omp for simd nowait
                 for(int i = 0; i < m; i++) {
-                    w.insertValue(i, w.values[i] - V->getValue(i, j) * dotProd);
+                    w.values[i] = w.values[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
-                {
                     H->setValue(j, k - 1, dotProd);
-                    dotProd = 0;
-                }
             }
         }
 

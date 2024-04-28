@@ -132,10 +132,16 @@ dense_vector dense_matrix::getCol(int col) {
 
 //get specific column (in an existing dense_vector)
 void dense_matrix::getCol(int col, dense_vector * res) {
-
-#pragma omp parallel for
+    #pragma omp parallel for
     for (int row = 0; row < this->rows; row++) {
         res->setValue(row, this->values[row * this->cols + col]);
+    }
+}
+
+void dense_matrix::getCol(int col, vector<double> * res){
+    #pragma omp for
+    for (int row = 0; row < this->rows; row++) {
+        res->push_back(this->values[row * this->cols + col]);
     }
 
 }

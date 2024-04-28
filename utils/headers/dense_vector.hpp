@@ -24,12 +24,15 @@ public:
     void setValue(int i, double value);
     
     double getValue(int i);
+    std::vector<double> getValues() const;
     
     dense_vector operator*(double x);
     dense_vector operator/(double x);
 
     // Member functions
     double getNorm2();
+
+    void getZeroVec();
 };
 
 #endif // DENSE_VECTOR_HPP

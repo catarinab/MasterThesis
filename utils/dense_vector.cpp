@@ -22,6 +22,11 @@ void dense_vector::getOnesVec() {
         this->values[i] = 1;
 }
 
+void dense_vector::getZeroVec() {
+    for(int i = 0; i < this->size; i++)
+        this->values[i] = 0;
+}
+
 //multiply all vector values by x
 dense_vector dense_vector::operator* (double x) {
     dense_vector res(this->size);
@@ -76,5 +81,9 @@ double dense_vector::getValue(int i) {
 
 void dense_vector::setValue(int i, double value) {
     this->values[i] = value;
+}
+
+std::vector<double> dense_vector::getValues() const {
+    return this->values;
 }
 

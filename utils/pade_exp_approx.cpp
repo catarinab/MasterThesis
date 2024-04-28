@@ -133,14 +133,14 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
 //Calculate the Pade approximation of the exponential of matrix H.
 dense_matrix padeApprox(dense_matrix H) {
     vector<dense_matrix> powers(8);
-    int s = 0, twoPower = 0, m = 0;
+    int s = 0, m = 0;
     H = definePadeParams(&powers, &m, &s, H);
 
     dense_matrix identity = dense_matrix(H.getColVal(), H.getRowVal());
     identity.setIdentity();
 
-    dense_matrix U = dense_matrix(H.getColVal(), H.getRowVal());
-    dense_matrix V = dense_matrix(H.getColVal(), H.getRowVal());
+    dense_matrix U;
+    dense_matrix V;
 
     vector<double> coeff = get_pade_coefficients(m);
 
