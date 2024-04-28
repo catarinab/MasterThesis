@@ -46,7 +46,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                         vCol.data(), 0.0, w.values.data());
 
         double dotProd;
-        #pragma omp parallel shared(dotProd, aux)
+        #pragma omp parallel shared(dotProd, vCol)
         {
             for(int j = 0; j < k; j++) {
                 //dotprod entre w e V->getCol(j)

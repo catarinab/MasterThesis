@@ -141,7 +141,7 @@ void dense_matrix::getCol(int col, dense_vector * res) {
 void dense_matrix::getCol(int col, vector<double> * res){
     #pragma omp for
     for (int row = 0; row < this->rows; row++) {
-        res->push_back(this->values[row * this->cols + col]);
+        res->at(row) = this->values[row * this->cols + col];
     }
 
 }
