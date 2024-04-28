@@ -3,7 +3,9 @@
 
 #include "dense_matrix.hpp"
 #include "utils.hpp"
+#include <complex>
 
-vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex<double> ** U, int size);
+
+std::vector<std::vector<int>> schurDecomposition(double * A, std::complex<double> ** T, std::complex<double> ** U, int size);
 
 #endif
