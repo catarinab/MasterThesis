@@ -39,13 +39,13 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     vector<double> vCol(m);
 
     for(k = 1; k < k_total + 1; k++) {
+        double dotProd;
         #pragma omp parallel
             V->getCol(k-1, &vCol);
 
-        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol.data(), 0.0, w.values.data());
+            mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                            vCol.data(), 0.0, w.values.data());
 
-        double dotProd;
         #pragma omp parallel shared(dotProd, vCol)
         {
             for(int j = 0; j < k; j++) {
