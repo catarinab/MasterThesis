@@ -11,6 +11,7 @@
 #include "headers/schur-blocking.hpp"
 #include "headers/Evaluate-Single-ML.hpp"
 
+using namespace std;
 
 /*
 Algorithm based on the paper "Computing the matrix Mittag–Leffler function with applications to fractional calculus"
@@ -158,6 +159,8 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     int i = element[0];
     int elSize = (int) element.size();
 
+    int elThreads = omp_get_max_threads() > elSize ? elSize : omp_get_max_threads();
+
     auto * M = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * auxMatrixLpck = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * P = (complex<double> *) calloc(elSize * elSize,  sizeof(complex<double>));
@@ -180,7 +183,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
     //M = T - lambda*I
     //auxMatrix = I - abs(triu(T,1));
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(elThreads)
     for(int j = 0; j < elSize; j++){
         for(int k = 0; k < elSize; k++){
             if(j == k) {
@@ -207,7 +210,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     double mu = 0;
     // F = f*I
     // mu = infNorm(ones)
-    #pragma omp parallel for reduction(max:mu)
+    #pragma omp parallel for reduction(max:mu) num_threads(elThreads)
     for(int ii = 0; ii < elSize; ii++) {
         F[ii * elSize + ii] = f;
         mu = max(mu, abs(ones[ii]));
@@ -285,10 +288,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             double norm_P = LAPACKE_zlange(LAPACK_ROW_MAJOR, 'I', elSize, elSize,
                                            reinterpret_cast<const MKL_Complex16 *>(P), elSize);
 
-            /*cout << scientific << setPrecision(15) << "omega = " << omega << endl;
-            cout << scientific << setPrecision(15) << "mu = " << mu << endl;
-            cout << scientific << setPrecision(15) << "norm_P = " << norm_P << endl;
-            cout << scientific << setPrecision(15) << "norm_F = " << norm_F << endl;*/
 
             if(norm_P*mu*omega <= tol*norm_F){
                 /*cout << "found solution:" << endl;
@@ -314,8 +313,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     free(auxMatrix);
     free(auxMatrixLpck);
     free(M);
-    free(F);
-    return nullptr;
+    return F;
 }
 
 dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
