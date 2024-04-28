@@ -45,6 +45,17 @@ void checkValues(int a, int b, const string& func) {
 
 }
 
+dense_matrix solveEq(const dense_matrix& A, dense_matrix b) {
+    lapack_int ipiv[A.getRowVal()];
+    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),
+                   A.getColVal(), ipiv);
+    LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'N', A.getRowVal(), b.getColVal(), (double *) A.getDataPointer(),
+                   A.getColVal(), ipiv, (double *) b.getDataPointer(), b.getColVal());
+
+    return b;
+}
+
+
 
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b) {

@@ -17,6 +17,8 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
 
 void checkValues(int a, int b, const string& func);
 
+dense_matrix solveEq(const dense_matrix& A, dense_matrix b);
+
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b);
 
@@ -26,7 +28,7 @@ dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) ;
 dense_matrix denseMatrixAdd(const dense_matrix& A, const dense_matrix& B);
 
 //Subtract two dense matrices
-dense_matrix  denseMatrixSub(const dense_matrix& A, const dense_matrix& B);
+dense_matrix denseMatrixSub(const dense_matrix& A, const dense_matrix& B);
 
 //multiply sparse matrix and dense vector
 dense_vector sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec);
