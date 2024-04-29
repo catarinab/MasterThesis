@@ -35,7 +35,7 @@ class dense_matrix {
     [[nodiscard]] double getValue(int row, int col) const;
     vector<double> getValues();
     void getCol(int col, dense_vector * res);
-    void getCol(int col, vector<double> * res);
+    void getCol(int col, vector<double>& vect);
     dense_vector getCol(int col);
     [[nodiscard]] const double* getDataPointer() const;
     [[nodiscard]] int getRowVal() const;
@@ -52,6 +52,8 @@ class dense_matrix {
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
     dense_matrix operator- () const;
+
+    void getCol(int col, double *res);
 };
 
 #endif

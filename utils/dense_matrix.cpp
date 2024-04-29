@@ -138,10 +138,16 @@ void dense_matrix::getCol(int col, dense_vector * res) {
     }
 }
 
-void dense_matrix::getCol(int col, vector<double> * res){
+void dense_matrix::getCol(int col, vector<double>& res){
     #pragma omp for
     for (int row = 0; row < this->rows; row++) {
-        res->at(row) = this->values[row * this->cols + col];
+        res[row] = this->values[row * this->cols + col];
+    }
+}
+
+void dense_matrix::getCol(int col, double * res){
+    for (int row = 0; row < this->rows; row++) {
+        res[row] = this->values[row * this->cols + col];
     }
 
 }
@@ -229,15 +235,14 @@ dense_matrix dense_matrix::operator* (double x) {
     return res;
 }
 
-//subtract all elements of matrix by x
 dense_matrix dense_matrix::operator- () const {
     dense_matrix res(this->rows, this->cols);
-    #pragma omp parallel for
-    for(int i = 0; i < this->rows; i++) 
+    for(int i = 0; i < this->rows; i++)
         for(int j = 0; j < this->cols; j++)
             res.setValue(i, j, -this->values[i * this->cols + j]);
-    return res; 
+    return res;
 }
+
 
 void dense_matrix::printMatrix() {
     for(int i = 0; i < this->rows; i++) {
