@@ -20,7 +20,7 @@ double delta = 0.1;
 void getSubMatrix(double ** subMatrix, const double * matrix, int row, int subSize, int size) {
     for(int i = row; i < row + subSize; i++) {
         for(int j = row; j < row + subSize; j++) {
-            (*subMatrix)[(i - row) * subSize + (j - row)] = matrix[i * size + j];
+            (*subMatrix)[(i - row) + (j - row) * subSize] = matrix[i + j * size];
         }
     }
 }
@@ -45,12 +45,12 @@ void rsf2csf(double * T, double * U, complex<double> ** T_csf, complex<double> *
     //copy double values to complex values
     for(int i = 0; i < size; i++) {
         for(int j = 0; j < size; j++) {
-            (*T_csf)[i * size + j] = complex<double>(T[i * size + j], 0);
-            (*U_csf)[i * size + j] = complex<double>(U[i * size + j], 0);
+            (*T_csf)[i + j * size] = complex<double>(T[i + j * size], 0);
+            (*U_csf)[i + j * size] = complex<double>(U[i + j * size], 0);
         }
     }
 
-    //Row major
+    //Col major
     auto * G = (complex<double> *) calloc(2 * 2, sizeof(complex<double>));
     auto * subMatrix = (double *) calloc(2 * 2, sizeof(double));
     vector<complex<double>> mu = vector<complex<double>>(2);
@@ -60,26 +60,26 @@ void rsf2csf(double * T, double * U, complex<double> ** T_csf, complex<double> *
     double wr[2], wi[2]; //eigenvalues
 
     for(int m = size - 1; m >= 1; m--) {
-        if(T[m * size + (m-1)] != 0) {
+        if(T[m + (m-1) * size] != 0) {
             int lda = 2;
             //T(m-1:m, m-1:m)
             getSubMatrix(&subMatrix, T, m - 1, lda, size);
 
-            int info = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'N', lda, subMatrix, lda,
+            int info = LAPACKE_dgeev(LAPACK_COL_MAJOR, 'N', 'N', lda, subMatrix, lda,
                           wr, wi, nullptr, lda, nullptr, lda);
             if(info != 0)
                 cout << "LAPACKE_dgeev info: " << info << endl;
 
             //mu = eig(T(k,k)) - T(m,m); -> T(k,k) = T(m-1:m, m-1:m)
-            mu[0] = complex<double>(wr[0], wi[0]) - T[m * size + m];
-            mu[1] = complex<double>(wr[1], wi[1]) - T[m * size + m];
+            mu[0] = complex<double>(wr[0], wi[0]) - T[m + m * size];
+            mu[1] = complex<double>(wr[1], wi[1]) - T[m + m * size];
 
             // r = hypot(mu(1), T(m,m-1));
-            double r = sqrt(pow(mu[0].real() - T[m * size + (m-1)], 2) + pow(mu[0].imag() , 2));
+            double r = sqrt(pow(mu[0].real() - T[m + (m-1) * size], 2) + pow(mu[0].imag() , 2));
             //c = mu(1)/r;
             complex<double> c = mu[0] / r;
             //s = T(m,m-1)/r;
-            double s = T[m * size + (m-1)] / r;
+            double s = T[m + (m-1) * size] / r;
 
             //G = [c' s; -s c];
             G[0] = conj(c);
@@ -89,33 +89,33 @@ void rsf2csf(double * T, double * U, complex<double> ** T_csf, complex<double> *
 
             //T_csf(k,m-1:n) = G*T(k,m-1:n);
             for(int j = m - 1; j < size; j++) {
-                temp1 = G[0] * (*T_csf)[(m-1) * size + j] + G[1] * (*T_csf)[m * size + j];
-                temp2 = G[2] * (*T_csf)[(m-1) * size + j] + G[3] * (*T_csf)[m * size + j];
-                (*T_csf)[(m-1) * size + j] = temp1;
-                (*T_csf)[m * size + j] = temp2;
+                temp1 = G[0] * (*T_csf)[(m-1) + j * size ] + G[1] * (*T_csf)[m + j * size];
+                temp2 = G[2] * (*T_csf)[(m-1) + j * size ] + G[3] * (*T_csf)[m + j * size];
+                (*T_csf)[(m-1) + j * size] = temp1;
+                (*T_csf)[m + j * size] = temp2;
             }
 
             //(*T_csf)(1:m,k) = T(1:m,k)*G';
             for(int j = 0; j <= m; j++) {
-                temp1 = (*T_csf)[j * size + m - 1] * conj(G[0]) + (*T_csf)[j * size + m] * conj(G[1]);
-                temp2 = (*T_csf)[j * size + m - 1] * conj(G[2]) + (*T_csf)[j * size + m] * conj(G[3]);
-                (*T_csf)[j * size + m - 1] = temp1;
-                (*T_csf)[j * size + m] = temp2;
+                temp1 = (*T_csf)[j + (m - 1) * size] * conj(G[0]) + (*T_csf)[j + m * size ] * conj(G[1]);
+                temp2 = (*T_csf)[j + (m - 1) * size] * conj(G[2]) + (*T_csf)[j + m * size ] * conj(G[3]);
+                (*T_csf)[j + (m - 1) * size] = temp1;
+                (*T_csf)[j + m * size ] = temp2;
             }
             //(*U_csf)(:,k) = U(:,k)*G';
             for(int j = 0; j < size; j++) {
-                temp1 = (*U_csf)[j * size + m - 1] * conj(G[0]) + (*U_csf)[j * size + m] * conj(G[1]);
-                temp2 = (*U_csf)[j * size + m - 1] * conj(G[2]) + (*U_csf)[j * size + m] * conj(G[3]);
-                (*U_csf)[j * size + m - 1] = temp1;
-                (*U_csf)[j * size + m] = temp2;
+                temp1 = (*U_csf)[j + (m - 1) * size] * conj(G[0]) + (*U_csf)[j + m * size ] * conj(G[1]);
+                temp2 = (*U_csf)[j + (m - 1) * size] * conj(G[2]) + (*U_csf)[j + m * size ] * conj(G[3]);
+                (*U_csf)[j + (m - 1) * size] = temp1;
+                (*U_csf)[j + m * size ] = temp2;
             }
-            (*T_csf)[m * size + (m-1)] = 0;
+            (*T_csf)[m + (m-1) * size] = 0;
         }
     }
 
     //create diagonal vector
     for(int i = 0; i < size; i++)
-        (*w)[i] = (*T_csf)[i * size + i];
+        (*w)[i] = (*T_csf)[i + i * size];
 
     free(subMatrix);
     free(G);
@@ -263,24 +263,22 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
     vector<int> IFST = vector<int>();
 
 
-
-    int info = LAPACKE_dhseqr(LAPACK_ROW_MAJOR, 'S', 'I', size, 1, size, A , size, wr, wi,
+    int info = LAPACKE_dhseqr(LAPACK_COL_MAJOR, 'S', 'I', size, 1, size, A , size, wr, wi,
                              U_real, size);
+
     if(info != 0)
         cout << "LAPACKE_dhseqr info: " << info << endl;
 
     //real schur form to complex schur form
     rsf2csf(A, U_real, T, U, size, &w);
 
-    /*printMatlabFileComplex("T-16-before.txt", size, *T);
-    printMatlabFileComplex("U-16-before.txt", size, *U);*/
-
     vector<int> clusters = blocking(size, w);
 
     ind = swapping(clusters, &ILST, &IFST);
 
+
     for(int i = 0; i < ILST.size(); i++) {
-        info = LAPACKE_ztrexc(LAPACK_ROW_MAJOR, 'V', size, reinterpret_cast<MKL_Complex16 *>(*T),
+        info = LAPACKE_ztrexc(LAPACK_COL_MAJOR, 'V', size, reinterpret_cast<MKL_Complex16 *>(*T),
                               size, reinterpret_cast<MKL_Complex16 *>(*U), size, IFST[i] + 1, ILST[i] + 1);
         if(info != 0)
             cout << "LAPACKE_ztrexc info: " << info << endl;

@@ -7,13 +7,13 @@
 
 using namespace std;
 
-//A matrix with dense columns (vector of dense vectors)
+//A Column Major Dense Matrix
 class dense_matrix {
 
     private:
         int rows;
         int cols;
-        vector<double> values; //for blas
+        vector<double> values;
 
     public:
 
@@ -24,16 +24,10 @@ class dense_matrix {
     }
 
     void setIdentity();
-    void setRandomHessenbergMatrix(double minVal, double maxVal);
-    void setRandomUpperTriangularMatrix(double minVal, double maxVal);
-    void setRandomMatrix(double minVal, double maxVal);
-    void setRandomDiagonalMatrix(double minVal, double maxVal);
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
-    void setValues(vector<double> values);
 
     [[nodiscard]] double getValue(int row, int col) const;
-    vector<double> getValues();
     void getCol(int col, dense_vector * res);
     void getCol(int col, vector<double>& vect);
     dense_vector getCol(int col);
@@ -42,9 +36,6 @@ class dense_matrix {
     [[nodiscard]] int getColVal() const;
     double getNorm2();
 
-    bool hasNanorInf();
-
-    void printMatlabFile(const string& fileName);
     void printVector(const string& filename);
     void readVector(const string& currFolder);
     void printMatrix();
@@ -52,8 +43,7 @@ class dense_matrix {
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
     dense_matrix operator- () const;
-
-    void getCol(int col, double *res);
+    void getCol(int col, double ** ptr);
 };
 
 #endif

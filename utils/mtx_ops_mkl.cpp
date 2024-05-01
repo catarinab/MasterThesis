@@ -47,10 +47,10 @@ void checkValues(int a, int b, const string& func) {
 
 dense_matrix solveEq(const dense_matrix& A, dense_matrix b) {
     lapack_int ipiv[A.getRowVal()];
-    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),
-                   A.getColVal(), ipiv);
-    LAPACKE_dgetrs(LAPACK_ROW_MAJOR, 'N', A.getRowVal(), b.getColVal(), (double *) A.getDataPointer(),
-                   A.getColVal(), ipiv, (double *) b.getDataPointer(), b.getColVal());
+    LAPACKE_dgetrf(LAPACK_COL_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),
+                   A.getRowVal(), ipiv);
+    LAPACKE_dgetrs(LAPACK_COL_MAJOR, 'N', A.getRowVal(), b.getColVal(), (double *) A.getDataPointer(),
+                   A.getRowVal(), ipiv, (double *) b.getDataPointer(), b.getColVal());
 
     return b;
 }
@@ -60,18 +60,18 @@ dense_matrix solveEq(const dense_matrix& A, dense_matrix b) {
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b) {
     dense_vector m(A.getRowVal());
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
-                A.getDataPointer(), A.getColVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
+    cblas_dgemv(CblasColMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
+                A.getDataPointer(), A.getRowVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
     return m;
 }
 
 //multiply two dense matrices
 dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) {
     dense_matrix C(A.getRowVal(), B.getColVal());
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                 A.getRowVal(), B.getColVal(), A.getColVal(), 1.0,
-                A.getDataPointer(), A.getColVal(), B.getDataPointer(), B.getColVal(), 0.0,
-                (double *) C.getDataPointer(), C.getColVal());
+                A.getDataPointer(), A.getRowVal(), B.getDataPointer(), B.getRowVal(), 0.0,
+                (double *) C.getDataPointer(), C.getRowVal());
 
     return C;
 }
