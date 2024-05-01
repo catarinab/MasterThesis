@@ -1,7 +1,7 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O2
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O2
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
@@ -23,17 +23,18 @@ all: test hess
 
 test:
 	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
-	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
-	$(C++) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
-	$(C++) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o mtx_ops_mkl.o \
-	calculate-MLF.o Evaluate-Single-ML.o test.o -o $(TARGETTEST)
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
+	$(C++) $(DEBUG) $(CFLAGS) -c test.cpp -o test.o
+	$(C++) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
+	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o test.o -o $(TARGETTEST)
 	rm *.o
 
 mlf-shared:
