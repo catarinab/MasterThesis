@@ -376,7 +376,8 @@ complex<double> calculateLTI(complex<double> lambda, double alpha, double beta, 
 }
 
 
-complex<double> LTI(complex<double> lambda, double alpha, double beta, int k) {
+complex<double> LTI(complex<double> lambda, double alpha, double beta, int k, int nrThreads){
+
     complex<double> result = 0;
 
     int p;
@@ -401,6 +402,7 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k) {
         c[kk][kk] = 1;
     }
 
+    #pragma omp parallel for if(nrThreads) num_threads(nrThreads) reduction(+:result)
     for (int j = 0; j <= k - p; j++) {
         if (abs(c[k - p][j]) > tau) {
             result += c[k - p][j] * calculateLTI(lambda, alpha, (k - p) * alpha + beta - j, p);
@@ -515,7 +517,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
     return result;
 }
 
-complex<double> evaluateSingle(complex<double> z, double alpha, double beta, int k) {
+complex<double> evaluateSingle(complex<double> z, double alpha, double beta, int k, int nrThreads) {
 
     complex<double> result;
     bool accept = false;
@@ -534,7 +536,7 @@ complex<double> evaluateSingle(complex<double> z, double alpha, double beta, int
     }
 
     if(!accept){
-        result = LTI(tVal, alpha, beta, k);
+        result = LTI(tVal, alpha, beta, k, nrThreads);
     }
 
     if(tVal.imag() == 0){

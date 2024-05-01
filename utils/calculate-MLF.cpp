@@ -265,14 +265,14 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             vector<double> fDerivMax = vector<double>(maxTerms + elSize - 1);
 
             int nr_threads = omp_get_max_threads() > k + elSize - maxDeriv ? k + elSize - maxDeriv : omp_get_max_threads();
-
+            int restThreads = floor((omp_get_max_threads() - nr_threads)/nr_threads);
             #pragma omp parallel for schedule(dynamic) num_threads(nr_threads)
             for(int j = maxDeriv; j < k + elSize ; j++){
                 //evaluate values for diagonal of the block
                 //calculate w
                 //calculate delta
                 for(int jj = element[0]; jj < element[0] + elSize; jj++){
-                    complex<double> res = evaluateSingle(T[jj + jj * tSize], alpha, beta, j);
+                    complex<double> res = evaluateSingle(T[jj + jj * tSize], alpha, beta, j, restThreads);
                     fDerivMax[j]  = max(fDerivMax[j] , abs(res));
                 }
                 //cout << scientific << setPrecision(15) << "fDerivMax[" << j << "] = " << fDerivMax[j] << endl;
