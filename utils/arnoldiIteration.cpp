@@ -55,17 +55,17 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     int k;
 
     //auxiliary
-    dense_vector opResult(m);
+    dense_vector b(m);
     dense_vector w(m);
 
     for(k = 1; k < k_total + 1; k++) {
 
-        w = V->getCol(k-1);
+        V->getCol(k-1, &w);
         for(int mult = 0; mult < nu; mult ++)
             w = distrMatrixVec(A, w, m);
 
         for(int j = 0; j < k; j++) {
-            dense_vector b = V->getCol(j);
+            V->getCol(j, &b);
             double dotProd = distrDotProduct(w, b, m, me);
 
             w = distrSumOp(w, b, -dotProd, m, me);
