@@ -3,6 +3,6 @@
 
 #include <complex>
 
-std::complex<double> evaluateSingle(std::complex<double> tVal, double alpha, double beta, int k, int nrThreads = 0);
+std::complex<double> evaluateSingle(std::complex<double> tVal, double alpha, double beta, int k);
 
 #endif
