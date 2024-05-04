@@ -15,7 +15,8 @@
 
 #include <complex>
 
-#define workFolder "compan/1/"
+#include "dense_matrix.hpp"
+#include "dense_vector.hpp"
 
 struct SparseTriplet {
     long long int col;
@@ -24,9 +25,6 @@ struct SparseTriplet {
     SparseTriplet(long long int row, long long int col, double value) : row(row), col(col), value(value) {}
     SparseTriplet() : row(0), col(0), value(0) {}
 };
-
-#pragma omp declare	reduction(+ : std::complex<double> : omp_out += omp_in ) initializer( omp_priv = omp_orig )
-
 
 inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
     if(a.row < b.row || (a.row == b.row && a.col < b.col))
