@@ -1,13 +1,8 @@
-#include <cmath>
-#include <vector>
 #include <complex>
-#include <functional>
 #include <iostream>
-#include <complex>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <Eigen/Dense>
 
-#include "headers/utils.hpp"
 #include "headers/Evaluate-Single-ML.hpp"
 #include "mkl.h"
 
