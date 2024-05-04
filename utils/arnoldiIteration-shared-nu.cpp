@@ -1,4 +1,4 @@
-#include "headers/arnoldiIteration-shared.hpp"
+#include "headers/arnoldiIteration-shared-nu.hpp"
 
 /*  Parameters
     ----------
@@ -12,11 +12,11 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_total, int m, dense_matrix * V,
-                     dense_matrix * H) {
+int arnoldiIteration(const csr_matrix &A, const dense_vector &initVec, int k_total, int m, dense_matrix *V,
+                     dense_matrix *H, int nu) {
 
     int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
-                                      k_total);
+                                      k_total*nu);
 
     if (stat != SPARSE_STATUS_SUCCESS) {
         cerr << "Error in mkl_sparse_set_mv_hint" << endl;
@@ -36,15 +36,21 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
     //auxiliary
     dense_vector w(m);
+    dense_vector temp;
     double *vCol;
 
     for(k = 1; k < k_total + 1; k++) {
+        V->getCol(k-1, &temp);
+        for(int mult = 0; mult < nu; mult++) {
+            mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                            temp.values.data(), 0.0, w.values.data());
+            if(mult != nu - 1)
+                temp.values = w.values;
+        }
+
+
+
         double dotProd;
-        V->getCol(k-1, &vCol);
-
-        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol, 0.0, w.values.data());
-
         #pragma omp parallel shared(dotProd, vCol)
         {
             for(int j = 0; j < k; j++) {
