@@ -1,104 +1,50 @@
 #include <iostream>
 #include <mkl.h>
-#include <omp.h>
-#include <fstream>
-#include <iomanip>
+#include <cstring>
 
 #include "../utils/headers/dense_matrix.hpp"
 #include "../utils/headers/calculate-MLF.hpp"
+#include "../utils/headers/schur-blocking.hpp"
+#include "../utils/headers/arnoldiIteration-shared-nu.hpp"
+#include "../utils/headers/mtx_ops_mkl.hpp"
 
 using namespace std;
 
+//Process input arguments
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, double * normVal) {
+    for(int i = 0; i < argc; i++) {
+        if(strcmp(argv[i], "-k") == 0) {
+            *krylovDegree = stoi(argv[i+1]);
+        }
+        else if(strcmp(argv[i], "-m") == 0) {
+            *mtxName = argv[i+1];
+        }
+        else if(strcmp(argv[i], "-n") == 0) {
+            *normVal = stod(argv[i+1]);
+        }
+    }
+}
+
 int main (int argc, char* argv[]) {
 
-    double alpha = 0.5;
-    double beta = 0;
+    int krylovDegree;
+    string mtxPath = "mtx/784-convect.mtx";
+    double normVal = 0;
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
-    double matlabInf;
-    double matlabFro;
-    double condNumber;
+    //initializations of needed matrix and vectors
+    csr_matrix A = buildFullMtx(mtxPath);
+    int size = (int) A.getSize();
 
-    omp_set_dynamic(1);
-    omp_set_nested(1);
+    dense_vector b(size);
+    b.getOnesVec();
+    b = b / b.getNorm2();
 
-    if(argc != 2){
-        cerr << "Usage: " << argv[0] << " <size>" << endl;
-        return 1;
-    }
+    dense_matrix V(size, krylovDegree);
+    dense_matrix H(krylovDegree, krylovDegree);
 
-    int size = stoi(argv[1]);
+    arnoldiIteration(A, b, krylovDegree, size, &V, &H, 3);
 
-    string folder = string("krylov-784/"+to_string(size)+"/");
-
-    ofstream outputFile;
-
-    outputFile.open(folder + "/cpp.txt");
-
-    dense_matrix A;
-
-    A.readVector("krylov-784/"+to_string(size)+"-vector.txt");
-
-    outputFile << "Matrix with size " << size << endl;
-
-    ifstream cond(folder + "cond.txt");
-
-    cond >> condNumber;
-
-    cond.close();
-
-    ifstream inf(folder + "infNorm.txt");
-
-    inf >> matlabInf;
-
-    inf.close();
-
-    ifstream fro(folder + "fro.txt");
-
-    fro >> matlabFro;
-
-    fro.close();
-
-    double exec_time;
-
-    dense_matrix B = calculate_MLF((double *) A.getDataPointer(), alpha, beta, size);
-
-    /*double * B = res.first;
-    vector<vector<int>> ind = res.second;
-
-    for(int i = 2; i < size; i++){
-        int count = 0;
-        for(const auto & j : ind){
-            if(j.size() == i)
-                count++;
-        }
-        if(count > 0)
-            outputFile << count << " blocks of size " << i << ", ";
-    }
-    outputFile << endl;*/
-
-
-
-    double infNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'I', size, size, B.getDataPointer(), size);
-
-    /*cerr << "Inf Norm: " << infNorm << setprecision(16) << endl;*/
-
-    double froNorm = LAPACKE_dlange(LAPACK_ROW_MAJOR, 'F', size, size, B.getDataPointer(), size);
-
-    /*cerr << "Fro Norm: "<< setprecision(16)  << froNorm << endl;*/
-
-    outputFile << "numero de condicionamento: " << condNumber << endl;
-    outputFile << "norma Infinita c++: " << scientific << infNorm << endl;
-    outputFile << "norma Frobenius c++: " << scientific << froNorm << endl;
-
-    /*cerr << "Matlab Inf: " << matlabInf << endl;
-
-    cerr << "Matlab Fro: " << matlabFro << endl;*/
-
-    outputFile << "erro frobenius: " << scientific << (abs(infNorm - matlabInf) / matlabInf) * 100 << "%" << endl;
-
-    outputFile << "erro inf: " << scientific << (abs(froNorm - matlabFro) / matlabFro) * 100 << "%" << endl << endl;
-
-    outputFile.close();
-
+    H.printMatrix();
     return 0;
 }

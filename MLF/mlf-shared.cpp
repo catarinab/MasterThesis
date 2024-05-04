@@ -42,7 +42,7 @@ int main (int argc, char* argv[]) {
     double beta = 0;
 
     int krylovDegree;
-    string mtxPath = "mtx/784-convect.mtx";
+    string mtxPath = "lap512.mtx";
     double normVal = 0;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
@@ -61,7 +61,7 @@ int main (int argc, char* argv[]) {
 
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, &V, &H, 1);
+    arnoldiIteration(A, b, krylovDegree, size, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
 
     exec_time_schur = -omp_get_wtime();

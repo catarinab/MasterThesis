@@ -1,7 +1,6 @@
 #include <iostream>
 #include <omp.h>
 #include <cstring>
-#include <utility>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/pade_exp_approx.hpp"
@@ -59,7 +58,7 @@ int main (int argc, char* argv[]) {
 
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, &V, &H, 1);
+    arnoldiIteration(A, b, krylovDegree, size, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
 
 
