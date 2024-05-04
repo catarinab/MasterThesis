@@ -27,10 +27,16 @@ class dense_matrix {
     void setCol(int col, dense_vector vec);
     void setValue(int row, int col, double val);
 
+    bool hasNanorInf();
+
     [[nodiscard]] double getValue(int row, int col) const;
+
+    void getCol(int col, double * ptr);
+    void getCol(int col, double * ptr, double scalar);
     void getCol(int col, dense_vector * res);
     void getCol(int col, vector<double>& vect);
     dense_vector getCol(int col);
+
     [[nodiscard]] const double* getDataPointer() const;
     [[nodiscard]] int getRowVal() const;
     [[nodiscard]] int getColVal() const;

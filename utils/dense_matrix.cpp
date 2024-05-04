@@ -164,3 +164,9 @@ void dense_matrix::printMatrix() {
     cout << endl;
 
 }
+
+void dense_matrix::getCol(int col, double *ptr) {
+    for(int row = 0; row < this->rows; row++) {
+        ptr[row] = this->values[row + col * this->rows];
+    }
+}
