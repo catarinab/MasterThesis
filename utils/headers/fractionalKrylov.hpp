@@ -22,8 +22,8 @@ autodiff::real stblrndsub(autodiff::real alpha, autodiff::real u1, autodiff::rea
 autodiff::real stblrnd(autodiff::real alpha, autodiff::real beta, autodiff::real gamma, autodiff::real delta,
                        autodiff::real u1, autodiff::real u2);
 
-dense_vector dTotalRNG(double alpha, double gamma, autodiff::real u1, autodiff::real u2, autodiff::real u3,
-                       autodiff::real t);
+dense_vector dTotalRNGp(double alpha, double gamma, autodiff::real u1, autodiff::real u2, autodiff::real u3,
+                        autodiff::real t);
 
 
 
