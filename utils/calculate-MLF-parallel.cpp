@@ -268,10 +268,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
             int restThreads = floor((omp_get_max_threads() - nrThreads) / nrThreads);
 
-            cout << nrThreads << endl;
-
-            cout << restThreads << endl;
-
             #pragma omp parallel for schedule(dynamic) num_threads(nrThreads)
             for(int j = maxDeriv; j < k + elSize ; j++){
                 //evaluate values for diagonal of the block
