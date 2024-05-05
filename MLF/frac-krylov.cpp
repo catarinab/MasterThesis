@@ -82,7 +82,7 @@ int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigne
         u << x[j*ndim+0], x[j*ndim+1], x[j*ndim+2];
 
         autodiff::real newU = totalRNG(q, u, t);
-        if(newU.val() < 1e4) {
+        if(newU.val() < 1e5) {
             dense_vector temp(sparseMatrixSize);
 
             dense_vector dRNG = dTotalRNGp(q(0).val(), q(1).val(), u(0), u(1), u(2), t);
@@ -94,6 +94,7 @@ int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigne
 
             //temp -> sparseMatrixSize x 1
             //result -> 1 x 2
+            //fval -> sparseMatrixSize x 2
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, sparseMatrixSize, 2, 1, 1,
                         temp.values.data(), 1, dRNG.values.data(), 2, 0.0, &fval[j*fdim], 2);
         }
@@ -158,11 +159,16 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
     exec_time = -omp_get_wtime();
-    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 2e4, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
+    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
     exec_time += omp_get_wtime();
     cout << "hcubature_v time: " << exec_time << endl;
-    for(int idx = 0; idx < sparseMatrixSize * 2; idx++)
-        duTdp[idx] = duTdp[idx] * normu0;
+    for(int idx = 0; idx < sparseMatrixSize; idx++) {
+        for (int col = 0; col < 2; col++) {
+            duTdp[idx * 2 + col] = duTdp[idx * 2 + col] * normu0;
+            //cout << duTdp[idx * 2 + col] << " ";
+        }
+        //cout << endl;
+    }
 }
 
 
