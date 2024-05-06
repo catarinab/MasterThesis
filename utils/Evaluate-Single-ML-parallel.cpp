@@ -402,8 +402,7 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k, in
         c[kk][kk] = 1;
     }
 
-
-    #pragma omp parallel for if(numThreads > 0) num_threads(numThreads) reduction(+:result)
+    #pragma omp parallel for if(numThreads) num_threads(numThreads) reduction(+:result)
     for (int j = 0; j <= k - p; j++) {
         if (abs(c[k - p][j]) > tau) {
             result += c[k - p][j] * calculateLTI(lambda, alpha, (k - p) * alpha + beta - j, p);
