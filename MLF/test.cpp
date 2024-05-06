@@ -31,13 +31,7 @@ int main (int argc, char* argv[]) {
 
     A.readVector("krylov-784/"+to_string(size)+"-vector.txt");
 
-    double exec_time = -omp_get_wtime();
-
     dense_matrix B = calculate_MLF((double *) A.getDataPointer(), alpha, beta, size);
-
-    exec_time += omp_get_wtime();
-
-    cout << exec_time << endl;
 
     return 0;
 }

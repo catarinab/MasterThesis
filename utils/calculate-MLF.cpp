@@ -264,9 +264,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         if(relDiff <= tol) {
             vector<double> fDerivMax = vector<double>(maxTerms + elSize - 1);
 
-            int nr_threads = omp_get_max_threads() > k + elSize - maxDeriv ? k + elSize - maxDeriv : omp_get_max_threads();
-
-            #pragma omp parallel for schedule(dynamic) num_threads(nr_threads)
+            #pragma omp parallel for schedule(dynamic)
             for(int j = maxDeriv; j < k + elSize ; j++){
                 //evaluate values for diagonal of the block
                 //calculate w
@@ -505,7 +503,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     exec_time += omp_get_wtime();
 
-    /*cout << "Execution time: " << exec_time << endl;*/
+    cout << exec_time << endl;
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
