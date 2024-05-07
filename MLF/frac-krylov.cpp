@@ -128,7 +128,7 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     std::default_random_engine generator(seed);
     std::normal_distribution<double> normalDistribution(0.0, 1.0);
 
-    double exec_time_uT, exec_time_duTdp;
+    double exec_time_arnoldi, exec_time_uT, exec_time_duTdp;
 
     normu0 = u0.getNorm2();
 
@@ -145,11 +145,12 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     H = dense_matrix(krylovDegree, krylovDegree);
 
     cout << nu << endl;
-
+    exec_time_arnoldi = -omp_get_wtime();
     if(nu == 1)
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H);
     else
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H, nu);
+    exec_time_arnoldi += omp_get_wtime();
 
     q << alpha, gamma;
 
@@ -178,7 +179,7 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
         //cout << endl;
     }
 
-    cout << exec_time_uT << "," << exec_time_duTdp << endl;
+    cout << exec_time_arnoldi << "," << exec_time_uT << "," << exec_time_duTdp << endl;
 }
 
 

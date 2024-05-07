@@ -75,7 +75,7 @@ int main (int argc, char* argv[]) {
     exec_time += omp_get_wtime();
 
     //output results
-    cout << exec_time_arnoldi << "," << exec_time_schur << "," << exec_time << endl;
+    cout << exec_time_arnoldi << "," << exec_time_schur << endl;
     /*printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
     printf("exec_time_pade: %f\n", exec_time_schur);
     printf("diff: %.15f\n", abs(normVal - resNorm));
