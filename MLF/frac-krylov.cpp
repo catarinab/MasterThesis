@@ -159,8 +159,11 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 
     double xmin[3] = {0,0,0}, xmax[3] = {1,1,1};
 
+    hcubature(sparseMatrixSize, uTCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
+
     exec_time_uT = -omp_get_wtime();
-    hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
+    //hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
+    hcubature(sparseMatrixSize, uTCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
     exec_time_uT += omp_get_wtime();
     for(int i = 0; i < sparseMatrixSize; i++)
         uT[i] = uT[i] * normu0;
@@ -169,7 +172,8 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
     exec_time_duTdp = -omp_get_wtime();
-    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
+    hcubature(sparseMatrixSize * 2, duTdpCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
+    //hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
     exec_time_duTdp += omp_get_wtime();
     for(int idx = 0; idx < sparseMatrixSize; idx++) {
         for (int col = 0; col < 2; col++) {
