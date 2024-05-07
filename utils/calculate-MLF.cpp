@@ -319,14 +319,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     auto * fA = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
-    int nrBlocks = 0;
-
-    for(const vector<int>& indVal: ind){
-        if(indVal.size() > 1)
-            nrBlocks++;
-    }
-
-    cout << nrBlocks << endl;
 
     exec_time = -omp_get_wtime();
 
