@@ -128,19 +128,16 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     std::default_random_engine generator(seed);
     std::normal_distribution<double> normalDistribution(0.0, 1.0);
 
-    double exec_time;
+    double exec_time_uT, exec_time_duTdp;
 
     normu0 = u0.getNorm2();
 
-    double alpha = 0.7898792051810126;
-    double gamma = 0.5658089024038534;
+    double alpha = 0.8;
+    double gamma = 0.6;
+
 
     /*double alpha = abs(normalDistribution(generator)) * 0.9 + 0.1;
     double gamma  = abs(normalDistribution(generator)) * 0.9 + 0.1;*/
-
-    cout << alpha << endl;
-
-    cout << gamma << endl;
 
     int nu = ceil(gamma/alpha);
 
@@ -161,20 +158,18 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 
     double xmin[3] = {0,0,0}, xmax[3] = {1,1,1};
 
-    exec_time = -omp_get_wtime();
+    exec_time_uT = -omp_get_wtime();
     hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
-    exec_time += omp_get_wtime();
-    cout << "hcubature_v time: " << exec_time << endl;
+    exec_time_uT += omp_get_wtime();
     for(int i = 0; i < sparseMatrixSize; i++)
         uT[i] = uT[i] * normu0;
 
     vector<double> duTdp(sparseMatrixSize * 2, 0);
     vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
-    exec_time = -omp_get_wtime();
+    exec_time_duTdp = -omp_get_wtime();
     hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
-    exec_time += omp_get_wtime();
-    cout << "hcubature_v time: " << exec_time << endl;
+    exec_time_duTdp += omp_get_wtime();
     for(int idx = 0; idx < sparseMatrixSize; idx++) {
         for (int col = 0; col < 2; col++) {
             duTdp[idx * 2 + col] = duTdp[idx * 2 + col] * normu0;
@@ -182,6 +177,8 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
         }
         //cout << endl;
     }
+
+    cout << exec_time_uT << "," << exec_time_duTdp << endl;
 }
 
 

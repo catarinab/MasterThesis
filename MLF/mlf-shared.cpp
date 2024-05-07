@@ -38,11 +38,12 @@ int main (int argc, char* argv[]) {
     double exec_time_schur, exec_time_arnoldi, exec_time;
 
     //input values
-    double alpha = 0.5;
-    double beta = 0.7;
+    double alpha = 0.8;
+    double beta = 0;
+    double gamma = 0.6;
 
     int krylovDegree;
-    string mtxPath = "../mtx/matlab-laplacian/lapl27000_3D.mtx";
+    string mtxPath = "mtx/784-convect.mtx";
     double normVal = 0;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
