@@ -36,7 +36,7 @@ int arnoldiIteration(const csr_matrix &A, const dense_vector &initVec, int k_tot
 
     //auxiliary
     dense_vector w(m);
-    dense_vector temp;
+    dense_vector temp(m);
     double *vCol;
 
     for(k = 1; k < k_total + 1; k++) {

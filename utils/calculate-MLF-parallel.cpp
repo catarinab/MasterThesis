@@ -159,8 +159,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     int i = element[0];
     int elSize = (int) element.size();
 
-    int elThreads = omp_get_max_threads() > elSize ? elSize : omp_get_max_threads();
-
     auto * M = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * auxMatrixLpck = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * P = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
@@ -183,7 +181,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
     //M = T - lambda*I
     //auxMatrix = I - abs(triu(T,1));
-    #pragma omp parallel for num_threads(elThreads)
+    #pragma omp parallel for
     for(int j = 0; j < elSize; j++){
         for(int k = 0; k < elSize; k++){
             if(j == k) {
@@ -210,7 +208,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     double mu = 0;
     // F = f*I
     // mu = infNorm(ones)
-    #pragma omp parallel for reduction(max:mu) num_threads(elThreads)
+    #pragma omp parallel for reduction(max:mu)
     for(int ii = 0; ii < elSize; ii++) {
         F[ii + ii * elSize] = f;
         mu = max(mu, abs(ones[ii]));

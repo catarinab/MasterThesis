@@ -69,6 +69,22 @@ mlf-shared:
 	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o mlf-shared.o -o $(TARGETSHARED)
 	rm *.o
 
+mlf-shared-new:
+	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF-parallel.cpp -o calculate-MLF.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML-parallel.cpp -o Evaluate-Single-ML.o
+	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared.cpp -o mlf-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
+	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o mlf-shared.o -o mlf-shared-new.out
+	rm *.o
+
 frac:
 	@echo "$(GREEN)Making fractional Arnoldi version: $(TARGETFRACSHARED) $(NORMAL)"
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o

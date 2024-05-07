@@ -39,10 +39,10 @@ int main (int argc, char* argv[]) {
 
     //input values
     double alpha = 0.5;
-    double beta = 0;
+    double beta = 0.7;
 
     int krylovDegree;
-    string mtxPath = "lap512.mtx";
+    string mtxPath = "../mtx/matlab-laplacian/lapl27000_3D.mtx";
     double normVal = 0;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 

@@ -17,7 +17,7 @@
 using namespace std;
 using namespace autodiff;
 
-int krylovDegree;
+int krylovDegree = 3;
 int sparseMatrixSize;
 dense_matrix V;
 dense_matrix H;
@@ -75,9 +75,9 @@ int uTCalc(unsigned ndim, const double *x, void *fdata, unsigned fdim, double *f
 //hcubature(u->(V*(-H)*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1]*dTotalRNGdp([α;γ],u)',[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
 int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
     //integrar em u
-
+    cout << npts << endl;
     #pragma omp parallel for schedule(dynamic)
-    for (unsigned j = 0; j < npts; ++j) { // evaluate the integrand for npts points
+    for (unsigned j = 0; j < npts; ++j) { //evaluate the integrand for npts points
         autodiff::ArrayXreal u(3);
         u << x[j*ndim+0], x[j*ndim+1], x[j*ndim+2];
 
@@ -107,7 +107,7 @@ int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigne
 int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
     //integrar em u
     #pragma omp parallel for schedule(dynamic)
-    for (unsigned j = 0; j < npts; ++j) { // evaluate the integrand for npts points
+    for (unsigned j = 0; j < npts; ++j) { //evaluate the integrand for npts points
         autodiff::ArrayXreal u(3);
         u << x[j*ndim+0], x[j*ndim+1], x[j*ndim+2];
 
@@ -124,17 +124,30 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 
     t = 1;
 
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::default_random_engine generator(seed);
+    std::normal_distribution<double> normalDistribution(0.0, 1.0);
+
     double exec_time;
 
     normu0 = u0.getNorm2();
 
     double alpha = 0.7898792051810126;
-    double gamma  = 0.5658089024038534;
+    double gamma = 0.5658089024038534;
+
+    /*double alpha = abs(normalDistribution(generator)) * 0.9 + 0.1;
+    double gamma  = abs(normalDistribution(generator)) * 0.9 + 0.1;*/
+
+    cout << alpha << endl;
+
+    cout << gamma << endl;
 
     int nu = ceil(gamma/alpha);
 
     V = dense_matrix(sparseMatrixSize, krylovDegree);
     H = dense_matrix(krylovDegree, krylovDegree);
+
+    cout << nu << endl;
 
     if(nu == 1)
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H);
@@ -172,14 +185,14 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 }
 
 
-void processArgs(int argc, char* argv[], string * mtxName) {
+void processArgs(int argc, char* argv[], string * mtxPath) {
 
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
             krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-m") == 0) {
-            *mtxName = argv[i+1];
+            *mtxPath = argv[i+1];
         }
     }
 }
@@ -209,7 +222,11 @@ int main (int argc, char* argv[]) {
     b.getOnesVec();
 
     //solve
+    exec_time = -omp_get_wtime();
     solve(A, b);
+    exec_time += omp_get_wtime();
+
+    cout << exec_time << endl;
 
 
     mkl_sparse_destroy(A.getMKLSparseMatrix());
