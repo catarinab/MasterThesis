@@ -133,7 +133,7 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     normu0 = u0.getNorm2();
 
     double alpha = 0.8;
-    double gamma = 0.6;
+    double gamma = 1;
 
 
     /*double alpha = abs(normalDistribution(generator)) * 0.9 + 0.1;

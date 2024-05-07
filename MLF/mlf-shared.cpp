@@ -40,7 +40,6 @@ int main (int argc, char* argv[]) {
     //input values
     double alpha = 0.8;
     double beta = 0;
-    double gamma = 0.6;
 
     int krylovDegree;
     string mtxPath = "mtx/784-convect.mtx";
