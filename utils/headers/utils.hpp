@@ -18,8 +18,6 @@
 #include "dense_matrix.hpp"
 #include "dense_vector.hpp"
 
-#pragma omp declare	reduction(+ : std::complex<double> : omp_out += omp_in ) initializer( omp_priv = omp_orig )
-
 struct SparseTriplet {
     long long int col;
     long long int row;

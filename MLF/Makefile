@@ -13,6 +13,7 @@ TARGETFRACSHARED=frac.out
 TARGETTESTEigen=testEigen.out
 TARGETHESS=hess.out
 LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_tbb_thread -lmkl_core -lgomp -lpthread -lm -ldl -ltbb
+SEQLINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lgomp -lpthread -lm -ldl -ltbb
 GREEN=\033[0;32m
 RED=\033[0;31m
 YELLOW=\033[0;33m
@@ -97,7 +98,7 @@ frac:
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
 	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o
 	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
-	$(C++) $(DEBUG) $(CFLAGSCubature) $(CFLAGS) $(LINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
+	$(C++) $(DEBUG) $(CFLAGSCubature) $(CFLAGS) $(SEQLINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
 	mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o arnoldiIteration-shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
 	rm *.o
 

@@ -27,52 +27,6 @@ double t;
 autodiff::ArrayXreal q(2);
 
 //hcubature(u->(V*(-H)*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1]*dTotalRNGdp([α;γ],u)',[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
-int duTdpCalc(unsigned ndim, const double *x, void *fdata, unsigned fdim, double *fval) {
-    //integrar em u
-
-    autodiff::ArrayXreal u(3);
-    u << x[0], x[1], x[2];
-
-    autodiff::real newU = totalRNG(q, u, t);
-
-    dense_vector dRNG = dTotalRNGp(q(0).val(), q(1).val(), u(0), u(1), u(2), t);
-
-    dense_vector temp(sparseMatrixSize);
-
-    if(newU.val() < 1e5) {
-        dense_matrix m1 = denseMatrixMult(V, -H);
-        dense_matrix expH = scalingAndSquaring(H * -newU.val());
-        dense_matrix m2 = denseMatrixMult(m1, expH);
-        m2.getCol(0, &temp);
-        //temp -> sparseMatrixSize x 1
-        //result -> 1 x 2
-        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, sparseMatrixSize, 2, 1, 1.0,
-                    temp.values.data(), 1, dRNG.values.data(), 2, 0.0, fval, 2);
-    }
-    else {
-        for (int i = 0; i < fdim; i++)
-            fval[i] = 0;
-    }
-
-    return 0; // success
-}
-
-//uT = normu0*hcubature(u->(V*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1],[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
-int uTCalc(unsigned ndim, const double *x, void *fdata, unsigned fdim, double *fval) {
-        autodiff::ArrayXreal u(3);
-        u << x[0], x[1], x[2];
-
-        autodiff::real newU = totalRNG(q, u, t);
-        if(newU.val() < 1e5) {
-            denseMatrixMult(V, scalingAndSquaring(H * -newU.val())).getCol(0, fval);
-        }
-        else
-            memset(fval, 0, fdim * sizeof(double));
-
-    return 0; // success
-}
-
-//hcubature(u->(V*(-H)*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1]*dTotalRNGdp([α;γ],u)',[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
 int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
     //integrar em u
     cout << npts << endl;
@@ -159,11 +113,8 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 
     double xmin[3] = {0,0,0}, xmax[3] = {1,1,1};
 
-    hcubature(sparseMatrixSize, uTCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
-
     exec_time_uT = -omp_get_wtime();
-    //hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
-    hcubature(sparseMatrixSize, uTCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
+    hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
     exec_time_uT += omp_get_wtime();
     for(int i = 0; i < sparseMatrixSize; i++)
         uT[i] = uT[i] * normu0;
@@ -172,8 +123,7 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
     exec_time_duTdp = -omp_get_wtime();
-    hcubature(sparseMatrixSize * 2, duTdpCalc, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
-    //hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
+    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
     exec_time_duTdp += omp_get_wtime();
     for(int idx = 0; idx < sparseMatrixSize; idx++) {
         for (int col = 0; col < 2; col++) {
