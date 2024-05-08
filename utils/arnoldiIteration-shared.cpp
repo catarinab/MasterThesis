@@ -59,7 +59,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     dotProd += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for nowait
+                #pragma omp for simd nowait
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd;
                 }
