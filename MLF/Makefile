@@ -24,7 +24,6 @@ all: mlf-shared
 
 test:
 	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
@@ -34,13 +33,12 @@ test:
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
 	$(C++) $(DEBUG) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
-	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o test.o -o $(TARGETTEST)
+	$(C++) $(CFLAGS) $(LINK)  csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o mtx_ops_mkl.o \
+	calculate-MLF.o Evaluate-Single-ML.o test.o -o $(TARGETTEST)
 	rm *.o
 
 test-new:
 	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
@@ -50,8 +48,8 @@ test-new:
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF-parallel.cpp -o calculate-MLF.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML-parallel.cpp -o Evaluate-Single-ML.o
 	$(C++) $(DEBUG) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
-	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o test.o -o test-new.out
+	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o mtx_ops_mkl.o \
+	calculate-MLF.o Evaluate-Single-ML.o test.o -o test-new.out
 	rm *.o
 
 mlf-shared:
