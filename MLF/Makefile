@@ -98,7 +98,7 @@ frac:
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
 	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o
 	$(C++) $(DEBUG) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
-	$(C++) $(DEBUG) $(CFLAGSCubature) $(CFLAGS) $(SEQLINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
+	$(C++) $(DEBUG) $(CFLAGSCubature) $(CFLAGS) $(LINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
 	mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o arnoldiIteration-shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
 	rm *.o
 
