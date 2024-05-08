@@ -36,39 +36,40 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
     //auxiliary
     dense_vector w(m);
-    double dotProd;
     double *vCol;
 
     for(k = 1; k < k_total + 1; k++) {
+        double dotProd;
         V->getCol(k-1, &vCol);
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w.values.data());
 
-        #pragma omp parallel shared(w) private(vCol)
+        #pragma omp parallel shared(dotProd, vCol)
         {
             for(int j = 0; j < k; j++) {
+                //dotprod entre w e V->getCol(j)
+                #pragma omp single
+                {
+                    dotProd = 0;
+                    V->getCol(j, &vCol);
+                }
 
-                V->getCol(j, &vCol);
-
-                #pragma omp for reduction(+:dotProd)
+                #pragma omp for simd reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for simd
+                #pragma omp for simd nowait
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
-                {
-                    dotProd = 0;
-                    H->setValue(j, k - 1, dotProd);
-                }
-
+                H->setValue(j, k - 1, dotProd);
             }
         }
+
 
         if( k == k_total) break;
         H->setValue(k, k - 1, w.getNorm2());
