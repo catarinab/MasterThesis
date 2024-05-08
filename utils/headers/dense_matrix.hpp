@@ -47,6 +47,8 @@ class dense_matrix {
     dense_matrix operator* (double x);
     dense_matrix operator- () const;
     void getCol(int col, double ** ptr);
+
+    void setColVals(int initRow, int finalRow, int col, double *vals);
 };
 
 #endif

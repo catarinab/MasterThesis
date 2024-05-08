@@ -38,6 +38,10 @@ void dense_matrix::setCol(int col, dense_vector vec){
     memcpy(this->values.data() + col * this->rows, vec.values.data(), this->rows * sizeof(double));
 }
 
+void dense_matrix::setColVals(int initRow, int finalRow, int col, double * vals) {
+    memcpy(this->values.data() + col * this->rows + initRow, vals, (finalRow - initRow) * sizeof(double));
+}
+
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
     this->values[row + col * this->rows] = val;
