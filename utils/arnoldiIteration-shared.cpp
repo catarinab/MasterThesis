@@ -1,7 +1,5 @@
 #include "headers/arnoldiIteration-shared.hpp"
 
-#pragma omp declare reduction(plus: double: omp_out += omp_in) initializer(omp_priv = omp_orig)
-
 /*  Parameters
     ----------
     A : An m × m array (csr_matrix)
@@ -52,20 +50,22 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
             for(int j = 0; j < k; j++) {
 
                 V->getCol(j, &vCol);
-                dotProd = 0;
 
                 #pragma omp for reduction(plus:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for simd nowait
+                #pragma omp for simd
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
+                {
+                    dotProd = 0;
                     H->setValue(j, k - 1, dotProd);
+                }
 
             }
         }
