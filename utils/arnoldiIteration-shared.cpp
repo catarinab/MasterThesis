@@ -1,3 +1,4 @@
+#include <cstring>
 #include "headers/arnoldiIteration-shared.hpp"
 
 /*  Parameters
@@ -37,14 +38,16 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     //auxiliary
     dense_vector w(m);
     double *vCol;
+    auto * dotProd = new double[k_total]();
 
     for(k = 1; k < k_total + 1; k++) {
+        memset(dotProd, 0, k * sizeof(double));
         V->getCol(k-1, &vCol);
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w.values.data());
 
-        auto * dotProd = new double[k]();
+
         #pragma omp parallel shared(dotProd) private(vCol)
         {
             for(int j = 0; j < k; j++) {
@@ -64,14 +67,14 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
         H->setColVals(0, k, k-1, dotProd);
 
-        delete[] dotProd;
-
-
         if( k == k_total) break;
         H->setValue(k, k - 1, w.getNorm2());
 
         if(H->getValue(k, k - 1) != 0)
             V->setCol(k, w / H->getValue(k, k - 1));
     }
+
+    delete[] dotProd;
+
     return k;
 }
