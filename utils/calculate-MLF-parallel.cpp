@@ -261,7 +261,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
             int nrThreads = omp_get_max_threads() > k + elSize - maxDeriv ? k + elSize - maxDeriv : omp_get_max_threads();
 
-            int restThreads = floor((omp_get_max_threads() - nrThreads) / nrThreads);
+            int restThreads = (omp_get_max_threads() - nrThreads) / nrThreads;
 
             #pragma omp parallel for schedule(dynamic) num_threads(nrThreads)
             for(int j = maxDeriv; j < k + elSize ; j++){
