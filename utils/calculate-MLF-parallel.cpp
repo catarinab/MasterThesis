@@ -186,7 +186,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     //M = T - lambda*I
     //auxMatrix = I - abs(triu(T,1));
 
-    #pragma omp parallel for num_threads(nrElThreads)
+    //#pragma omp parallel for num_threads(nrElThreads)
     for(int j = 0; j < elSize; j++){
         for(int k = 0; k < elSize; k++){
             if(j == k) {
@@ -213,7 +213,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     double mu = 0;
     // F = f*I
     // mu = infNorm(ones)
-    #pragma omp parallel for num_threads(nrElThreads) reduction(max:mu)
+    //#pragma omp parallel for num_threads(nrElThreads) reduction(max:mu)
     for(int ii = 0; ii < elSize; ii++) {
         F[ii + ii * elSize] = f;
         mu = max(mu, abs(ones[ii]));
@@ -234,7 +234,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
         //F = F + P*f
         //F_aux = F - F_old
-        #pragma omp parallel for num_threads(nrElThreads)
+        //#pragma omp parallel for num_threads(nrElThreads)
         for(int ii = 0; ii < elSize; ii++){
             for(int j = 0; j < elSize; j++){
                 F[ii + j * elSize] = F[ii + j * elSize] +  P[ii + j * elSize] * f;
