@@ -2,6 +2,7 @@
 #include <utility>
 #include <vector>
 #include <cmath> //sqrt
+#include <mkl.h>
 
 #include "headers/dense_vector.hpp"
 
@@ -49,6 +50,15 @@ dense_vector dense_vector::operator/ (double x) {
     return res;
 }
 
+//divide all vector values by x
+dense_vector dense_vector::operator/= (double x) {
+    for(int i = 0; i < this->size; i++) {
+        this->values[i] /= x;
+    }
+    return *this;
+}
+
+
 void dense_vector::setValues(vector<double> newValues) {
     this->values = std::move(newValues);
 }
@@ -66,13 +76,7 @@ void dense_vector::insertValue(int col, double value) {
 
 
 double dense_vector::getNorm2() {
-    double res = 0;
-
-    #pragma omp parallel for reduction(+:res)
-    for(int i = 0; i < this->size; i++) {
-        res += abs(this->values[i]) * abs(this->values[i]);
-    }
-    return (double) sqrt(res);
+    return cblas_dnrm2(this->size, this->values.data(), 1);
 }
 
 double dense_vector::getValue(int i) {

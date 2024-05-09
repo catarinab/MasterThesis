@@ -69,10 +69,11 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
         if( k == k_total) break;
         double wNorm = w.getNorm2();
+        w /= wNorm;
         H->setValue(k, k - 1, wNorm);
 
         if(H->getValue(k, k - 1) != 0)
-            V->setCol(k, w / wNorm);
+            V->setCol(k, w);
     }
 
     delete[] dotProd;

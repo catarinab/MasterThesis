@@ -29,6 +29,7 @@ public:
     
     dense_vector operator*(double x);
     dense_vector operator/(double x);
+    dense_vector operator/=(double x);
 
     // Member functions
     double getNorm2();

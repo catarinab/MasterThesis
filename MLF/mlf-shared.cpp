@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
 
     dense_vector b(size);
     b.getOnesVec();
-    b = b / b.getNorm2();
+    b /= b.getNorm2();
     //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 

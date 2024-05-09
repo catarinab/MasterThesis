@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <omp.h>
 #include <cstring>
 
 #include "headers/io_ops.hpp"
