@@ -38,7 +38,7 @@ int main (int argc, char* argv[]) {
     double exec_time_schur, exec_time_arnoldi, exec_time;
 
     //input values
-    double alpha = 0.8;
+    double alpha = 0.4722744269947524;
     double beta = 0;
 
     int krylovDegree;
@@ -75,7 +75,7 @@ int main (int argc, char* argv[]) {
     exec_time += omp_get_wtime();
 
     //output results
-    cout << exec_time_arnoldi << "," << exec_time_schur << endl;
+    cout << exec_time_schur << "," << (double) (abs(normVal - resNorm) / abs(normVal)) << endl;
     /*printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
     printf("exec_time_pade: %f\n", exec_time_schur);
     printf("diff: %.15f\n", abs(normVal - resNorm));
