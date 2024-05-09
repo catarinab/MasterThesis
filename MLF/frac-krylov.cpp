@@ -17,7 +17,7 @@
 using namespace std;
 using namespace autodiff;
 
-int krylovDegree = 3;
+
 int sparseMatrixSize;
 dense_matrix V;
 dense_matrix H;
@@ -29,7 +29,6 @@ autodiff::ArrayXreal q(2);
 //hcubature(u->(V*(-H)*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1]*dTotalRNGdp([α;γ],u)',[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
 int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
     //integrar em u
-    cout << npts << endl;
     #pragma omp parallel for schedule(dynamic)
     for (unsigned j = 0; j < npts; ++j) { //evaluate the integrand for npts points
         autodiff::ArrayXreal u(3);
@@ -74,7 +73,7 @@ int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned f
     return 0; // success
 }
 
-void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol = 1e-3) {
+void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol = 1e-8, double rtol = 1e-3) {
 
     t = 1;
 
@@ -133,15 +132,15 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
         //cout << endl;
     }
 
-    cout << exec_time_arnoldi << "," << exec_time_uT << "," << exec_time_duTdp << endl;
+    cout << exec_time_uT << "," << exec_time_duTdp << endl;
 }
 
 
-void processArgs(int argc, char* argv[], string * mtxPath) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath) {
 
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
-            krylovDegree = stoi(argv[i+1]);
+            *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-m") == 0) {
             *mtxPath = argv[i+1];
@@ -155,16 +154,14 @@ int main (int argc, char* argv[]) {
     double exec_time;
 
     string mtxPath;
+    int krylovDegree;
 
     if(argc != 5){
         cerr << "Usage: " << argv[0] << " -k <init-krylov-degree> -m <mtxPath> " << endl;
         return 1;
     }
 
-    processArgs(argc, argv, &mtxPath);
-
-    cout << "krylovDegree: " << krylovDegree << endl;
-    cout << "mtxPath: " << mtxPath << endl;
+    processArgs(argc, argv, &krylovDegree, &mtxPath);
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
@@ -174,11 +171,7 @@ int main (int argc, char* argv[]) {
     b.getOnesVec();
 
     //solve
-    exec_time = -omp_get_wtime();
-    solve(A, b);
-    exec_time += omp_get_wtime();
-
-    cout << exec_time << endl;
+    solve(A, b, krylovDegree, 1e-8, 0.934537);
 
 
     mkl_sparse_destroy(A.getMKLSparseMatrix());
