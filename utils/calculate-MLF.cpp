@@ -22,69 +22,12 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
-string folderMLF("0-1/");
-
-void printMatrixFile(const string& fileName, const string& name, complex<double> * matrix, int size) {
-    ofstream myFile;
-    myFile.open(folderMLF + fileName);
-    myFile << name << " =[ " ;
-    for(int i = 0; i < size; i++ ) {
-        for(int j = 0; j < size; j++){
-            myFile << scientific << std::setprecision (15) << matrix[i + j * size].real() << "+"
-                   << matrix[i + j * size].imag() << "i";
-            if(j != size - 1)
-                myFile <<",";
-        }
-        if(i != size -1)
-            myFile << ";";
-    }
-    myFile << "];" << endl;
-    myFile.close();
-}
-
-void printMatrixFile(const string& fileName, const string& name, double * matrix, int size) {
-    ofstream myFile;
-    myFile.open(folderMLF + fileName);
-    myFile << name << " =[ " ;
-    for(int i = 0; i < size; i++ ) {
-        for(int j = 0; j < size; j++){
-            myFile << scientific << std::setprecision (15) << matrix[i + j * size];
-            if(j != size - 1)
-                myFile <<",";
-        }
-        if(i != size -1)
-            myFile << ";";
-    }
-    myFile << "];" << endl;
-    myFile.close();
-}
-
-void printMatrix(const string& name, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax) {
-    int size = colMax - colMin + 1;
-    for (int i = 0; i <= (rowMax - rowMin); i++) {
-        for (int j = 0; j <= (colMax - colMin); j++) {
-            cout << name <<": " << scientific << setprecision(16) <<
-                 matrix[i + j * size].real() << " + " << matrix[i + j * size].imag() << "i" << endl;
-        }
-    }
-    cout << endl;
-}
-
 void getSubMatrix(complex<double> ** subMatrix, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
     int subRows = rowMax - rowMin + 1;
     int subCols = colMax - colMin + 1;
     for (int i = 0; i < subRows; i++) {
         for (int j = 0; j < subCols; j++) {
             (*subMatrix)[i + j * subRows] = matrix[(rowMin + i) + (colMin + j) * size];
-        }
-    }
-}
-
-void printMainMatrix(const string& name,complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
-    for (int i = rowMin; i <= rowMax; i++) {
-        for (int j = colMin; j <= colMax; j++) {
-            cout << name <<": " << scientific << setprecision(15) <<
-                 matrix[i + j * size].real() << " + " << matrix[i + j * size].imag() << "i" << endl;
         }
     }
 }
@@ -177,8 +120,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     //lambda = trace(T)/n
     lambda /= (double) elSize;
 
-    //cout << fixed << scientific << setprecision(15) << "lambda: " << lambda << endl;
-
     //M = T - lambda*I
     //auxMatrix = I - abs(triu(T,1));
     for(int j = 0; j < elSize; j++){
@@ -203,7 +144,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
     complex<double> f = evaluateSingle(lambda, alpha, beta, 0);
 
-    //cout << "f = " << f << endl;
     double mu = 0;
     // F = f*I
     // mu = infNorm(ones)
@@ -212,15 +152,12 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         mu = max(mu, abs(ones[ii]));
     }
 
-    /*cout << "Initial F:" << endl;
-    printMatrix("F", F, 0, elSize - 1, 0, elSize - 1);*/
 
     for(int k = 1; k <= maxTerms; k++){
         double norm_F_F_old;
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
-        //cout << scientific << setprecision(16) << "f at iteration " << k << " is: " << f << endl;
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
@@ -234,8 +171,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             }
         }
 
-        /*cout << "F at iteration " << k << ":" << endl;
-        printMatrix("F", F, 0, elSize - 1, 0, elSize - 1);*/
+
         norm_F = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
                                 reinterpret_cast<const MKL_Complex16 *>(F), elSize);
         norm_F_old = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
@@ -252,8 +188,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
         memcpy(P, auxMatrixLpck, elSize * elSize * sizeof(complex<double>));
 
-        /*cout << "P at iteration " << k << ":" << endl;
-        printMatrix("P", P, 0, elSize - 1, 0, elSize - 1);*/
+
         double relDiff = norm_F_F_old/(tol + norm_F_old);
 
         if(relDiff <= tol) {
@@ -268,7 +203,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
                     complex<double> res = evaluateSingle(T[jj + jj * tSize], alpha, beta, j);
                     fDerivMax[j]  = max(fDerivMax[j] , abs(res));
                 }
-                //cout << scientific << setPrecision(15) << "fDerivMax[" << j << "] = " << fDerivMax[j] << endl;
             }
 
             maxDeriv = k+elSize;
@@ -283,9 +217,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
 
             if(norm_P*mu*omega <= tol*norm_F){
-                /*cout << "found solution:" << endl;
-                printMatrix("F", F, 0, elSize - 1,
-                            0, elSize - 1);*/
                 free(P);
                 free(F_old);
                 free(F_aux);
@@ -298,7 +229,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         }
     }
 
-    cout << "DIDNT CONVERGE" << endl;
+    cerr << "DIDNT CONVERGE" << endl;
     free(P);
     free(F_old);
     free(F_aux);
@@ -311,16 +242,12 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
 dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
-    double exec_time;
-
     auto * T = (complex<double> *) calloc(size * size, sizeof(complex<double>));
     auto * U = (complex<double> *) calloc(size * size, sizeof(complex<double>));
     //important: only the necessary fields in fA are filled, the other ones *must* be assigned to 0 -> use calloc
     auto * fA = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
-
-    exec_time = -omp_get_wtime();
 
     //evaluate diagonal entries (blocks or single entries)
     for(int col = 0; col < ind.size(); col++){
@@ -329,9 +256,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
         int elLine = j[0];
         if(elSize == 1) {
             fA[elLine + elLine * size] = evaluateSingle(T[elLine + elLine * size], alpha, beta, 0);
-            /*cout  << fixed << scientific << setPrecision(15) << "val," << T[elLine + elLine * size].real() << " + " <<
-            T[elLine + elLine * size].imag() << "i,single,i," << elLine + 1 << ",val,"
-                 << fA[elLine + elLine * size].real() << " + " << fA[elLine + elLine * size].imag() << "i" << endl;*/
         }
         else {
             complex<double> * F = evaluateBlock(T, alpha, beta, j, size);
@@ -344,9 +268,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             vector<int> i = ind[row];
             if(i.size() == 1 && j.size() == 1) {
                 fA[i[0] + j[0] * size] = single_eq(fA, T, i[0], j[0], size);
-                /*cout << "singleeq,i," << i[0] + 1
-                     << ",j," << j[0] + 1 << ",val," << fA[i[0] * size + j[0]].real() << " + "
-                     << fA[i[0] * size + j[0]].imag() << "i" << endl;*/
             }
             else{
                 int jSize = (int) j.size();
@@ -361,11 +282,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                 int kSize = kMax - kMin + 1;
 
                 bool kMult = kSize > 0 && (row + 1) <= (col - 1);
-
-                /*cout << "iMin," << iMin << ",iMax," << iMax <<
-                     ",jMin," << jMin << ",jMax," << jMax << endl;*/
-                /*if(kMult)
-                    cout << "kMin," << kMin << ",kMax," << kMax << endl;*/
 
                 //triangular
                 auto *Fii = (complex<double> *) calloc((iSize * iSize), sizeof(complex<double>));
@@ -409,18 +325,13 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                              iSize, jSize, jSize, &alphaMult, Tij, iSize,
                             Fjj, jSize, &betaMult, Tij_Fjj, iSize);
 
-                /*printMatrix("Fii * Tij", Fii_Tij, iMin, iMax, jMin, jMax);
-                printMatrix("Tij * Fjj", Tij_Fjj, iMin, iMax, jMin, jMax);*/
-
                 if(kMult){
 
                     auto *Fik = (complex<double> *) calloc((iSize * kSize), sizeof(complex<double>));
                     getSubMatrix(&Fik, fA, iMin, iMax, kMin, kMax, size);
-                    //printMatrix("Fik", Fik, iMin, iMax, kMin, kMax);
 
                     auto *Fkj = (complex<double> *) calloc((kSize * jSize), sizeof(complex<double>));
                     getSubMatrix(&Fkj, fA, kMin, kMax, jMin, jMax, size);
-                    //printMatrix("Fkj", Fkj, kMin, kMax, jMin, jMax);
 
                     auto *Tkj = (complex<double> *) calloc((kSize * jSize), sizeof(complex<double>));
                     getSubMatrix(&Tkj, T, kMin, kMax, jMin, jMax, size);
@@ -433,15 +344,11 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                                  iSize, jSize, kSize, &alphaMult, Fik, iSize,
                                 Tkj, kSize, &betaMult, Fik_Tkj, iSize);
 
-                    //printMatrix("Fik*Tkj", aux3, 0, iMax - iMin, 0, jMax - jMin);
-
 
                     //Tik * Fkj
                     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                                  iSize, jSize, kSize, &alphaMult, Tik, iSize,
                                 Fkj, kSize, &betaMult, Tik_Fkj, iSize);
-
-                    //printMatrix("Tik * Fkj", aux4, 0, iMax - iMin, 0, jMax - jMin);
 
                     free(Fik);
                     free(Fkj);
@@ -456,8 +363,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                     }
                 }
 
-                //printMatrix("rhs", result, 0, iMax - iMin, 0, jMax - jMin);
-
                 //Sylvester equation to find Fij
                 //Tii * Fij - Fij * Tjj = aux
                 double scale = 1.0;
@@ -467,10 +372,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                                reinterpret_cast<const MKL_Complex16 *>(Tjj), jSize,
                                reinterpret_cast<MKL_Complex16 *>(result), iSize, &scale);
 
-
-
                 if(scale != 1) {
-                    cout << "scale = " <<  scale << endl;
                     for (int ii = 0; ii < iSize; ii++) {
                         for (int jj = 0; jj < jSize; jj++) {
                             result[ii + jj * iSize] /= scale;
@@ -479,8 +381,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                 }
 
                 setMainMatrix(&fA, result, iMin, iMax, jMin, jMax, size);
-
-                //printMainMatrix("finalResult", fA, iMin, iMax, jMin, jMax, size);
 
                 free(Fii);
                 free(Fjj);
@@ -495,10 +395,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             }
         }
     }
-
-    exec_time += omp_get_wtime();
-
-    //cout << exec_time << endl;
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 

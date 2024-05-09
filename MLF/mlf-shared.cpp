@@ -70,8 +70,6 @@ int main (int argc, char* argv[]) {
 
     double resNorm = getApproximation(V, mlfH, betaVal);
 
-    //cerr << resNorm << endl;
-
     exec_time += omp_get_wtime();
 
     //output results
