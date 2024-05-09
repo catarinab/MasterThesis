@@ -39,6 +39,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     dense_vector w(m);
     double *vCol;
     auto * dotProd = new double[k_total + 1]();
+    double wNorm = 0;
 
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
@@ -63,16 +64,22 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
+            #pragma omp barrier
+
+            #pragma omp single
+                wNorm = w.getNorm2();
+
+            #pragma omp for
+            for(int i = 0; i < m; i++) {
+                w.values[i] = w.values[i] / wNorm;
+            }
         }
 
         H->setColVals(0, k, k-1, dotProd);
 
         if( k == k_total) break;
-        double wNorm = w.getNorm2();
-        w /= wNorm;
         H->setValue(k, k - 1, wNorm);
-
-        if(H->getValue(k, k - 1) != 0)
+        if(wNorm != 0)
             V->setCol(k, w);
     }
 
