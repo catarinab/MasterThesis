@@ -38,12 +38,12 @@ int main (int argc, char* argv[]) {
     double exec_time_schur, exec_time_arnoldi, exec_time;
 
     //input values
-    double alpha = 0.4722744269947524;
+    double alpha = 0.9228730416043215;
     double beta = 0;
 
     int krylovDegree;
-    string mtxPath = "mtx/784-convect.mtx";
-    double normVal = 0;
+    string mtxPath = "A-500.mtx";
+    double normVal = 12.63377767489511;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
     //initializations of needed matrix and vectors
