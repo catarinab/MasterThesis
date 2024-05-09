@@ -38,7 +38,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     //auxiliary
     dense_vector w(m);
     double *vCol;
-    auto * dotProd = new double[k_total]();
+    auto * dotProd = new double[k_total + 1]();
 
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
@@ -68,10 +68,11 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
         H->setColVals(0, k, k-1, dotProd);
 
         if( k == k_total) break;
-        H->setValue(k, k - 1, w.getNorm2());
+        double wNorm = w.getNorm2();
+        H->setValue(k, k - 1, wNorm);
 
         if(H->getValue(k, k - 1) != 0)
-            V->setCol(k, w / H->getValue(k, k - 1));
+            V->setCol(k, w / wNorm);
     }
 
     delete[] dotProd;

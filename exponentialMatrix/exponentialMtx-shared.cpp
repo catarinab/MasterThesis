@@ -79,6 +79,5 @@ int main (int argc, char* argv[]) {
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
-
     return 0;
 }
