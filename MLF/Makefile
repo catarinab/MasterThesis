@@ -1,6 +1,6 @@
 mpi = mpiicpx
-C++ = icpx
-CFLAGS= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
+C++ = g++
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
