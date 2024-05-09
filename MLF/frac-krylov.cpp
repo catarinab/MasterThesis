@@ -73,7 +73,7 @@ int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned f
     return 0; // success
 }
 
-void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol = 1e-8, double rtol = 1e-3) {
+void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double normVal, double atol = 1e-8, double rtol = 1e-3) {
 
     t = 1;
 
@@ -97,7 +97,6 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
     V = dense_matrix(sparseMatrixSize, krylovDegree);
     H = dense_matrix(krylovDegree, krylovDegree);
 
-    cout << nu << endl;
     exec_time_arnoldi = -omp_get_wtime();
     if(nu == 1)
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H);
@@ -132,11 +131,13 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
         //cout << endl;
     }
 
-    cout << exec_time_uT << "," << exec_time_duTdp << endl;
+    double relError = abs(normVal - cblas_dnrm2(sparseMatrixSize, uT.data(), 1)) / abs(normVal);
+
+    cout << exec_time_uT << "," << exec_time_duTdp << "," << relError << endl;
 }
 
 
-void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, double* normVal, double * rtol) {
 
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
@@ -144,6 +145,12 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath) {
         }
         else if(strcmp(argv[i], "-m") == 0) {
             *mtxPath = argv[i+1];
+        }
+        else if(strcmp(argv[i], "-n") == 0) {
+            *normVal = stod(argv[i+1]);
+        }
+        else if(strcmp(argv[i], "-err") == 0) {
+            *rtol = stod(argv[i+1]);
         }
     }
 }
@@ -155,13 +162,15 @@ int main (int argc, char* argv[]) {
 
     string mtxPath;
     int krylovDegree;
+    double rtol;
+    double normVal;
 
-    if(argc != 5){
-        cerr << "Usage: " << argv[0] << " -k <init-krylov-degree> -m <mtxPath> " << endl;
+    if(argc != 9){
+        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxPath> -n <norm-val> -err <rtol>" << endl;
         return 1;
     }
 
-    processArgs(argc, argv, &krylovDegree, &mtxPath);
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal, &rtol);
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
@@ -170,8 +179,7 @@ int main (int argc, char* argv[]) {
     dense_vector b(sparseMatrixSize);
     b.getOnesVec();
 
-    //solve
-    solve(A, b, krylovDegree, 1e-8, 0.934537);
+    solve(A, b, krylovDegree, 1e-8, rtol);
 
 
     mkl_sparse_destroy(A.getMKLSparseMatrix());
