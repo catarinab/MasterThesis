@@ -106,8 +106,6 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H, nu);
     exec_time_arnoldi += omp_get_wtime();
 
-    mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
-
     q << alpha, gamma;
 
     vector<double> uT = vector<double>(sparseMatrixSize, 0);
