@@ -78,8 +78,6 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
 
     t = 1;
 
-    mkl_set_num_threads(1);
-
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::normal_distribution<double> normalDistribution(0.0, 1.0);
@@ -107,6 +105,8 @@ void solve(const csr_matrix &A, dense_vector u0, double atol = 1e-8, double rtol
     else
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H, nu);
     exec_time_arnoldi += omp_get_wtime();
+
+    mkl_set_threading_layer(MKL_THREADING_SEQUENTIAL);
 
     q << alpha, gamma;
 

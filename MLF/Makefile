@@ -86,18 +86,18 @@ mlf-shared-new:
 
 frac:
 	@echo "$(GREEN)Making fractional Arnoldi version: $(TARGETFRACSHARED) $(NORMAL)"
-	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o $(LINK)
-	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o $(LINK)
-	$(C++) $(CFLAGS) $(LINK) -c ../utils/dense_vector.cpp -o dense_vector.o $(LINK)
-	$(C++) $(CFLAGS) $(LINK) -c ../utils/io_ops.cpp -o io_ops.o $(LINK)
-	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o $(SEQLINK)
-	$(C++) $(CFLAGS) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o $(SEQLINK)
-	$(C++) $(CFLAGS) -c ../utils/arnoldiIteration-shared-nu.cpp -o arnoldiIteration-shared-nu.o $(LINK)
-	$(C++) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o $(LINK)
-	$(C++) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o $(LINK)
-	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o $(LINK)
-	$(C++) $(CFLAGSCubature) $(CFLAGS)  ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
-	mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o arnoldiIteration-shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED) $(LINK) $(SEQLINK)
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/csr_matrix.cpp -o csr_matrix.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/dense_matrix.cpp -o dense_matrix.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/dense_vector.cpp -o dense_vector.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/io_ops.cpp -o io_ops.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/arnoldiIteration-shared-nu.cpp -o arnoldiIteration-shared-nu.o
+	$(C++) $(CFLAGS) $(SEQLINK) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(CFLAGS) $(SEQLINK) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o
+	$(C++) $(CFLAGS) $(SEQLINK) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
+	$(C++) $(CFLAGSCubature) $(CFLAGS) $(SEQLINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
+	mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o arnoldiIteration-shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
 	rm *.o
 
 testEigen:
