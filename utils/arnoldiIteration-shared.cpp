@@ -69,19 +69,8 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                 }
             }
 
-            //wNorm = norm2(w);
-            #pragma omp for reduction(+:wNorm)
-            for(int i = 0; i < m; i++) {
-                wNorm += w.values[i] * w.values[i];
-            }
             #pragma omp single
-                wNorm = sqrt(wNorm);
-
-            //H(:, k-1) = dotProd
-            #pragma omp for nowait
-            for(int i = 0; i < k; i++) {
-                H->setValue(i, k - 1, dotProd[i]);
-            }
+                wNorm = cblas_dnrm2(m, w.values.data(), 1);
 
             if( k < k_total) {
                 if (wNorm != 0) {
@@ -92,6 +81,10 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     }
                 }
             }
+        }
+        //H(:, k-1) = dotProd
+        for(int i = 0; i < k; i++) {
+            H->setValue(i, k - 1, dotProd[i]);
         }
         if( k < k_total)
             H->setValue(k, k - 1, wNorm);
