@@ -255,20 +255,21 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             nrBlocks++;
     //evaluate diagonal entries (blocks or single entries)
 
-    #pragma omp parallel for schedule(dynamic) if (nrBlocks)
-    for(int col = 0; col < ind.size(); col++){
-        vector<int> j = ind[col];
+    #pragma omp parallel for schedule(dynamic) if (nrBlocks == 0)
+    for(auto j : ind) {
         int elSize = (int) j.size();
         int elLine = j[0];
-        if(elSize == 1) {
+        if (elSize == 1) {
             fA[elLine + elLine * size] = evaluateSingle(T[elLine + elLine * size], alpha, beta, 0);
-        }
-        else {
-            complex<double> * F = evaluateBlock(T, alpha, beta, j, size);
+        } else {
+            complex<double> *F = evaluateBlock(T, alpha, beta, j, size);
             setMainMatrix(&fA, F, elLine, elSize, size);
             free(F);
         }
+    }
 
+    for(int col = 0; col < ind.size(); col++) {
+        vector<int> j = ind[col];
         //Parlett recursion
         for (int row = col - 1; row >= 0; row--) {
             vector<int> i = ind[row];
