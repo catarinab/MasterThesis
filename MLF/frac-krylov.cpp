@@ -164,7 +164,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 }
 
 
-void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, double* normVal, double * rtol) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, double * rtol) {
 
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
@@ -172,9 +172,6 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, d
         }
         else if(strcmp(argv[i], "-m") == 0) {
             *mtxPath = argv[i+1];
-        }
-        else if(strcmp(argv[i], "-n") == 0) {
-            *normVal = stod(argv[i+1]);
         }
         else if(strcmp(argv[i], "-err") == 0) {
             *rtol = stod(argv[i+1]);
@@ -192,12 +189,12 @@ int main (int argc, char* argv[]) {
     double rtol;
     double normVal;
 
-    if(argc != 9){
-        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxPath> -n <norm-val> -err <rtol>" << endl;
+    if(argc != 7){
+        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxPath> -err <rtol>" << endl;
         return 1;
     }
 
-    processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal, &rtol);
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &rtol);
 
     readJuliaVec();
 
