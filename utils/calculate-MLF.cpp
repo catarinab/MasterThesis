@@ -249,18 +249,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
 
-    for(int i = 0; i <= size; i++){
-        int nrBlocks = 0;
-        for(const auto & j : ind){
-            if(j.size() == i){
-                nrBlocks++;
-            }
-        }
-        if(nrBlocks > 0)
-            cout << "Number of blocks with " << i << " elements: " << nrBlocks << endl;
-
-    }
-
     //evaluate diagonal entries (blocks or single entries)
     for(int col = 0; col < ind.size(); col++){
         vector<int> j = ind[col];
