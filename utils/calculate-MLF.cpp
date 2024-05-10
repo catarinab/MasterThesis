@@ -249,7 +249,13 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
 
+    int nrBlocks = 0;
+    for(const auto & i : ind)
+        if(i.size() > 1)
+            nrBlocks++;
     //evaluate diagonal entries (blocks or single entries)
+
+    #pragma omp parallel for schedule(dynamic) if (nrBlocks)
     for(int col = 0; col < ind.size(); col++){
         vector<int> j = ind[col];
         int elSize = (int) j.size();
