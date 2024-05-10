@@ -5,6 +5,7 @@
 #include <autodiff/forward/real.hpp>
 #include <autodiff/forward/real/eigen.hpp>
 #include <iomanip>
+#include <fstream>
 
 #include "../utils/headers/dense_vector.hpp"
 #include "../utils/headers/mtx_ops_mkl.hpp"
@@ -17,14 +18,28 @@
 using namespace std;
 using namespace autodiff;
 
-
 int sparseMatrixSize;
 dense_matrix V;
 dense_matrix H;
 double normu0;
 double t;
-
 autodiff::ArrayXreal q(2);
+
+vector<double> juliares;
+
+void readJuliaVec() {
+    ifstream inputFile("juliares.txt");
+    if (inputFile) {
+        double value;
+        while (inputFile >> value) {
+            juliares.push_back(value);
+        }
+        inputFile.close();
+    }
+    else {
+        cout << "Error opening julia vector file" << endl;
+    }
+}
 
 //hcubature(u->(V*(-H)*exp_cutoff(TotalRNG([α;γ],u),-H))[:,1]*dTotalRNGdp([α;γ],u)',[0;0;0],[1;1;1],atol=atol,rtol=rtol)[1]
 int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
@@ -73,7 +88,7 @@ int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned f
     return 0; // success
 }
 
-void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double normVal, double atol = 1e-8, double rtol = 1e-5) {
+void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol = 1e-8, double rtol = 1e-5) {
 
     t = 1;
 
@@ -116,24 +131,36 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double normVa
     exec_time_uT = -omp_get_wtime();
     hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
     exec_time_uT += omp_get_wtime();
-    cout << "res = [";
-    for(int i = 0; i < sparseMatrixSize; i++) {
-        uT[i] = uT[i] * normu0;
-        cout << uT[i];
-        if(i != sparseMatrixSize - 1)
-            cout << ", ";
+
+    for(int idx = 0; idx < sparseMatrixSize; idx++) {
+        uT[idx] = uT[idx] * normu0;
+        //cout << uT[idx] << " ";
     }
-    cout << "]" << endl;
+    //cout << endl;
 
-    cout << endl;
+    vector<double> duTdp(sparseMatrixSize * 2, 0);
+    vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
-    cout << cblas_dnrm2(sparseMatrixSize, uT.data(), 1) << endl;
+    exec_time_duTdp = -omp_get_wtime();
+    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
+    exec_time_duTdp += omp_get_wtime();
+    for(int idx = 0; idx < sparseMatrixSize; idx++) {
+        for (int col = 0; col < 2; col++) {
+            duTdp[idx * 2 + col] = duTdp[idx * 2 + col] * normu0;
+            //cout << duTdp[idx * 2 + col] << " ";
+        }
+        //cout << endl;
+    }
 
-    cout << normVal << endl;
+    vector<double> diff;
 
-    double relError = abs(normVal - cblas_dnrm2(sparseMatrixSize, uT.data(), 1)) / abs(normVal) * 100;
+    for(int idx = 0; idx < sparseMatrixSize; idx++) {
+        diff.push_back(uT[idx] - juliares[idx]);
+    }
 
-    cout << exec_time_uT << "," << relError << endl;
+    double relNorm = cblas_dnrm2(sparseMatrixSize, diff.data(), 1) / cblas_dnrm2(sparseMatrixSize, juliares.data(), 1);
+
+    cout << exec_time_uT << "," << exec_time_duTdp << "," << relNorm << endl;
 }
 
 
@@ -172,6 +199,8 @@ int main (int argc, char* argv[]) {
 
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal, &rtol);
 
+    readJuliaVec();
+
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
     sparseMatrixSize = (int) A.getSize();
@@ -179,7 +208,7 @@ int main (int argc, char* argv[]) {
     dense_vector b = dense_vector(sparseMatrixSize);
     b.insertValue(0, 1);
 
-    solve(A, b, krylovDegree, normVal);
+    solve(A, b, krylovDegree, 1e-8, rtol);
 
 
     mkl_sparse_destroy(A.getMKLSparseMatrix());

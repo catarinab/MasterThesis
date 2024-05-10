@@ -23,11 +23,6 @@ void dense_vector::getOnesVec() {
         this->values[i] = 1;
 }
 
-void dense_vector::getZeroVec() {
-    for(int i = 0; i < this->size; i++)
-        this->values[i] = 0;
-}
-
 //multiply all vector values by x
 dense_vector dense_vector::operator* (double x) {
     dense_vector res(this->size);
@@ -56,6 +51,14 @@ dense_vector dense_vector::operator/= (double x) {
         this->values[i] /= x;
     }
     return *this;
+}
+
+dense_vector dense_vector::operator-(const dense_vector& other) const {
+    dense_vector result(this->size);
+    for (int i = 0; i < this->values.size(); i++) {
+        result.insertValue(i, this->values[i] - other.values[i]);
+    }
+    return result;
 }
 
 
@@ -94,5 +97,12 @@ std::vector<double> dense_vector::getValues() const {
 void dense_vector::getMaxValVec() {
     for(int i = 0; i < this->size; i++)
         this->values[i] = std::numeric_limits<double>::max() / 10;
+}
+
+std::ostream& operator<<(std::ostream& os, const dense_vector& dv) {
+    for (double value : dv.values) {
+        os << value << endl;
+    }
+    return os;
 }
 

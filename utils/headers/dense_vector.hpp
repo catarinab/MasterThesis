@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <vector>
+#include <ostream>
 
 class dense_vector {
 public:
@@ -30,11 +31,11 @@ public:
     dense_vector operator*(double x);
     dense_vector operator/(double x);
     dense_vector operator/=(double x);
+    dense_vector operator-(const dense_vector& other) const;
 
     // Member functions
     double getNorm2();
-
-    void getZeroVec();
+    friend std::ostream& operator<<(std::ostream& os, const dense_vector& dv);
 };
 
 #endif // DENSE_VECTOR_HPP

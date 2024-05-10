@@ -1,6 +1,7 @@
 #include <iostream>
 #include <omp.h>
 #include <cstring>
+#include <fstream>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/calculate-MLF.hpp"
@@ -8,41 +9,39 @@
 
 using namespace std;
 
+dense_vector juliares;
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(dense_matrix V, const dense_matrix& mlfH, double betaVal) {
+dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double betaVal) {
 
     if(betaVal != 1)
         V = V * betaVal;
 
-    dense_vector res = denseMatrixMult(V, mlfH).getCol(0);
+    return denseMatrixMult(V, mlfH).getCol(0);
+}
 
-    cout << "res = [";
-    for(int i = 0; i < res.getSize(); i++) {
-        cout << res.getValue(i);
-        if(i != res.getSize() - 1)
-            cout << ", ";
+void readJuliaVec() {
+    ifstream inputFile("juliares.txt");
+    if (inputFile) {
+        double value;
+        while (inputFile >> value) {
+            juliares.values.push_back(value);
+        }
+        inputFile.close();
     }
-    cout << "];" << endl;
-
-    cout << endl;
-
-    cout << cblas_dnrm2(res.getSize(), res.values.data(), 1) << endl;
-
-    return vectorTwoNorm(denseMatrixMult(V, mlfH).getCol(0));
+    else {
+        cout << "Error opening julia vector file" << endl;
+    }
 }
 
 //Process input arguments
-void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, double * normVal) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName) {
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
             *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-m") == 0) {
             *mtxName = argv[i+1];
-        }
-        else if(strcmp(argv[i], "-n") == 0) {
-            *normVal = stod(argv[i+1]);
         }
     }
 }
@@ -58,8 +57,9 @@ int main (int argc, char* argv[]) {
 
     int krylovDegree = 3;
     string mtxPath = "A-500.mtx";
-    double normVal = 0;
-    processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
+    processArgs(argc, argv, &krylovDegree, &mtxPath);
+
+    readJuliaVec();
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
@@ -82,22 +82,20 @@ int main (int argc, char* argv[]) {
 
     exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
+
+    dense_vector res = getApproximation(V, mlfH, betaVal);
+
     exec_time_schur += omp_get_wtime();
 
-    double resNorm = getApproximation(V, mlfH, betaVal);
+    dense_vector diff = res - juliares;
+
+    double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
+    double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
 
     exec_time += omp_get_wtime();
 
     //output results
-    cout << exec_time_schur << "," << (double) (abs(normVal - resNorm) / abs(normVal)) * 100 << endl;
-
-
-
-    /*printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
-    printf("exec_time_pade: %f\n", exec_time_schur);
-    printf("diff: %.15f\n", abs(normVal - resNorm));
-    printf("2Norm: %.15f\n", resNorm);
-    printf("exec_time: %f\n", exec_time);*/
+    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
