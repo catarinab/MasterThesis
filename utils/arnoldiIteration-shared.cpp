@@ -72,13 +72,11 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
             #pragma omp single
                 wNorm = cblas_dnrm2(m, w.values.data(), 1);
 
-            if( k < k_total) {
-                if (wNorm != 0) {
-                    V->getCol(k, &vCol);
-                    #pragma omp parallel for
-                    for (int i = 0; i < m; i++) {
-                        vCol[i] = w.values[i] / wNorm;
-                    }
+            if( k < k_total && wNorm != 0.0) {
+                V->getCol(k, &vCol);
+                #pragma omp parallel for
+                for (int i = 0; i < m; i++) {
+                    vCol[i] = w.values[i] / wNorm;
                 }
             }
         }
