@@ -249,27 +249,32 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
 
-    int nrBlocks = 0;
-    for(const auto & i : ind)
-        if(i.size() > 1)
-            nrBlocks++;
-    //evaluate diagonal entries (blocks or single entries)
+    for(int i = 0; i <= size; i++){
+        int nrBlocks = 0;
+        for(const auto & j : ind){
+            if(j.size() == i){
+                nrBlocks++;
+            }
+        }
+        if(nrBlocks > 0)
+            cout << "Number of blocks with " << i << " elements: " << nrBlocks << endl;
 
-    #pragma omp parallel for schedule(dynamic) if (nrBlocks == 0)
-    for(auto j : ind) {
+    }
+
+    //evaluate diagonal entries (blocks or single entries)
+    for(int col = 0; col < ind.size(); col++){
+        vector<int> j = ind[col];
         int elSize = (int) j.size();
         int elLine = j[0];
-        if (elSize == 1) {
+        if(elSize == 1) {
             fA[elLine + elLine * size] = evaluateSingle(T[elLine + elLine * size], alpha, beta, 0);
-        } else {
-            complex<double> *F = evaluateBlock(T, alpha, beta, j, size);
+        }
+        else {
+            complex<double> * F = evaluateBlock(T, alpha, beta, j, size);
             setMainMatrix(&fA, F, elLine, elSize, size);
             free(F);
         }
-    }
 
-    for(int col = 0; col < ind.size(); col++) {
-        vector<int> j = ind[col];
         //Parlett recursion
         for (int row = col - 1; row >= 0; row--) {
             vector<int> i = ind[row];
