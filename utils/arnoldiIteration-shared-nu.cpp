@@ -1,4 +1,5 @@
 #include "headers/arnoldiIteration-shared-nu.hpp"
+#include <string.h>
 
 /*  Parameters
     ----------
@@ -45,7 +46,7 @@ int arnoldiIteration(const csr_matrix &A, const dense_vector &initVec, int k_tot
             mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                             temp.values.data(), 0.0, w.values.data());
             if(mult != nu - 1)
-                temp.values = w.values;
+                memcpy(temp.values.data(), w.values.data(), m * sizeof(double));
         }
 
 
