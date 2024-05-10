@@ -41,8 +41,12 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     auto * dotProd = new double[k_total + 1]();
     double wNorm = 0;
 
+
+
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
+        wNorm = 0;
+
         V->getCol(k-1, &vCol);
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
@@ -59,28 +63,38 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     dotProd[j] += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for simd nowait
+                #pragma omp for simd
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
-            #pragma omp barrier
 
-            #pragma omp single
-                wNorm = w.getNorm2();
-
-            #pragma omp for
+            //wNorm = norm2(w);
+            #pragma omp for reduction(+:wNorm)
             for(int i = 0; i < m; i++) {
-                w.values[i] = w.values[i] / wNorm;
+                wNorm += w.values[i] * w.values[i];
+            }
+            #pragma omp single
+                wNorm = sqrt(wNorm);
+
+            //H(:, k-1) = dotProd
+            #pragma omp for nowait
+            for(int i = 0; i < k; i++) {
+                H->setValue(i, k - 1, dotProd[i]);
+            }
+
+            if( k < k_total) {
+                if (wNorm != 0) {
+                    V->getCol(k, &vCol);
+                    #pragma omp parallel for
+                    for (int i = 0; i < m; i++) {
+                        vCol[i] = w.values[i] / wNorm;
+                    }
+                }
             }
         }
-
-        H->setColVals(0, k, k-1, dotProd);
-
-        if( k == k_total) break;
-        H->setValue(k, k - 1, wNorm);
-        if(wNorm != 0)
-            V->setCol(k, w);
+        if( k < k_total)
+            H->setValue(k, k - 1, wNorm);
     }
 
     delete[] dotProd;
