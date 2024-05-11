@@ -42,10 +42,10 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     auto * dotProd = new double[k_total + 1]();
     double wNorm;
 
+    V->getCol(0, &vCol);
+
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
-
-        V->getCol(k-1, &vCol);
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w.values.data());
@@ -66,26 +66,23 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
-
-            #pragma omp barrier
-
-            wNorm = cblas_dnrm2(m, w.values.data(), 1);
-
-            if(k < k_total && wNorm != 0.0) {
-                V->getCol(k, &vCol);
-                #pragma omp parallel for
-                for (int i = 0; i < m; i++) {
-                    vCol[i] = w.values[i] / wNorm;
-                }
-            }
         }
         //H(:, k-1) = dotProd
         for(int i = 0; i < k; i++) {
             H->setValue(i, k - 1, dotProd[i]);
         }
 
-        if(k < k_total)
+        if(k < k_total) {
+            wNorm = cblas_dnrm2(m, w.values.data(), 1);
+
             H->setValue(k, k - 1, wNorm);
+
+            V->getCol(k, &vCol);
+            if(wNorm != 0)
+            for (int i = 0; i < m; i++) {
+                vCol[i] = w.values[i] / wNorm;
+            }
+        }
     }
 
     delete[] dotProd;
