@@ -22,69 +22,12 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
-string folderMLF("0-1/");
-
-void printMatrixFile(const string& fileName, const string& name, complex<double> * matrix, int size) {
-    ofstream myFile;
-    myFile.open(folderMLF + fileName);
-    myFile << name << " =[ " ;
-    for(int i = 0; i < size; i++ ) {
-        for(int j = 0; j < size; j++){
-            myFile << scientific << std::setprecision (15) << matrix[i + j * size].real() << "+"
-                   << matrix[i + j * size].imag() << "i";
-            if(j != size - 1)
-                myFile <<",";
-        }
-        if(i != size -1)
-            myFile << ";";
-    }
-    myFile << "];" << endl;
-    myFile.close();
-}
-
-void printMatrixFile(const string& fileName, const string& name, double * matrix, int size) {
-    ofstream myFile;
-    myFile.open(folderMLF + fileName);
-    myFile << name << " =[ " ;
-    for(int i = 0; i < size; i++ ) {
-        for(int j = 0; j < size; j++){
-            myFile << scientific << std::setprecision (15) << matrix[i + j * size];
-            if(j != size - 1)
-                myFile <<",";
-        }
-        if(i != size -1)
-            myFile << ";";
-    }
-    myFile << "];" << endl;
-    myFile.close();
-}
-
-void printMatrix(const string& name, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax) {
-    int size = colMax - colMin + 1;
-    for (int i = 0; i <= (rowMax - rowMin); i++) {
-        for (int j = 0; j <= (colMax - colMin); j++) {
-            cout << name <<": " << scientific << setprecision(16) <<
-                 matrix[i + j * size].real() << " + " << matrix[i + j * size].imag() << "i" << endl;
-        }
-    }
-    cout << endl;
-}
-
 void getSubMatrix(complex<double> ** subMatrix, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
     int subRows = rowMax - rowMin + 1;
     int subCols = colMax - colMin + 1;
     for (int i = 0; i < subRows; i++) {
         for (int j = 0; j < subCols; j++) {
             (*subMatrix)[i + j * subRows] = matrix[(rowMin + i) + (colMin + j) * size];
-        }
-    }
-}
-
-void printMainMatrix(const string& name,complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
-    for (int i = rowMin; i <= rowMax; i++) {
-        for (int j = colMin; j <= colMax; j++) {
-            cout << name <<": " << scientific << setprecision(15) <<
-                 matrix[i + j * size].real() << " + " << matrix[i + j * size].imag() << "i" << endl;
         }
     }
 }
