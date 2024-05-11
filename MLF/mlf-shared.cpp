@@ -58,6 +58,8 @@ int main (int argc, char* argv[]) {
     mkl_set_dynamic(0);
     mkl_set_num_threads(omp_get_num_threads());
 
+    cout << mkl_get_max_threads() << endl;
+
     int krylovDegree = 3;
     string mtxPath = "A.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
