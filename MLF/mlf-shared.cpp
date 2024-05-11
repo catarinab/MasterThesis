@@ -55,10 +55,12 @@ int main (int argc, char* argv[]) {
     double alpha = 0.989301534973027;
     double beta = 1;
 
-    mkl_set_dynamic(0);
-    mkl_set_num_threads(omp_get_num_threads());
+    int max_threads = omp_get_max_threads();
+    mkl_set_num_threads(max_threads);
+    omp_set_num_threads(max_threads);
 
-    cout << mkl_get_max_threads() << endl;
+    cout << "mkl max threads: " << mkl_get_max_threads() << endl;
+    cout << "omp max threads: " << omp_get_max_threads() << endl;
 
     int krylovDegree = 3;
     string mtxPath = "A.mtx";
