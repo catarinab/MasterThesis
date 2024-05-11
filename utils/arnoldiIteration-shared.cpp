@@ -1,5 +1,6 @@
 #include <cstring>
 #include "headers/arnoldiIteration-shared.hpp"
+#include <omp.h>
 
 /*  Parameters
     ----------
@@ -39,9 +40,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     dense_vector w(m);
     double *vCol;
     auto * dotProd = new double[k_total + 1]();
-    double wNorm = 0;
-
-
+    double wNorm;
 
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
@@ -67,6 +66,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
+
             #pragma omp barrier
 
             #pragma omp single
