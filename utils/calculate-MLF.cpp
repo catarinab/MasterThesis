@@ -248,7 +248,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     auto * fA = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
     vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
-
+    int totalBlocks = 0;
     for(int i = 2; i <= size; i++){
         int nrBlocks = 0;
         for(const auto & j : ind){
@@ -256,9 +256,12 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                 nrBlocks++;
             }
         }
+        totalBlocks += nrBlocks;
         if(nrBlocks > 0)
-            cout << "size " << i << ": " << nrBlocks << ";";
+            cout << "size " << i << ": " << nrBlocks << " ";
     }
+    if(totalBlocks > 0)
+        cout << ",";
 
     //evaluate diagonal entries (blocks or single entries)
     for(int col = 0; col < ind.size(); col++){
