@@ -52,21 +52,17 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.989301534973027;
+    double alpha = 0.8077316487942006;
     double beta = 1;
 
-    int max_threads = omp_get_max_threads();
-    mkl_set_num_threads(max_threads);
-    omp_set_num_threads(max_threads);
-
-    cout << "mkl max threads: " << mkl_get_max_threads() << endl;
-    cout << "omp max threads: " << omp_get_max_threads() << endl;
+    cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
+    cerr << "omp max threads: " << omp_get_max_threads() << endl;
 
     int krylovDegree = 3;
-    string mtxPath = "A.mtx";
+    string mtxPath = "A-500-100.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
 
-    //readJuliaVec();
+    readJuliaVec();
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
@@ -85,7 +81,7 @@ int main (int argc, char* argv[]) {
     arnoldiIteration(A, b, krylovDegree, size, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
 
-    //H = -H;
+    H = -H;
 
     exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
@@ -96,14 +92,12 @@ int main (int argc, char* argv[]) {
 
     exec_time += omp_get_wtime();
 
-   /* dense_vector diff = res - juliares;
+    dense_vector diff = res - juliares;
 
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
 
-    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;*/
-
-    cout << exec_time_arnoldi << "," << exec_time_schur << endl;
+    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 

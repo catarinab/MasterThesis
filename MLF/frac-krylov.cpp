@@ -102,7 +102,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 
     u0 /= normu0;
 
-    double alpha = 0.989301534973027;
+    double alpha = 0.8077316487942006;
     double gamma = 1;
 
 
