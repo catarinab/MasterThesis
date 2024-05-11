@@ -69,8 +69,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
             #pragma omp barrier
 
-            #pragma omp single
-                wNorm = cblas_dnrm2(m, w.values.data(), 1);
+            wNorm = cblas_dnrm2(m, w.values.data(), 1);
 
             if(k < k_total && wNorm != 0.0) {
                 V->getCol(k, &vCol);
