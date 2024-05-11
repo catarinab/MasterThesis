@@ -257,7 +257,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             }
         }
         if(nrBlocks > 0)
-            cout << "size " << i << ": " << nrBlocks << endl;
+            cout << "size " << i << ": " << nrBlocks << ",";
     }
 
     //evaluate diagonal entries (blocks or single entries)
