@@ -45,7 +45,6 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
     for(k = 1; k < k_total + 1; k++) {
         memset(dotProd, 0, k * sizeof(double));
-        wNorm = 0;
 
         V->getCol(k-1, &vCol);
 
@@ -63,10 +62,15 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     dotProd[j] += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for simd
+                #pragma omp for simd nowait
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
+            }
+
+            #pragma omp for
+            for(int i = 0; i < k; i++) {
+                H->setValue(i, k - 1, dotProd[i]);
             }
 
             #pragma omp single
@@ -81,9 +85,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
             }
         }
         //H(:, k-1) = dotProd
-        for(int i = 0; i < k; i++) {
-            H->setValue(i, k - 1, dotProd[i]);
-        }
+
         if(k < k_total)
             H->setValue(k, k - 1, wNorm);
     }
