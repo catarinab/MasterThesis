@@ -43,6 +43,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     double wNorm;
 
     for(k = 1; k < k_total + 1; k++) {
+        double tempNorm = 0;
         V->getCol(k-1, &vCol);
         memset(dotProd, 0, k * sizeof(double));
 
@@ -66,10 +67,12 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                 }
             }
 
-            #pragma omp barrier
+            #pragma omp for reduction(+:tempNorm)
+            for (int i = 0; i < m; i++) {
+                tempNorm += w.values[i] * w.values[i];
+            }
 
-            //nrm2 is not threaded
-            wNorm = cblas_dnrm2(m, w.values.data(), 1);
+            wNorm = sqrt(tempNorm);
 
             if(k < k_total && wNorm != 0) {
                 V->getCol(k, &vCol);
@@ -79,8 +82,8 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                 }
             }
         }
-
-        H->setValue(k, k - 1, cblas_dnrm2(m, w.values.data(), 1));
+        if(k < k_total)
+            H->setValue(k, k - 1, sqrt(tempNorm));
 
         //H(:, k-1) = dotProd
         for (int i = 0; i < k; i++) {
