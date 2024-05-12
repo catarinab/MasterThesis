@@ -67,18 +67,19 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                 }
             }
 
-            #pragma omp for reduction(+:tempNorm)
-            for (int i = 0; i < m; i++) {
-                tempNorm += w.values[i] * w.values[i];
-            }
-
-            wNorm = sqrt(tempNorm);
-
-            if(k < k_total && wNorm != 0) {
-                V->getCol(k, &vCol);
-                #pragma omp for
+            if(k < k_total) {
+                #pragma omp for reduction(+:tempNorm)
                 for (int i = 0; i < m; i++) {
-                    vCol[i] = w.values[i] / wNorm;
+                    tempNorm += w.values[i] * w.values[i];
+                }
+
+                wNorm = sqrt(tempNorm);
+                if(wNorm != 0) {
+                    V->getCol(k, &vCol);
+                    #pragma omp for
+                    for (int i = 0; i < m; i++) {
+                        vCol[i] = w.values[i] / wNorm;
+                    }
                 }
             }
 
