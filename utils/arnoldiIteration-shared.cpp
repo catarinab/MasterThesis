@@ -81,14 +81,17 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     vCol[i] = w.values[i] / wNorm;
                 }
             }
+
+            //H(:, k-1) = dotProd
+            #pragma omp for
+            for (int i = 0; i < k; i++) {
+                H->setValue(i, k - 1, dotProd[i]);
+            }
         }
         if(k < k_total)
             H->setValue(k, k - 1, sqrt(tempNorm));
 
-        //H(:, k-1) = dotProd
-        for (int i = 0; i < k; i++) {
-            H->setValue(i, k - 1, dotProd[i]);
-        }
+
 
     }
 
