@@ -60,34 +60,31 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     dotProd[j] += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for nowait
+                #pragma omp for
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
 
-            #pragma omp barrier
-
+            //nrm2 is not threaded
             wNorm = cblas_dnrm2(m, w.values.data(), 1);
 
-            //H(:, k-1) = dotProd
-            #pragma omp single nowait
-            {
-                if(k < k_total)
-                    H->setValue(k, k - 1, wNorm);
-                for (int i = 0; i < k; i++) {
-                    H->setValue(i, k - 1, dotProd[i]);
-                }
-            }
-
             if(k < k_total && wNorm != 0) {
+                #pragma omp single nowait
+                    H->setValue(k, k - 1, wNorm);
                 V->getCol(k, &vCol);
-                #pragma omp for schedule(dynamic)
+                #pragma omp for
                 for (int i = 0; i < m; i++) {
                     vCol[i] = w.values[i] / wNorm;
                 }
             }
         }
+
+        //H(:, k-1) = dotProd
+        for (int i = 0; i < k; i++) {
+            H->setValue(i, k - 1, dotProd[i]);
+        }
+
     }
 
     delete[] dotProd;
