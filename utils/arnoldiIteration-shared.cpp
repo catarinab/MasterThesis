@@ -42,16 +42,15 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     auto * dotProd = new double[k_total + 1]();
     double wNorm;
 
-    V->getCol(0, &vCol);
-
     for(k = 1; k < k_total + 1; k++) {
+        V->getCol(k-1, &vCol);
         memset(dotProd, 0, k * sizeof(double));
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w.values.data());
 
 
-        #pragma omp parallel shared(dotProd) private(vCol)
+        #pragma omp parallel shared(dotProd) private(vCol, wNorm)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
@@ -61,26 +60,32 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     dotProd[j] += (w.values[i] * vCol[i]);
                 }
 
-                #pragma omp for simd nowait
+                #pragma omp for nowait
                 for(int i = 0; i < m; i++) {
                     w.values[i] = w.values[i] - vCol[i] * dotProd[j];
                 }
             }
-        }
-        //H(:, k-1) = dotProd
-        for(int i = 0; i < k; i++) {
-            H->setValue(i, k - 1, dotProd[i]);
-        }
 
-        if(k < k_total) {
+            #pragma omp barrier
+
             wNorm = cblas_dnrm2(m, w.values.data(), 1);
 
-            H->setValue(k, k - 1, wNorm);
+            //H(:, k-1) = dotProd
+            #pragma omp single nowait
+            {
+                if(k < k_total)
+                    H->setValue(k, k - 1, wNorm);
+                for (int i = 0; i < k; i++) {
+                    H->setValue(i, k - 1, dotProd[i]);
+                }
+            }
 
-            V->getCol(k, &vCol);
-            if(wNorm != 0)
-            for (int i = 0; i < m; i++) {
-                vCol[i] = w.values[i] / wNorm;
+            if(k < k_total && wNorm != 0) {
+                V->getCol(k, &vCol);
+                #pragma omp for schedule(dynamic)
+                for (int i = 0; i < m; i++) {
+                    vCol[i] = w.values[i] / wNorm;
+                }
             }
         }
     }

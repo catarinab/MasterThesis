@@ -77,12 +77,13 @@ int arnoldiIteration(const csr_matrix &A, const dense_vector &initVec, int k_tot
             }
         }
 
-
         if( k == k_total) break;
-        H->setValue(k, k - 1, w.getNorm2());
 
-        if(H->getValue(k, k - 1) != 0)
-            V->setCol(k, w / H->getValue(k, k - 1));
+        double wNorm = w.getNorm2();
+        H->setValue(k, k - 1, wNorm);
+
+        if(wNorm != 0)
+            V->setCol(k, w / wNorm);
     }
     return k;
 }
