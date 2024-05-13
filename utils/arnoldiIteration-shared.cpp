@@ -51,7 +51,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                         vCol, 0.0, w);
 
 
-        #pragma omp parallel shared(dotProd) private(vCol, wNorm)
+        #pragma omp parallel shared(dotProd) private(vCol, wNorm) firstprivate(w)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
