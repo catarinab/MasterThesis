@@ -52,14 +52,14 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.6104620977292838;
-    double beta = 1;
+    double alpha = 0.5;
+    double beta = 0;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
 
     int krylovDegree = 3;
-    string mtxPath = "A-700.mtx";
+    string mtxPath = "A.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
 
     readJuliaVec();
@@ -82,21 +82,18 @@ int main (int argc, char* argv[]) {
     exec_time_arnoldi += omp_get_wtime();
 
     H = -H;
-
-    exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
 
     dense_vector res = getApproximation(V, mlfH, betaVal);
-    exec_time_schur += omp_get_wtime();
 
     exec_time += omp_get_wtime();
 
-    dense_vector diff = res - juliares;
+    /*dense_vector diff = res - juliares;
 
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
 
-    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
+    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;*/
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 

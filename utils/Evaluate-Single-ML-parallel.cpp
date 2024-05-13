@@ -395,7 +395,7 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k, in
 
 
     c[0][0] = 1;
-    #pragma omp parallel for num_threads(numThreads + 1)
+    #pragma omp parallel num_threads(numThreads + 1)
     {
     #pragma omp for
     for (int kk = 1; kk <= k - p; kk++) {
