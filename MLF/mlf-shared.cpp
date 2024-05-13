@@ -21,7 +21,7 @@ dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double b
 }
 
 void readJuliaVec() {
-    ifstream inputFile("juliares-700.txt");
+    ifstream inputFile("juliares.txt");
     if (inputFile) {
         double value;
         while (inputFile >> value) {
@@ -52,14 +52,14 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.5;
-    double beta = 0;
+    double alpha = 0.8077316487942006;
+    double beta = 1;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
 
     int krylovDegree = 3;
-    string mtxPath = "A.mtx";
+    string mtxPath = "A-500-100.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
 
     readJuliaVec();
@@ -82,18 +82,22 @@ int main (int argc, char* argv[]) {
     exec_time_arnoldi += omp_get_wtime();
 
     H = -H;
+
+    exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
+
+    exec_time_schur += omp_get_wtime();
 
     dense_vector res = getApproximation(V, mlfH, betaVal);
 
     exec_time += omp_get_wtime();
 
-    /*dense_vector diff = res - juliares;
+    dense_vector diff = res - juliares;
 
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
 
-    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;*/
+    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
