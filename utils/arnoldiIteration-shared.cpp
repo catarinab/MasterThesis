@@ -37,7 +37,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     int k;
 
     //auxiliary
-    dense_vector w(m);
+    auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
     double *vCol;
     auto * dotProd = new double[k_total + 1]();
     double wNorm;
@@ -48,7 +48,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
         memset(dotProd, 0, k * sizeof(double));
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol, 0.0, w.values.data());
+                        vCol, 0.0, w);
 
 
         #pragma omp parallel shared(dotProd) private(vCol, wNorm)
@@ -58,19 +58,19 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
                 #pragma omp for reduction(+:dotProd[j:j+1])
                 for (int i = 0; i < m; i++) {
-                    dotProd[j] += (w.values[i] * vCol[i]);
+                    dotProd[j] += (w[i] * vCol[i]);
                 }
 
                 #pragma omp for nowait
                 for(int i = 0; i < m; i++) {
-                    w.values[i] = w.values[i] - vCol[i] * dotProd[j];
+                    w[i] = w[i] - vCol[i] * dotProd[j];
                 }
             }
 
             if(k < k_total) {
                 #pragma omp for reduction(+:tempNorm)
                 for (int i = 0; i < m; i++) {
-                    tempNorm += w.values[i] * w.values[i];
+                    tempNorm += w[i] * w[i];
                 }
 
                 wNorm = sqrt(tempNorm);
@@ -79,7 +79,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     //V(:, k) = w / wNorm
                     #pragma omp for
                     for (int i = 0; i < m; i++) {
-                        vCol[i] = w.values[i] / wNorm;
+                        vCol[i] = w[i] / wNorm;
                     }
                 }
             }
@@ -97,6 +97,8 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     }
 
     delete[] dotProd;
+
+    free(w);
 
     return k;
 }
