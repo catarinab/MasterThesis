@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.21937791384023478;
+    double alpha = 0.6104620977292838;
     double beta = 1;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;

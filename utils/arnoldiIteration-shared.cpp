@@ -41,19 +41,14 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     double *vCol;
     auto * dotProd = new double[k_total + 1]();
     double wNorm;
-    double sparseMatrixTime = 0;
 
     for(k = 1; k < k_total + 1; k++) {
         double tempNorm = 0;
         V->getCol(k-1, &vCol);
         memset(dotProd, 0, k * sizeof(double));
-        double tempSparseTime = -omp_get_wtime();
+
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w.values.data());
-
-        tempSparseTime += omp_get_wtime();
-
-        sparseMatrixTime += tempSparseTime;
 
 
         #pragma omp parallel shared(dotProd) private(vCol, wNorm)
@@ -81,26 +76,25 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                 wNorm = sqrt(tempNorm);
                 if(wNorm != 0) {
                     V->getCol(k, &vCol);
+                    //V(:, k) = w / wNorm
                     #pragma omp for
                     for (int i = 0; i < m; i++) {
                         vCol[i] = w.values[i] / wNorm;
                     }
                 }
             }
-
-            //H(:, k-1) = dotProd
         }
+        //H(k, k-1) = wNorm
         if(k < k_total)
             H->setValue(k, k - 1, sqrt(tempNorm));
 
+        //H(:, k-1) = dotProds
         for (int i = 0; i < k; i++) {
             H->setValue(i, k - 1, dotProd[i]);
         }
 
 
     }
-
-    cout << "Sparse matrix time: " << sparseMatrixTime << endl;
 
     delete[] dotProd;
 
