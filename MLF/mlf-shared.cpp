@@ -21,7 +21,7 @@ dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double b
 }
 
 void readJuliaVec() {
-    ifstream inputFile("juliares.txt");
+    ifstream inputFile("juliares-700.txt");
     if (inputFile) {
         double value;
         while (inputFile >> value) {
@@ -52,14 +52,14 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.8077316487942006;
+    double alpha = 0.21937791384023478;
     double beta = 1;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
 
     int krylovDegree = 3;
-    string mtxPath = "A-500-100.mtx";
+    string mtxPath = "A-700.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
 
     readJuliaVec();

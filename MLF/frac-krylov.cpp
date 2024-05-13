@@ -28,7 +28,7 @@ autodiff::ArrayXreal q(2);
 vector<double> juliares;
 
 void readJuliaVec() {
-    ifstream inputFile("juliares.txt");
+    ifstream inputFile("juliares-700.txt");
     if (inputFile) {
         double value;
         while (inputFile >> value) {
@@ -102,7 +102,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 
     u0 /= normu0;
 
-    double alpha = 0.8077316487942006;
+    double alpha = 0.21937791384023478;
     double gamma = 1;
 
 
