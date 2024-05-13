@@ -130,7 +130,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 
     exec_time_uT = -omp_get_wtime();
     hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
-    exec_time_uT += omp_get_wtime();
+
 
     for(int idx = 0; idx < sparseMatrixSize; idx++) {
         uT[idx] = uT[idx] * normu0;
@@ -138,7 +138,9 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
     }
     //cout << endl;
 
-    vector<double> duTdp(sparseMatrixSize * 2, 0);
+    exec_time_uT += omp_get_wtime();
+
+    /*vector<double> duTdp(sparseMatrixSize * 2, 0);
     vector<double> errduTdp(sparseMatrixSize * 2, 0);
 
     exec_time_duTdp = -omp_get_wtime();
@@ -150,7 +152,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
             //cout << duTdp[idx * 2 + col] << " ";
         }
         //cout << endl;
-    }
+    }*/
 
     vector<double> diff;
 
@@ -160,7 +162,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 
     double relNorm = cblas_dnrm2(sparseMatrixSize, diff.data(), 1) / cblas_dnrm2(sparseMatrixSize, juliares.data(), 1);
 
-    cout << exec_time_uT << "," << exec_time_duTdp << "," << relNorm << endl;
+    cout << exec_time_uT << "," << 0 << "," << relNorm << endl;
 }
 
 

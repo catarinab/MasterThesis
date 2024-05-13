@@ -86,9 +86,8 @@ int main (int argc, char* argv[]) {
     exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
 
-    exec_time_schur += omp_get_wtime();
-
     dense_vector res = getApproximation(V, mlfH, betaVal);
+    exec_time_schur += omp_get_wtime();
 
     exec_time += omp_get_wtime();
 
