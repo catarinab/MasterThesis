@@ -229,7 +229,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         }
     }
 
-    cerr << "DIDNT CONVERGE" << endl;
+    cout << "DIDNT CONVERGE, ";
     free(P);
     free(F_old);
     free(F_aux);
