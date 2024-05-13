@@ -395,9 +395,6 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k, in
 
 
     c[0][0] = 1;
-    #pragma omp parallel num_threads(numThreads + 1)
-    {
-    #pragma omp for
     for (int kk = 1; kk <= k - p; kk++) {
         c[kk][0] = (1 - alpha * (kk - 1) - beta) * c[kk - 1][0];
         for (int j = 1; j < kk; j++) {
@@ -406,12 +403,11 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k, in
         c[kk][kk] = 1;
     }
 
-    #pragma omp for reduction(+:result)
+    #pragma omp parallel for num_threads(numThreads + 1) reduction(+:result)
     for (int j = 0; j <= k - p; j++) {
         if (abs(c[k - p][j]) > tau) {
             result += c[k - p][j] * calculateLTI(lambda, alpha, (k - p) * alpha + beta - j, p);
         }
-    }
     }
 
     result = result / pow(alpha, k - p);
