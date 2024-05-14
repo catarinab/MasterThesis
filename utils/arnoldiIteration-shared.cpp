@@ -59,25 +59,17 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
 
         if(k < k_total){
             double tempNorm = 0;
+            wNorm = cblas_dnrm2(m, w, 1);
 
-            #pragma omp parallel shared(w, tempNorm) private(vCol, wNorm)
-            {
-                #pragma omp for reduction(+:tempNorm)
+            if(wNorm != 0) {
+                V->getCol(k, &vCol);
+                //V(:, k) = w / wNorm
+                #pragma omp parallel for
                 for (int i = 0; i < m; i++) {
-                    tempNorm += w[i] * w[i];
-                }
-                wNorm = sqrt(tempNorm);
-
-                if(wNorm != 0) {
-                    V->getCol(k, &vCol);
-                    //V(:, k) = w / wNorm
-                    #pragma omp for
-                    for (int i = 0; i < m; i++) {
-                        vCol[i] = w[i] / wNorm;
-                    }
+                    vCol[i] = w[i] / wNorm;
                 }
             }
-            H->setValue(k, k - 1, sqrt(tempNorm));
+            H->setValue(k, k - 1, wNorm);
         }
 
 
