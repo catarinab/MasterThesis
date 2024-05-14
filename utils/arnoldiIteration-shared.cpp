@@ -37,9 +37,10 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     int k;
 
     //auxiliary
-    auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
-    double *vCol;
+    auto * w = new double[m];
+    double * vCol;
     double wNorm;
+    auto * dotProd = new double[k_total]();
 
     for(k = 1; k < k_total + 1; k++) {
         V->getCol(k-1, &vCol);
@@ -50,15 +51,12 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
         for(int j = 0; j < k; j++) {
             V->getCol(j, &vCol);
 
-            double dotProd = cblas_ddot(m, w, 1, vCol, 1);
+            dotProd[j] = cblas_ddot(m, w, 1, vCol, 1);
 
-            cblas_daxpy(m, -dotProd, vCol, 1, w, 1);
-
-            H->setValue(j, k - 1, dotProd);
+            cblas_daxpy(m, -dotProd[j], vCol, 1, w, 1);
         }
 
         if(k < k_total){
-            double tempNorm = 0;
             wNorm = cblas_dnrm2(m, w, 1);
 
             if(wNorm != 0) {
@@ -69,13 +67,19 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     vCol[i] = w[i] / wNorm;
                 }
             }
-            H->setValue(k, k - 1, wNorm);
         }
+
+        for(int i = 0; i < k; i++) {
+            H->setValue(i, k - 1, dotProd[i]);
+        }
+        if(k < k_total)
+            H->setValue(k, k - 1, wNorm);
 
 
     }
 
-    free(w);
+    delete[] w;
+    delete[] dotProd;
 
     return k;
 }
