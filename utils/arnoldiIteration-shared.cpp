@@ -42,9 +42,9 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     double wNorm;
     auto * dotProd = new double[k_total]();
 
-    for(k = 1; k < k_total + 1; k++) {
-        V->getCol(k-1, &vCol);
+    V->getCol(0, &vCol);
 
+    for(k = 1; k < k_total + 1; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
@@ -59,8 +59,8 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
         if(k < k_total){
             wNorm = cblas_dnrm2(m, w, 1);
 
+            V->getCol(k, &vCol);
             if(wNorm != 0) {
-                V->getCol(k, &vCol);
                 //V(:, k) = w / wNorm
                 #pragma omp parallel for firstprivate(vCol)
                 for (int i = 0; i < m; i++) {
