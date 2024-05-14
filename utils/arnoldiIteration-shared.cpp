@@ -39,41 +39,35 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     //auxiliary
     auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
     double *vCol;
-    auto * dotProd = new double[k_total + 1]();
     double wNorm;
 
     for(k = 1; k < k_total + 1; k++) {
-        double tempNorm = 0;
         V->getCol(k-1, &vCol);
-        memset(dotProd, 0, k * sizeof(double));
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
+        for(int j = 0; j < k; j++) {
+            V->getCol(j, &vCol);
 
-        #pragma omp parallel shared(dotProd) private(vCol, wNorm) firstprivate(w)
-        {
-            for(int j = 0; j < k; j++) {
-                V->getCol(j, &vCol);
+            double dotProd = cblas_ddot(m, w, 1, vCol, 1);
 
-                #pragma omp for reduction(+:dotProd[j:j+1])
-                for (int i = 0; i < m; i++) {
-                    dotProd[j] += (w[i] * vCol[i]);
-                }
+            cblas_daxpy(m, -dotProd, vCol, 1, w, 1);
 
-                #pragma omp for nowait
-                for(int i = 0; i < m; i++) {
-                    w[i] = w[i] - vCol[i] * dotProd[j];
-                }
-            }
+            H->setValue(j, k - 1, dotProd);
+        }
 
-            if(k < k_total) {
+        if(k < k_total){
+            double tempNorm = 0;
+
+            #pragma omp parallel shared(w, tempNorm) private(vCol, wNorm)
+            {
                 #pragma omp for reduction(+:tempNorm)
                 for (int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
-
                 wNorm = sqrt(tempNorm);
+
                 if(wNorm != 0) {
                     V->getCol(k, &vCol);
                     //V(:, k) = w / wNorm
@@ -83,20 +77,11 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
                     }
                 }
             }
-        }
-        //H(k, k-1) = wNorm
-        if(k < k_total)
             H->setValue(k, k - 1, sqrt(tempNorm));
-
-        //H(:, k-1) = dotProds
-        for (int i = 0; i < k; i++) {
-            H->setValue(i, k - 1, dotProd[i]);
         }
 
 
     }
-
-    delete[] dotProd;
 
     free(w);
 
