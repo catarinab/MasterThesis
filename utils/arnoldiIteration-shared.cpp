@@ -37,48 +37,68 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
     int k;
 
     //auxiliary
-    auto * w = new double[m];
-    double * vCol;
+    auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
+    double *vCol;
+    auto * dotProd = new double[k_total + 1]();
     double wNorm;
-    auto * dotProd = new double[k_total]();
-
-    V->getCol(0, &vCol);
 
     for(k = 1; k < k_total + 1; k++) {
+        double tempNorm = 0;
+        V->getCol(k-1, &vCol);
+        memset(dotProd, 0, k * sizeof(double));
+
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
-        for(int j = 0; j < k; j++) {
-            V->getCol(j, &vCol);
 
-            dotProd[j] = cblas_ddot(m, w, 1, vCol, 1);
+        #pragma omp parallel shared(dotProd) private(wNorm)
+        {
+            for(int j = 0; j < k; j++) {
+                V->getCol(j, &vCol);
 
-            cblas_daxpy(m, -dotProd[j], vCol, 1, w, 1);
-        }
-
-        if(k < k_total){
-            wNorm = cblas_dnrm2(m, w, 1);
-            V->getCol(k, &vCol);
-            if(wNorm != 0) {
-                //V(:, k) = w / wNorm
-                #pragma omp parallel for
+                #pragma omp for reduction(+:dotProd[j:j+1])
                 for (int i = 0; i < m; i++) {
-                    vCol[i] = w[i] / wNorm;
+                    dotProd[j] += (w[i] * vCol[i]);
+                }
+
+                #pragma omp for nowait
+                for(int i = 0; i < m; i++) {
+                    w[i] = w[i] - vCol[i] * dotProd[j];
+                }
+            }
+
+            if(k < k_total) {
+                #pragma omp for reduction(+:tempNorm)
+                for (int i = 0; i < m; i++) {
+                    tempNorm += w[i] * w[i];
+                }
+
+                wNorm = sqrt(tempNorm);
+                if(wNorm != 0) {
+                    V->getCol(k, &vCol);
+                    //V(:, k) = w / wNorm
+                    #pragma omp for
+                    for (int i = 0; i < m; i++) {
+                        vCol[i] = w[i] / wNorm;
+                    }
                 }
             }
         }
+        //H(k, k-1) = wNorm
+        if(k < k_total)
+            H->setValue(k, k - 1, sqrt(tempNorm));
 
-        for(int i = 0; i < k; i++) {
+        //H(:, k-1) = dotProds
+        for (int i = 0; i < k; i++) {
             H->setValue(i, k - 1, dotProd[i]);
         }
-        if(k < k_total)
-            H->setValue(k, k - 1, wNorm);
 
 
     }
 
-    delete[] w;
     delete[] dotProd;
+
+    free(w);
 
     return k;
 }
