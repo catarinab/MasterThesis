@@ -62,7 +62,7 @@ int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_tot
             if(wNorm != 0) {
                 V->getCol(k, &vCol);
                 //V(:, k) = w / wNorm
-                #pragma omp parallel for
+                #pragma omp parallel for firstprivate(vCol)
                 for (int i = 0; i < m; i++) {
                     vCol[i] = w[i] / wNorm;
                 }
