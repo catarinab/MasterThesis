@@ -262,7 +262,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     }
     if(totalBlocks > 0)
         cout << ",";
-
+    double exec_time = -omp_get_wtime();
     //evaluate diagonal entries (blocks or single entries)
     for(int col = 0; col < ind.size(); col++){
         vector<int> j = ind[col];
@@ -409,6 +409,10 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             }
         }
     }
+
+    exec_time += omp_get_wtime();
+
+    cout << exec_time << endl;
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
