@@ -74,7 +74,7 @@ int duTdpCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigne
 
 int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned fdim, double *fval) {
     //integrar em u
-    #pragma omp parallel for schedule(dynamic)
+    #pragma omp parallel for schedule(guided)
     for (unsigned j = 0; j < npts; ++j) { //evaluate the integrand for npts points
         autodiff::ArrayXreal u(3);
         u << x[j*ndim+0], x[j*ndim+1], x[j*ndim+2];
@@ -114,12 +114,16 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
     V = dense_matrix(sparseMatrixSize, krylovDegree);
     H = dense_matrix(krylovDegree, krylovDegree);
 
+    cout << "nu: " << nu << endl;
+
     exec_time_arnoldi = -omp_get_wtime();
     if(nu == 1)
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H);
     else
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H, nu);
     exec_time_arnoldi += omp_get_wtime();
+
+    cout << "arnoldi done " << endl;
 
     q << alpha, gamma;
 
@@ -190,6 +194,12 @@ int main (int argc, char* argv[]) {
     int krylovDegree;
     double rtol;
     double normVal;
+
+    mkl_domain_set_num_threads(1, MKL_DOMAIN_BLAS);
+    mkl_domain_set_num_threads(omp_get_max_threads(), MKL_DOMAIN_LAPACK);
+
+    cerr << mkl_domain_get_max_threads(MKL_DOMAIN_BLAS) << endl;
+    cerr << mkl_domain_get_max_threads(MKL_DOMAIN_LAPACK) << endl;
 
     if(argc != 7){
         cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxPath> -err <rtol>" << endl;
