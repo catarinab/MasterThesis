@@ -31,14 +31,14 @@ dense_matrix denseMatrixAdd(const dense_matrix& A, const dense_matrix& B);
 dense_matrix denseMatrixSub(const dense_matrix& A, const dense_matrix& B);
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec);
+void sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec, dense_vector& res);
 
 //add two dense vectors
-dense_vector addVec(dense_vector y, const dense_vector& x, double scalar, int size);
+void addVec(dense_vector& y, const dense_vector& x, double scalar, int size);
 
 //dot product of two dense vectors
 double dotProduct(const dense_vector& a, const dense_vector& b, int size);
 
-double vectorTwoNorm(const dense_vector& vec);
+double vec2norm(const dense_vector& vec);
 
 #endif

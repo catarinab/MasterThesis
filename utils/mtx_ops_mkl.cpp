@@ -114,20 +114,15 @@ dense_matrix denseMatrixSub(const dense_matrix& A, const dense_matrix& B) {
 }
 
 //multiply sparse matrix and dense vector
-dense_vector sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec) {
-    dense_vector res(vec.getSize());
-
+void sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec, dense_vector& res) {
     mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, matrix.getMKLSparseMatrix(), matrix.getMKLDescription(),
                     vec.values.data(), 0.0, res.values.data());
-
-    return res;
 }
 
 //a = a + scalar*x
 //this function could be used to add or subtract vectors (only the vector x is multiplied by the scalar)
-dense_vector addVec(dense_vector a, const dense_vector& b, double scalar, int size) {
+void addVec(dense_vector& a, const dense_vector& b, double scalar, int size) {
     cblas_daxpy(size, scalar, b.values.data(), 1, a.values.data(), 1);
-    return a;
 }
 
 //dot product of two dense vectors
@@ -135,6 +130,6 @@ double dotProduct(const dense_vector& a, const dense_vector& b, int size) {
     return cblas_ddot(size, a.values.data(), 1, b.values.data(), 1);
 }
 
-double vectorTwoNorm(const dense_vector& vec) {
+double vec2norm(const dense_vector& vec) {
     return cblas_dnrm2(vec.getSize(), vec.values.data(), 1.0);
 }
