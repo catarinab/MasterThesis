@@ -15,7 +15,7 @@ double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal
     if(betaVal != 1)
         V = V * betaVal;
 
-    return vectorTwoNorm(denseMatrixMult(V, expH).getCol(0));
+    return vec2norm(denseMatrixMult(V, expH).getCol(0));
 }
 
 //Process input arguments

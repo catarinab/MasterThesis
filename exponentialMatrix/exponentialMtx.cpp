@@ -21,7 +21,7 @@ double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal
     if(betaVal != 1)
         V = V * betaVal;
 
-    return vectorTwoNorm(denseMatrixMult(V, expH).getCol(0));
+    return vec2norm(denseMatrixMult(V, expH).getCol(0));
 }
 
 //Process input arguments
@@ -71,7 +71,7 @@ int main (int argc, char* argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H, 1);
+    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
     //root node performs pade approximation and outputs results
     if(me == 0) {
