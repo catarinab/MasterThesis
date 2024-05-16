@@ -11,10 +11,10 @@ extern int helpSize;
 
 void initGatherVars(int size, int nprocs);
 
-double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me);
+double distrDotProduct(dense_vector& a, dense_vector& b, int size, int me);
 
-dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, int size, int me);
+void distrSumOp(dense_vector& a, dense_vector& b, double scalar, int size, int me);
 
-dense_vector distrMatrixVec(const csr_matrix& A, const dense_vector& vec, int size);
+void distrMatrixVec(const csr_matrix& A, dense_vector& vec, dense_vector& res, int size);
 
 #endif // DISTR_MTX_OPS_HPP

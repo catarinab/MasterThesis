@@ -29,74 +29,46 @@ void initGatherVars(int size, int nprocs) {
     }
 
     for(int i = 0; i < nprocs; i++) {
-        displs[i] = i* helpSize; 
+        displs[i] = i * helpSize;
         counts[i] = helpSize;
     }
     counts[nprocs - 1] += size % nprocs;
-
 }
 
 //send necessary vectors to all processes
-void sendVectors(dense_vector a, dense_vector b, int func, int size) {
+
+
+void sendVectors(dense_vector& a, dense_vector& b, int func, int size) {
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD); //broadcast need for help in function func
 
-    
-    if(func == MV)
-        MPI_Bcast(&a.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
-    else {
-        MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-        MPI_Scatterv(&b.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-    }
 }
 
 //distribute dot product through all nodes
-double distrDotProduct(dense_vector a, const dense_vector& b, int size, int me) {
+double distrDotProduct(dense_vector& a, dense_vector& b, int size, int me) {
     double dotProd = 0;
-
     sendVectors(a, b, VV, size);
-
-    a.size = counts[0];
-
     double temp = dotProduct(a, b, counts[me]);
-
     MPI_Reduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
-
-    a.size = size;
-
     return dotProd;
     
 }
 
 //distribute sum between vectors through all nodes
-dense_vector distrSumOp(dense_vector a, const dense_vector& b, double scalar, int size, int me) {
-    dense_vector finalRes(size); 
-
+void distrSumOp(dense_vector& a, dense_vector& b, double scalar, int size, int me) {
     sendVectors(a, b, ADD, size);
-
     MPI_Bcast(&scalar, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-
-    a.size = counts[0];
-
-    dense_vector res = addVec(a, b, scalar, counts[me]);
-
-    MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-
-    a.size = size;
-
-    return finalRes;
+    addVec(a, b, scalar, counts[me]);
+    MPI_Gatherv(MPI_IN_PLACE, helpSize, MPI_DOUBLE, &a.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 }
 
 //distribute matrix-vector multiplication through all nodes
-dense_vector distrMatrixVec(const csr_matrix& A, const dense_vector& vec, int size) {
-    
-    dense_vector finalRes(size);
-
-    sendVectors(vec, dense_vector(0), MV, size);
-
-    dense_vector res = sparseMatrixVector(A, vec);
-
-    MPI_Gatherv(&res.values[0], helpSize, MPI_DOUBLE, &finalRes.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-
-    return finalRes;
+void distrMatrixVec(const csr_matrix& A, dense_vector& vec, dense_vector& res, int size) {
+    int func = MV;
+    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Bcast(&vec.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    sparseMatrixVector(A, vec, res);
+    MPI_Gatherv(MPI_IN_PLACE, helpSize, MPI_DOUBLE, &res.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 }
