@@ -516,7 +516,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
     return result;
 }
 
-complex<double> evaluateSingle(complex<double> z, double alpha, double beta, int k) {
+complex<double> evaluateSingle(complex<double> tVal, double alpha, double beta, int k) {
 
     complex<double> result;
     bool accept = false;
@@ -527,8 +527,6 @@ complex<double> evaluateSingle(complex<double> z, double alpha, double beta, int
     double denominator = falling_factorial(maxJArgs, k);
     double exp = 1.0/(maxJArgs - k);
     double bound = pow((numerator/denominator), exp);
-
-    complex<double> tVal = z;
 
     if(abs(tVal) <= bound){
         result = series_expansion(tVal, alpha, beta, &accept, k);
