@@ -34,7 +34,7 @@ const double* dense_matrix::getDataPointer() const {
 }
 
 //insert column in matrix
-void dense_matrix::setCol(int col, dense_vector vec){
+void dense_matrix::setCol(int col, dense_vector& vec){
     memcpy(this->values.data() + col * this->rows, vec.values.data(), this->rows * sizeof(double));
 }
 

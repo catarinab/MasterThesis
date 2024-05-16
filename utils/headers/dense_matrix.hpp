@@ -24,7 +24,7 @@ class dense_matrix {
     }
 
     void setIdentity();
-    void setCol(int col, dense_vector vec);
+    void setCol(int col, dense_vector& vec);
     void setValue(int row, int col, double val);
 
     [[nodiscard]] double getValue(int row, int col) const;
