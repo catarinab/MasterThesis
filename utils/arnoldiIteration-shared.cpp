@@ -14,7 +14,7 @@
     V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
-int arnoldiIteration(const csr_matrix& A, const dense_vector& initVec, int k_total, int m, dense_matrix * V,
+int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, dense_matrix * V,
                      dense_matrix * H) {
 
     int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
