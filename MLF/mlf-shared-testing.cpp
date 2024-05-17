@@ -105,7 +105,7 @@ int main (int argc, char* argv[]) {
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
 
-    cout << exec_time_arnoldi << "," << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
+    cout << exec_time_schur << "," << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
