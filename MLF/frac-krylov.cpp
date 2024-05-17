@@ -27,8 +27,8 @@ autodiff::ArrayXreal q(2);
 
 vector<double> juliares;
 
-void readJuliaVec() {
-    ifstream inputFile("juliares-700.txt");
+void readJuliaVec(const string& filename = "juliares.txt") {
+    ifstream inputFile(filename);
     if (inputFile) {
         double value;
         while (inputFile >> value) {
@@ -80,8 +80,13 @@ int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned f
         u << x[j*ndim+0], x[j*ndim+1], x[j*ndim+2];
 
         autodiff::real newU = totalRNG(q, u, t);
-        if(newU.val() < 1e5)
-            denseMatrixMult(V, scalingAndSquaring(H * -newU.val())).getCol(0, &fval[j*fdim]);
+        if(newU.val() < 1e5) {
+            dense_matrix expHT = scalingAndSquaring(H * -newU.val());
+            if(expHT.hasNanorInf())
+                memset(&fval[j*fdim], 0, fdim * sizeof(double));
+            else
+                denseMatrixMult(V, expHT).getCol(0, &fval[j * fdim]);
+        }
         else
             memset(&fval[j*fdim], 0, fdim * sizeof(double));
     }
@@ -102,19 +107,15 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 
     u0 /= normu0;
 
-    double alpha = 0.6104620977292838;
+    double alpha = 0.10549612258317864;
     double gamma = 1;
-
-
-    /*double alpha = abs(normalDistribution(generator)) * 0.9 + 0.1;
-    double gamma  = abs(normalDistribution(generator)) * 0.9 + 0.1;*/
 
     int nu = ceil(gamma/alpha);
 
     V = dense_matrix(sparseMatrixSize, krylovDegree);
     H = dense_matrix(krylovDegree, krylovDegree);
 
-    cout << "nu: " << nu << endl;
+    cerr << "nu: " << nu << endl;
 
     exec_time_arnoldi = -omp_get_wtime();
     if(nu == 1)
@@ -123,7 +124,7 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
         arnoldiIteration(A, u0, krylovDegree, sparseMatrixSize, &V, &H, nu);
     exec_time_arnoldi += omp_get_wtime();
 
-    cout << "arnoldi done " << endl;
+    cerr << "arnoldi done " << endl;
 
     q << alpha, gamma;
 
@@ -135,34 +136,13 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
     exec_time_uT = -omp_get_wtime();
     hcubature_v(sparseMatrixSize, uTCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, uT.data(), erruT.data());
 
-
+    vector<double> diff;
     for(int idx = 0; idx < sparseMatrixSize; idx++) {
         uT[idx] = uT[idx] * normu0;
-        //cout << uT[idx] << " ";
-    }
-    //cout << endl;
-
-    exec_time_uT += omp_get_wtime();
-
-    /*vector<double> duTdp(sparseMatrixSize * 2, 0);
-    vector<double> errduTdp(sparseMatrixSize * 2, 0);
-
-    exec_time_duTdp = -omp_get_wtime();
-    hcubature_v(sparseMatrixSize * 2, duTdpCalcV, nullptr, 3, xmin, xmax, 0, atol, rtol, ERROR_L2, duTdp.data(), errduTdp.data());
-    exec_time_duTdp += omp_get_wtime();
-    for(int idx = 0; idx < sparseMatrixSize; idx++) {
-        for (int col = 0; col < 2; col++) {
-            duTdp[idx * 2 + col] = duTdp[idx * 2 + col] * normu0;
-            //cout << duTdp[idx * 2 + col] << " ";
-        }
-        //cout << endl;
-    }*/
-
-    vector<double> diff;
-
-    for(int idx = 0; idx < sparseMatrixSize; idx++) {
         diff.push_back(uT[idx] - juliares[idx]);
     }
+
+    exec_time_uT += omp_get_wtime();
 
     double relNorm = cblas_dnrm2(sparseMatrixSize, diff.data(), 1) / cblas_dnrm2(sparseMatrixSize, juliares.data(), 1);
 
@@ -170,14 +150,15 @@ void solve(const csr_matrix &A, dense_vector u0, int krylovDegree, double atol =
 }
 
 
-void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, double * rtol) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, double * rtol, string * juliaPath) {
 
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
             *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-m") == 0) {
-            *mtxPath = argv[i+1];
+            *mtxPath = "A-" + std::string(argv[i + 1]) + ".mtx";
+            *juliaPath = "juliares-" + std::string(argv[i + 1]) + ".txt";
         }
         else if(strcmp(argv[i], "-err") == 0) {
             *rtol = stod(argv[i+1]);
@@ -188,12 +169,11 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, d
 
 int main (int argc, char* argv[]) {
     //input values
-    double exec_time;
 
     string mtxPath;
+    string juliaPath;
     int krylovDegree;
     double rtol;
-    double normVal;
 
     mkl_domain_set_num_threads(1, MKL_DOMAIN_BLAS);
     mkl_domain_set_num_threads(omp_get_max_threads(), MKL_DOMAIN_LAPACK);
@@ -202,13 +182,12 @@ int main (int argc, char* argv[]) {
     cerr << mkl_domain_get_max_threads(MKL_DOMAIN_LAPACK) << endl;
 
     if(argc != 7){
-        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxPath> -err <rtol>" << endl;
+        cerr << "Usage: " << argv[0] << " -s <size> -k <krylov-degree> -m <mtxSize> -err <rtol>" << endl;
         return 1;
     }
 
-    processArgs(argc, argv, &krylovDegree, &mtxPath, &rtol);
-
-    readJuliaVec();
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &rtol, &juliaPath);
+    readJuliaVec(juliaPath);
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
@@ -218,7 +197,6 @@ int main (int argc, char* argv[]) {
     b.insertValue(0, 1);
 
     solve(A, b, krylovDegree, 1e-8, rtol);
-
 
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 

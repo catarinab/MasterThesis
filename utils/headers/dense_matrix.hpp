@@ -48,6 +48,8 @@ class dense_matrix {
     dense_matrix operator- () const;
     void getCol(int col, double ** ptr);
 
+    bool hasNanorInf();
+
     void setColVals(int initRow, int finalRow, int col, double *vals);
 };
 

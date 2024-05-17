@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 #include "headers/dense_matrix.hpp"
 
@@ -173,4 +174,8 @@ void dense_matrix::getCol(int col, double *ptr) {
     for(int row = 0; row < this->rows; row++) {
         ptr[row] = this->values[row + col * this->rows];
     }
+}
+
+bool dense_matrix::hasNanorInf() {
+    return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
 }
