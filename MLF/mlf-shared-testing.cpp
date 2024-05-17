@@ -20,8 +20,8 @@ dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double b
     return denseMatrixMult(V, mlfH).getCol(0);
 }
 
-void readJuliaVec() {
-    ifstream inputFile("juliares-700.txt");
+void readJuliaVec(const string& filename = "juliares.txt") {
+    ifstream inputFile(filename);
     if (inputFile) {
         double value;
         while (inputFile >> value) {
@@ -34,14 +34,14 @@ void readJuliaVec() {
     }
 }
 
-//Process input arguments
-void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName) {
+void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, string * juliaPath) {
     for(int i = 0; i < argc; i++) {
         if(strcmp(argv[i], "-k") == 0) {
             *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-m") == 0) {
-            *mtxName = argv[i+1];
+            *mtxPath = "A-" + std::string(argv[i + 1]) + ".mtx";
+            *juliaPath = "juliares-" + std::string(argv[i + 1]) + ".txt";
         }
     }
 }
@@ -52,17 +52,25 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.6104620977292838;
+    double alpha = 0.5873440782747112;
     double beta = 1;
+
+    string mtxPath;
+    string juliaPath;
+    int krylovDegree;
+    double rtol;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
 
-    int krylovDegree = 3;
-    string mtxPath = "A-700.mtx";
-    processArgs(argc, argv, &krylovDegree, &mtxPath);
 
-    readJuliaVec();
+    if(argc != 5){
+        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxSize>" << endl;
+        return 1;
+    }
+
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &juliaPath);
+    readJuliaVec(juliaPath);
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMtx(mtxPath);
