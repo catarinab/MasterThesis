@@ -68,7 +68,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
             if(k < k_total) {
                 #pragma omp for reduction(+:tempNorm)
-                for(int i = 0; i < m; i++){
+                for(int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
                 double wNorm = sqrt(tempNorm);

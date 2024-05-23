@@ -192,31 +192,31 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double relDiff = norm_F_F_old/(tol + norm_F_old);
 
         if(relDiff <= tol) {
-            vector<double> fDerivMax = vector<double>(maxTerms + elSize - 1);
+            vector<double> omega = vector<double>(maxTerms + elSize - 1);
 
-            #pragma omp parallel for schedule(dynamic)
+            #pragma omp parallel for schedule(guided)
             for(int j = maxDeriv; j < k + elSize ; j++){
                 //evaluate values for diagonal of the block
                 //calculate w
                 //calculate delta
                 for(int jj = element[0]; jj < element[0] + elSize; jj++){
                     complex<double> res = evaluateSingle(T[jj + jj * tSize], alpha, beta, j);
-                    fDerivMax[j]  = max(fDerivMax[j] , abs(res));
+                    omega[j]  = max(omega[j] , abs(res));
                 }
             }
 
             maxDeriv = k+elSize;
 
-            double omega = 0;
+            double delta = 0;
             for(int j = 0; j < elSize; j++){
-                omega = max(omega, fDerivMax[k + j]/factorial(j));
+                delta = max(delta, omega[k + j] / factorial(j));
             }
 
             double norm_P = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
                                            reinterpret_cast<const MKL_Complex16 *>(P), elSize);
 
 
-            if(norm_P*mu*omega <= tol*norm_F){
+            if(norm_P * mu * delta <= tol * norm_F){
                 free(P);
                 free(F_old);
                 free(F_aux);
@@ -247,7 +247,11 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     //important: only the necessary fields in fA are filled, the other ones *must* be assigned to 0 -> use calloc
     auto * fA = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
-    vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
+    bool blocks = false;
+
+    vector<vector<int>> ind = schurDecomposition(A, &T, &U, size, &blocks);
+
+    //testing purposes
     int totalBlocks = 0;
     for(int i = 2; i <= size; i++){
         int nrBlocks = 0;
@@ -262,10 +266,12 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     }
     if(totalBlocks > 0)
         cout << ",";
+
+    cout << blocks << endl;
     double exec_time = -omp_get_wtime();
     //evaluate diagonal entries (blocks or single entries)
-    for(int col = 0; col < ind.size(); col++){
-        vector<int> j = ind[col];
+    #pragma omp parallel for schedule(guided) if (!blocks)
+    for(auto j : ind){
         int elSize = (int) j.size();
         int elLine = j[0];
         if(elSize == 1) {
@@ -276,14 +282,19 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             setMainMatrix(&fA, F, elLine, elSize, size);
             free(F);
         }
-
-        //Parlett recursion
-        for (int row = col - 1; row >= 0; row--) {
+    }
+    //Parlett recursion
+    #pragma omp parallel if(!blocks)
+    for (int superDiag = 1; superDiag < ind.size(); ++superDiag) {
+        #pragma omp for schedule(guided)
+        for (int row = 0; row < ind.size() - superDiag; ++row) {
+            int col = row + superDiag;
+            vector<int> j = ind[col];
             vector<int> i = ind[row];
-            if(i.size() == 1 && j.size() == 1) {
+            if (i.size() == 1 && j.size() == 1) {
                 fA[i[0] + j[0] * size] = single_eq(fA, T, i[0], j[0], size);
             }
-            else{
+            else {
                 int jSize = (int) j.size();
                 int iSize = (int) i.size();
                 int jMin = j[0];
@@ -322,24 +333,24 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                 getSubMatrix(&Tjj, T, jMin, jMax, jMin, jMax, size);
                 //printMatrix("Tjj", Tjj, jMin, jMax, jMin, jMax);
 
-                auto * Fii_Tij = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto *Fii_Tij = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
-                auto * Tij_Fjj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto *Tij_Fjj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
-                auto * Fik_Tkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
-                auto * Tik_Fkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
-                auto * result = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto *Fik_Tkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto *Tik_Fkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto *result = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
                 //Fii * Tij
                 cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                             iSize, jSize, iSize, &alphaMult, Fii, iSize,
+                            iSize, jSize, iSize, &alphaMult, Fii, iSize,
                             Tij, iSize, &betaMult, Fii_Tij, iSize);
                 //Tij * Fjj
                 cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                             iSize, jSize, jSize, &alphaMult, Tij, iSize,
+                            iSize, jSize, jSize, &alphaMult, Tij, iSize,
                             Fjj, jSize, &betaMult, Tij_Fjj, iSize);
 
-                if(kMult){
+                if (kMult) {
 
                     auto *Fik = (complex<double> *) calloc((iSize * kSize), sizeof(complex<double>));
                     getSubMatrix(&Fik, fA, iMin, iMax, kMin, kMax, size);
@@ -355,13 +366,13 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
                     //Fik*Tkj
                     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                 iSize, jSize, kSize, &alphaMult, Fik, iSize,
+                                iSize, jSize, kSize, &alphaMult, Fik, iSize,
                                 Tkj, kSize, &betaMult, Fik_Tkj, iSize);
 
 
                     //Tik * Fkj
                     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
-                                 iSize, jSize, kSize, &alphaMult, Tik, iSize,
+                                iSize, jSize, kSize, &alphaMult, Tik, iSize,
                                 Fkj, kSize, &betaMult, Tik_Fkj, iSize);
 
                     free(Fik);
@@ -370,10 +381,10 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                     free(Tik);
                 }
                 //Fij
-                for(int ii = 0; ii < iSize; ii++){
-                    for(int jj = 0; jj < jSize; jj++){
+                for (int ii = 0; ii < iSize; ii++) {
+                    for (int jj = 0; jj < jSize; jj++) {
                         result[ii + jj * iSize] = Fii_Tij[ii + jj * iSize] - Tij_Fjj[ii + jj * iSize] +
-                                                     Fik_Tkj[ii + jj * iSize] - Tik_Fkj[ii + jj * iSize];
+                                                  Fik_Tkj[ii + jj * iSize] - Tik_Fkj[ii + jj * iSize];
                     }
                 }
 
@@ -386,7 +397,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                                reinterpret_cast<const MKL_Complex16 *>(Tjj), jSize,
                                reinterpret_cast<MKL_Complex16 *>(result), iSize, &scale);
 
-                if(scale != 1) {
+                if (scale != 1) {
                     for (int ii = 0; ii < iSize; ii++) {
                         for (int jj = 0; jj < jSize; jj++) {
                             result[ii + jj * iSize] /= scale;
@@ -411,6 +422,8 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     }
 
     exec_time += omp_get_wtime();
+
+    cout << exec_time << endl;
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 

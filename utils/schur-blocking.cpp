@@ -122,8 +122,11 @@ void rsf2csf(double * T, double * U, complex<double> ** T_csf, complex<double> *
 
 }
 
-vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * IFST) {
+vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * IFST, bool * blocks) {
     int mMax = *max_element(q.begin(), q.end());
+    if(mMax != q.size() - 1)
+        *blocks = true;
+
     vector<double> g(mMax + 1, 0);
     vector<int> phi(mMax + 1, 0);
 
@@ -251,10 +254,10 @@ vector<int> blocking(int size, complex<double> * diag) {
     return m;
 }
 
-vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex<double> ** U, int size) {
-    auto * U_real = (double *) malloc(size * size * sizeof(double));
+vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex<double> ** U, int size, bool * blocks) {
+    /*auto * U_real = (double *) malloc(size * size * sizeof(double));
     auto * wr = (double *) calloc(size, sizeof(double));
-    auto * wi = (double *) calloc(size, sizeof(double));
+    auto * wi = (double *) calloc(size, sizeof(double));*/
     auto * w = (complex<double> *) calloc(size, sizeof(complex<double>));
 
     vector<int> mm;
@@ -262,19 +265,29 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
     vector<int> ILST = vector<int>();
     vector<int> IFST = vector<int>();
 
+    for(int i = 0; i < size * size; i++)
+        (*T)[i] = complex<double>(A[i], 0);
 
-    int info = LAPACKE_dhseqr(LAPACK_COL_MAJOR, 'S', 'I', size, 1, size, A , size, wr, wi,
+    int info = LAPACKE_zhseqr(LAPACK_COL_MAJOR, 'S', 'I', size, 1, size, reinterpret_cast<MKL_Complex16 *>(*T), size,
+                              reinterpret_cast<MKL_Complex16 *>(w), reinterpret_cast<MKL_Complex16 *>(*U), size);
+
+    if(info != 0)
+        cout << "LAPACKE_zhseqr info: " << info << endl;
+
+
+    /*int info = LAPACKE_dhseqr(LAPACK_COL_MAJOR, 'S', 'I', size, 1, size, A , size, wr, wi,
                              U_real, size);
 
     if(info != 0)
         cout << "LAPACKE_dhseqr info: " << info << endl;
 
     //real schur form to complex schur form
-    rsf2csf(A, U_real, T, U, size, &w);
+    rsf2csf(A, U_real, T, U, size, &w);*/
 
     vector<int> clusters = blocking(size, w);
 
-    ind = swapping(clusters, &ILST, &IFST);
+    ind = swapping(clusters, &ILST, &IFST, blocks);
+
 
 
     for(int i = 0; i < ILST.size(); i++) {
@@ -287,9 +300,9 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
     *T = reinterpret_cast<complex<double> *>(*T);
     *U = reinterpret_cast<complex<double> *>(*U);
 
-    free(wr);
-    free(wi);
+    /*free(wr);
+    free(wi);*/
     free(w);
-    free(U_real);
+    /*free(U_real);*/
     return ind;
 }
