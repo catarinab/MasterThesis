@@ -267,7 +267,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     if(totalBlocks > 0)
         cout << ",";
 
-    cout << blocks << endl;
+    cerr << blocks << endl;
     double exec_time = -omp_get_wtime();
     //evaluate diagonal entries (blocks or single entries)
     #pragma omp parallel for schedule(guided) if (!blocks)
