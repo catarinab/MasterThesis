@@ -34,8 +34,10 @@ void printMtxFile(std::complex<double> *F, int elSize, int mtxSize) {
         return;
     }
 
+    int nz = elSize * (elSize + 1) / 2 + (elSize - 1);
+
     file << "%%MatrixMarket matrix coordinate complex general\n";
-    file << elSize << " " << elSize << " " << (elSize * elSize) << "\n";
+    file << elSize << " " << elSize << " " << nz << "\n";
 
     for (int col = 0; col < elSize; ++col) {
         for (int row = 0; row < elSize; ++row) {

@@ -58,7 +58,6 @@ int main (int argc, char* argv[]) {
     string mtxPath;
     string juliaPath;
     int krylovDegree;
-    double rtol;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
