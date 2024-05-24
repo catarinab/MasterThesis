@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
 
     double t = 1;
     //input values
-    double alpha = 0.03754079961218426;
+    double alpha = 0.25870366495185526;
     double beta = 1;
 
     string mtxPath;
