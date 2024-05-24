@@ -41,7 +41,7 @@ void printMtxFile(std::complex<double> *F, int elSize, int mtxSize) {
 
     for (int col = 0; col < elSize; ++col) {
         for (int row = 0; row < elSize; ++row) {
-            std::complex<double> value = F[col * elSize + row];
+            std::complex<double> value = F[col + row * elSize];
             if (value != std::complex<double>(0.0, 0.0)) {
                 file << row + 1 << " " << col + 1 << " " ;
                 if(abs(value.real()) > EPS16)
