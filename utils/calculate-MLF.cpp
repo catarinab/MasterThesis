@@ -22,6 +22,63 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
+void printMtxFile(std::complex<double> *F, int elSize, int mtxSize) {
+    if(!F)
+        return;
+    char filename[100];
+    std::sprintf(filename, "blocks/block-%d-%d.mtx", elSize, mtxSize);
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing.\n";
+        return;
+    }
+
+    file << "%%MatrixMarket matrix coordinate complex general\n";
+    file << elSize << " " << elSize << " " << (elSize * elSize) << "\n";
+
+    for (int col = 0; col < elSize; ++col) {
+        for (int row = 0; row < elSize; ++row) {
+            std::complex<double> value = F[col * elSize + row];
+            if (value != std::complex<double>(0.0, 0.0)) {
+                file << row + 1 << " " << col + 1 << " " ;
+                if(abs(value.real()) > EPS16)
+                    file << value.real() << " ";
+                else
+                    file << "0 ";
+                if(abs(value.imag()) > EPS16)
+                    file << value.imag() << "\n";
+                else
+                    file << "0\n";
+            }
+        }
+    }
+
+    file.close();
+}
+
+void printInfoFile(std::complex<double> *F, int elSize, int blockSize) {
+    if(!F)
+        return;
+    char filename[100];
+    std::sprintf(filename, "blocks/block-%d-%d.txt", elSize, blockSize);
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << " for writing.\n";
+        return;
+    }
+
+    double rcond = 0;
+
+    LAPACKE_ztrcon(LAPACK_COL_MAJOR, '1', 'U', 'N', elSize, reinterpret_cast<const MKL_Complex16 *>(F), elSize, &rcond);
+
+    file << "Condition number: " << rcond << endl;
+
+    file.close();
+
+}
+
 void getSubMatrix(complex<double> ** subMatrix, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
     int subRows = rowMax - rowMin + 1;
     int subCols = colMax - colMin + 1;
@@ -33,6 +90,8 @@ void getSubMatrix(complex<double> ** subMatrix, complex<double> * matrix, int ro
 }
 
 void setMainMatrix(complex<double> ** A, complex<double> * subMatrix, int i, int elSize, int size) {
+    if(!subMatrix)
+        return;
     for(int row = i ; row < i + elSize; row++)
         for(int col = i ; col < i + elSize; col++) {
             if(row <= col)
@@ -41,6 +100,8 @@ void setMainMatrix(complex<double> ** A, complex<double> * subMatrix, int i, int
 }
 
 void setMainMatrix(complex<double> ** A, complex<double> * subMatrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
+    if(!subMatrix)
+        return;
     int subRows = rowMax - rowMin + 1;
     int subCols = colMax - colMin + 1;
     for (int i = 0; i < subRows; i++) {
@@ -152,6 +213,9 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         mu = max(mu, abs(ones[ii]));
     }
 
+    printMtxFile(F, elSize, tSize);
+    printInfoFile(F, elSize, tSize);
+
 
     for(int k = 1; k <= maxTerms; k++){
         double norm_F_F_old;
@@ -192,7 +256,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double relDiff = norm_F_F_old/(tol + norm_F_old);
 
         if(relDiff <= tol) {
-            vector<double> omega = vector<double>(maxTerms + elSize - 1);
+            vector<double> fDerivMax = vector<double>(maxTerms + elSize - 1);
 
             #pragma omp parallel for schedule(guided)
             for(int j = maxDeriv; j < k + elSize ; j++){
@@ -201,22 +265,22 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
                 //calculate delta
                 for(int jj = element[0]; jj < element[0] + elSize; jj++){
                     complex<double> res = evaluateSingle(T[jj + jj * tSize], alpha, beta, j);
-                    omega[j]  = max(omega[j] , abs(res));
+                    fDerivMax[j]  = max(fDerivMax[j] , abs(res));
                 }
             }
 
             maxDeriv = k+elSize;
 
-            double delta = 0;
+            double omega = 0;
             for(int j = 0; j < elSize; j++){
-                delta = max(delta, omega[k + j] / factorial(j));
+                omega = max(omega, fDerivMax[k + j]/factorial(j));
             }
 
             double norm_P = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
                                            reinterpret_cast<const MKL_Complex16 *>(P), elSize);
 
 
-            if(norm_P * mu * delta <= tol * norm_F){
+            if(norm_P*mu*omega <= tol*norm_F){
                 free(P);
                 free(F_old);
                 free(F_aux);
@@ -230,6 +294,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     }
 
     cout << "DIDNT CONVERGE, ";
+
     free(P);
     free(F_old);
     free(F_aux);
@@ -247,11 +312,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     //important: only the necessary fields in fA are filled, the other ones *must* be assigned to 0 -> use calloc
     auto * fA = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
-    bool blocks = false;
-
-    vector<vector<int>> ind = schurDecomposition(A, &T, &U, size, &blocks);
-
-    //testing purposes
+    vector<vector<int>> ind = schurDecomposition(A, &T, &U, size);
     int totalBlocks = 0;
     for(int i = 2; i <= size; i++){
         int nrBlocks = 0;
@@ -266,12 +327,10 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     }
     if(totalBlocks > 0)
         cout << ",";
-
-    cerr << blocks << endl;
     double exec_time = -omp_get_wtime();
     //evaluate diagonal entries (blocks or single entries)
-    #pragma omp parallel for schedule(guided) if (!blocks)
-    for(auto j : ind){
+    for(int col = 0; col < ind.size(); col++){
+        vector<int> j = ind[col];
         int elSize = (int) j.size();
         int elLine = j[0];
         if(elSize == 1) {
@@ -282,19 +341,14 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
             setMainMatrix(&fA, F, elLine, elSize, size);
             free(F);
         }
-    }
-    //Parlett recursion
-    #pragma omp parallel if(!blocks)
-    for (int superDiag = 1; superDiag < ind.size(); ++superDiag) {
-        #pragma omp for schedule(guided)
-        for (int row = 0; row < ind.size() - superDiag; ++row) {
-            int col = row + superDiag;
-            vector<int> j = ind[col];
+
+        //Parlett recursion
+        for (int row = col - 1; row >= 0; row--) {
             vector<int> i = ind[row];
-            if (i.size() == 1 && j.size() == 1) {
+            if(i.size() == 1 && j.size() == 1) {
                 fA[i[0] + j[0] * size] = single_eq(fA, T, i[0], j[0], size);
             }
-            else {
+            else{
                 int jSize = (int) j.size();
                 int iSize = (int) i.size();
                 int jMin = j[0];
@@ -333,13 +387,13 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                 getSubMatrix(&Tjj, T, jMin, jMax, jMin, jMax, size);
                 //printMatrix("Tjj", Tjj, jMin, jMax, jMin, jMax);
 
-                auto *Fii_Tij = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto * Fii_Tij = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
-                auto *Tij_Fjj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto * Tij_Fjj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
-                auto *Fik_Tkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
-                auto *Tik_Fkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
-                auto *result = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto * Fik_Tkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto * Tik_Fkj = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
+                auto * result = (complex<double> *) calloc((iSize * jSize), sizeof(complex<double>));
 
                 //Fii * Tij
                 cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
@@ -350,7 +404,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                             iSize, jSize, jSize, &alphaMult, Tij, iSize,
                             Fjj, jSize, &betaMult, Tij_Fjj, iSize);
 
-                if (kMult) {
+                if(kMult){
 
                     auto *Fik = (complex<double> *) calloc((iSize * kSize), sizeof(complex<double>));
                     getSubMatrix(&Fik, fA, iMin, iMax, kMin, kMax, size);
@@ -381,8 +435,8 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                     free(Tik);
                 }
                 //Fij
-                for (int ii = 0; ii < iSize; ii++) {
-                    for (int jj = 0; jj < jSize; jj++) {
+                for(int ii = 0; ii < iSize; ii++){
+                    for(int jj = 0; jj < jSize; jj++){
                         result[ii + jj * iSize] = Fii_Tij[ii + jj * iSize] - Tij_Fjj[ii + jj * iSize] +
                                                   Fik_Tkj[ii + jj * iSize] - Tik_Fkj[ii + jj * iSize];
                     }
@@ -397,7 +451,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
                                reinterpret_cast<const MKL_Complex16 *>(Tjj), jSize,
                                reinterpret_cast<MKL_Complex16 *>(result), iSize, &scale);
 
-                if (scale != 1) {
+                if(scale != 1) {
                     for (int ii = 0; ii < iSize; ii++) {
                         for (int jj = 0; jj < jSize; jj++) {
                             result[ii + jj * iSize] /= scale;
@@ -422,8 +476,6 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
     }
 
     exec_time += omp_get_wtime();
-
-    cout << exec_time << endl;
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
@@ -450,4 +502,3 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     return res;
 }
-

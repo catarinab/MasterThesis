@@ -6,6 +6,6 @@
 #include <complex>
 
 
-std::vector<std::vector<int>> schurDecomposition(double * A, std::complex<double> ** T, std::complex<double> ** U, int size, bool * blocks);
+std::vector<std::vector<int>> schurDecomposition(double * A, std::complex<double> ** T, std::complex<double> ** U, int size);
 
 #endif

@@ -122,10 +122,8 @@ void rsf2csf(double * T, double * U, complex<double> ** T_csf, complex<double> *
 
 }
 
-vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * IFST, bool * blocks) {
+vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * IFST) {
     int mMax = *max_element(q.begin(), q.end());
-    if(mMax != q.size() - 1)
-        *blocks = true;
 
     vector<double> g(mMax + 1, 0);
     vector<int> phi(mMax + 1, 0);
@@ -254,7 +252,7 @@ vector<int> blocking(int size, complex<double> * diag) {
     return m;
 }
 
-vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex<double> ** U, int size, bool * blocks) {
+vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex<double> ** U, int size) {
     /*auto * U_real = (double *) malloc(size * size * sizeof(double));
     auto * wr = (double *) calloc(size, sizeof(double));
     auto * wi = (double *) calloc(size, sizeof(double));*/
@@ -286,7 +284,7 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
 
     vector<int> clusters = blocking(size, w);
 
-    ind = swapping(clusters, &ILST, &IFST, blocks);
+    ind = swapping(clusters, &ILST, &IFST);
 
 
 
