@@ -23,6 +23,8 @@ all: mlf-shared
 
 mlf: mlf-shared mlf-shared-cblas
 
+frac-test: mlf-shared-test frac
+
 test:
 	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
