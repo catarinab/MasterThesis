@@ -22,11 +22,11 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
-void printMtxFile(std::complex<double> *F, int elSize, int mtxSize) {
+void printMtxFile(std::complex<double> *F, int idx, int elSize, int mtxSize) {
     if(!F)
         return;
     char filename[100];
-    std::sprintf(filename, "blocks/block-%d-%d.mtx", elSize, mtxSize);
+    std::sprintf(filename, "blocks/block-%d-%d-%d.mtx", idx, elSize, mtxSize);
 
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -50,11 +50,11 @@ void printMtxFile(std::complex<double> *F, int elSize, int mtxSize) {
     file.close();
 }
 
-void printInfoFile(std::complex<double> *F, int elSize, int blockSize) {
+void printInfoFile(std::complex<double> *F, int idx, int elSize, int mtxSize) {
     if(!F)
         return;
     char filename[100];
-    std::sprintf(filename, "blocks/block-%d-%d.txt", elSize, blockSize);
+    std::sprintf(filename, "blocks/block-%d-%d-%d.txt", idx, elSize, mtxSize);
 
     std::ofstream file(filename);
     if (!file.is_open()) {
@@ -206,8 +206,8 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         mu = max(mu, abs(ones[ii]));
     }
 
-    printMtxFile(F, elSize, tSize);
-    printInfoFile(F, elSize, tSize);
+    printMtxFile(F, i, elSize, tSize);
+    printInfoFile(F, i, elSize, tSize);
 
 
     for(int k = 1; k <= maxTerms; k++){
@@ -285,6 +285,14 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             }
         }
     }
+
+    std::ofstream outfile;
+
+    char filename[100];
+    std::sprintf(filename, "blocks/block-%d-%d-%d.txt", i, elSize, tSize);
+
+    outfile.open(filename, std::ios_base::app); // append instead of overwrite
+    outfile <<  "DIDNT CONVERGE" << endl;
 
     cout << "DIDNT CONVERGE, ";
 
