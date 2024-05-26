@@ -97,10 +97,6 @@ int main (int argc, char* argv[]) {
 
     dense_vector res = getApproximation(V, mlfH, betaVal);
 
-    for(int i = 0; i < size; i++) {
-        cout << res.values[i] << endl;
-    }
-
     exec_time += omp_get_wtime();
 
     dense_vector diff = res - juliares;
