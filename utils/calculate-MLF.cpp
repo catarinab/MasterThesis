@@ -22,6 +22,8 @@ by Roberto Garrappa and Marina Popolizio
 complex<double> alphaMult = {1, 0};
 complex<double> betaMult = {0, 0};
 
+bool hasPrinted = false;
+
 void printMtxFile(std::complex<double> *F, int idx, int elSize, int mtxSize) {
     if(!F)
         return;
@@ -301,8 +303,10 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     outfile.open(filename, std::ios_base::app);
     outfile <<  "DIDNT CONVERGE" << endl;
     outfile.close();*/
-
-    cout << "DIDNT CONVERGE, ";
+    if(!hasPrinted) {
+        cout << "DIDNT CONVERGE, ";
+        hasPrinted = true;
+    }
 
     free(P);
     free(F_old);
