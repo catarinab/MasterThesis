@@ -206,8 +206,8 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         mu = max(mu, abs(ones[ii]));
     }
 
-    printMtxFile(F, i, elSize, tSize);
-    printInfoFile(F, i, elSize, tSize);
+    /*printMtxFile(F, i, elSize, tSize);
+    printInfoFile(F, i, elSize, tSize);*/
 
 
     for(int k = 1; k <= maxTerms; k++){
@@ -286,15 +286,24 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         }
     }
 
-    std::ofstream outfile;
+    /*std::ofstream outfile;
 
     char filename[100];
     std::sprintf(filename, "blocks/block-%d-%d-%d.txt", i, elSize, tSize);
 
-    outfile.open(filename, std::ios_base::app); // append instead of overwrite
+    outfile.open(filename, std::ios_base::app);
     outfile <<  "DIDNT CONVERGE" << endl;
+    outfile.close();*/
 
     cout << "DIDNT CONVERGE, ";
+
+    //print F
+    for(int ii = 0; ii < elSize; ii++){
+        for(int j = 0; j < elSize; j++){
+            cout << F[ii + j * elSize] << " ";
+        }
+        cout << endl;
+    }
 
     free(P);
     free(F_old);
