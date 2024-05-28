@@ -162,7 +162,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
     auto * P = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * F = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
     auto * F_old = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
-    auto * F_aux = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
+    auto * F_F_old = (complex<double> *) calloc(elSize * elSize, sizeof(complex<double>));
 
     auto * auxMatrix = (double *) calloc(elSize * elSize, sizeof(double));
     auto *  ones = (double *) calloc(elSize, sizeof(double));
@@ -184,9 +184,10 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
                 auxMatrix[j + k * elSize] = 1.0;
             }
             else {
-                if (k > j)
-                    auxMatrix[j + k * elSize] = - abs(T[(i + j) + (i + k) * tSize]);
-                M[j + k * elSize] = T[(i + j) + (i + k) * tSize];
+                if (k > j) {
+                    auxMatrix[j + k * elSize] = -abs(T[(i + j) + (i + k) * tSize]);
+                    M[j + k * elSize] = T[(i + j) + (i + k) * tSize];
+                }
             }
         }
         ones[j] = 1.0;
@@ -216,47 +217,34 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
+        //if f contains inf or nan, return
+        if(isinf(f.real()) || isnan(f.real()) || isinf(f.imag()) || isnan(f.imag())){
+            cerr << lambda << " " << alpha << " " << beta << " " << k << endl;
+            cerr << "f contains inf or nan" << endl;
+            break;
+        }
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
 
         //F = F + P*f
         //F_aux = F - F_old
+        //P = P*N/(k+1);
         for(int ii = 0; ii < elSize; ii++){
             for(int j = 0; j < elSize; j++){
                 F[ii + j * elSize] = F[ii + j * elSize] +  P[ii + j * elSize] * f;
-                F_aux[ii + j * elSize] = F[ii + j * elSize] - F_old[ii + j * elSize];
+                F_F_old[ii + j * elSize] = F[ii + j * elSize] - F_old[ii + j * elSize];
             }
         }
-
-        if(i == 110 && k >= 142){
-            cout << "f at iteration " << k << ": " << f << endl;
-            cout << "P at iteration " << k << ": " << endl;
-            for(int ii = 0; ii < elSize; ii++){
-                for(int j = 0; j < elSize; j++){
-                    cout << P[ii + j * elSize] << " ";
-                }
-                cout << endl;
-            }
-            cout << "F at iteration " << k << ": " << endl;
-            for(int ii = 0; ii < elSize; ii++){
-                for(int j = 0; j < elSize; j++){
-                    cout << F[ii + j * elSize] << " ";
-                }
-                cout << endl;
-            }
-        }
-
 
         norm_F = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
                                 reinterpret_cast<const MKL_Complex16 *>(F), elSize);
         norm_F_old = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
                                     reinterpret_cast<const MKL_Complex16 *>(F_old), elSize);
         norm_F_F_old = LAPACKE_zlange(LAPACK_COL_MAJOR, 'I', elSize, elSize,
-                                      reinterpret_cast<const MKL_Complex16 *>(F_aux), elSize);
+                                      reinterpret_cast<const MKL_Complex16 *>(F_F_old), elSize);
 
-
-        //P = P*N/(k+1);
+        //P = P*M/(k+1);
         complex<double> alphaP = 1.0/(k+1.0);
         cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                     elSize, elSize, elSize, &alphaP, P, elSize, M,
@@ -295,7 +283,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             if(norm_P*mu*omega <= tol*norm_F){
                 free(P);
                 free(F_old);
-                free(F_aux);
+                free(F_F_old);
                 free(ones);
                 free(auxMatrix);
                 free(auxMatrixLpck);
@@ -316,17 +304,9 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
 
     cout << "DIDNT CONVERGE, ";
 
-    //print F
-    for(int ii = 0; ii < elSize; ii++){
-        for(int j = 0; j < elSize; j++){
-            cout << F[ii + j * elSize] << " ";
-        }
-        cout << endl;
-    }
-
     free(P);
     free(F_old);
-    free(F_aux);
+    free(F_F_old);
     free(ones);
     free(auxMatrix);
     free(auxMatrixLpck);
