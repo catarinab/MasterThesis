@@ -215,6 +215,14 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
+        if(i == 110){
+            for(int ii = 0; ii < elSize; ii++){
+                for(int j = 0; j < elSize; j++){
+                    cout << F[ii + j * elSize] << " ";
+                }
+                cout << endl;
+            }
+        }
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
