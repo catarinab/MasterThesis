@@ -150,7 +150,8 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
                                 vector<int> element, int tSize) {
     //default values
     double tol = EPS16;
-    int maxTerms = 250;
+    //int maxTerms = 250;
+    int maxTerms = 150;
     int maxDeriv = 1;
 
     int i = element[0];
@@ -215,15 +216,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
-        if(i == 110){
-            cout << "F at iteration " << k << ": " << endl;
-            for(int ii = 0; ii < elSize; ii++){
-                for(int j = 0; j < elSize; j++){
-                    cout << F[ii + j * elSize] << " ";
-                }
-                cout << endl;
-            }
-        }
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
@@ -234,6 +226,24 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
             for(int j = 0; j < elSize; j++){
                 F[ii + j * elSize] = F[ii + j * elSize] +  P[ii + j * elSize] * f;
                 F_aux[ii + j * elSize] = F[ii + j * elSize] - F_old[ii + j * elSize];
+            }
+        }
+
+        if(i == 110 && k >= 142){
+            cout << "f at iteration " << k << ": " << f << endl;
+            cout << "P at iteration " << k << ": " << endl;
+            for(int ii = 0; ii < elSize; ii++){
+                for(int j = 0; j < elSize; j++){
+                    cout << P[ii + j * elSize] << " ";
+                }
+                cout << endl;
+            }
+            cout << "F at iteration " << k << ": " << endl;
+            for(int ii = 0; ii < elSize; ii++){
+                for(int j = 0; j < elSize; j++){
+                    cout << F[ii + j * elSize] << " ";
+                }
+                cout << endl;
             }
         }
 
