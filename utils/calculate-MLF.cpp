@@ -216,6 +216,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
         if(i == 110){
+            cout << "F at iteration " << k << ": " << endl;
             for(int ii = 0; ii < elSize; ii++){
                 for(int j = 0; j < elSize; j++){
                     cout << F[ii + j * elSize] << " ";
