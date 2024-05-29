@@ -66,7 +66,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
                 tempTime = -omp_get_wtime();
                 //dotprod between w and V->getCol(j)
-                #pragma omp for reduction(+:dotProd[j:j+1])
+                #pragma omp for reduction(+:dotProd[j])
                 for (int i = 0; i < m; i++) {
                     dotProd[j] += (w[i] * vCol[i]);
                 }
