@@ -66,8 +66,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 V->getCol(j, &vCol);
 
                 double localDotProd = 0;
-
-                tempTime = -omp_get_wtime();
+                #pragma omp single
+                    tempTime = -omp_get_wtime();
                 //dotprod between w and V->getCol(j)
                 #pragma omp for nowait
                 for (int i = 0; i < m; i++) {
@@ -78,35 +78,49 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                     dotProd[j] += localDotProd;
                 }
                 #pragma omp barrier
-                exec_time_dotProd += tempTime + omp_get_wtime();
+                #pragma omp single
+                {
+                    exec_time_dotProd += tempTime + omp_get_wtime();
+                    tempTime = -omp_get_wtime();
+                }
 
-                tempTime = -omp_get_wtime();
                 #pragma omp for nowait
                 for(int i = 0; i < m; i++) {
                     w[i] = w[i] - vCol[i] * dotProd[j];
                 }
-                exec_time_axpy += tempTime + omp_get_wtime();
+
+                #pragma omp single
+                    exec_time_axpy += tempTime + omp_get_wtime();
             }
 
             if(k < k_total) {
-                tempTime = -omp_get_wtime();
+                #pragma omp single
+                    tempTime = -omp_get_wtime();
                 #pragma omp for reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
                 double wNorm = sqrt(tempNorm);
-                exec_time_norm += tempTime + omp_get_wtime();
+                #pragma omp single
+                    exec_time_norm += tempTime + omp_get_wtime();
                 if(wNorm != 0) {
                     //V(:, k) = w / wNorm
                     V->getCol(k, &vCol);
-                    tempTime = -omp_get_wtime();
+                    #pragma omp single
+                        tempTime = -omp_get_wtime();
                     #pragma omp for nowait
                     for (int i = 0; i < m; i++) {
                         vCol[i] = w[i] / wNorm;
                     }
-                    exec_time_setValue += tempTime + omp_get_wtime();
+
+                    #pragma omp single
+                    {
+                        exec_time_setValue += tempTime + omp_get_wtime();
+                        tempTime = -omp_get_wtime();
+                    }
+
                     //H(k, k-1) = wNorm
-                    tempTime = -omp_get_wtime();
+
                     #pragma omp for nowait
                     for (int i = 0; i < k; i++) {
                         H->setValue(i, k - 1, dotProd[i]);
@@ -115,7 +129,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                     {
                         H->setValue(k, k - 1, wNorm);
                     }
-                    exec_time_setHValue += tempTime + omp_get_wtime();
+                    #pragma omp single
+                        exec_time_setHValue += tempTime + omp_get_wtime();
                 }
             }
         }
