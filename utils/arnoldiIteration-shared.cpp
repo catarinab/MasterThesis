@@ -98,6 +98,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                     }
                     exec_time_setValue += tempTime + omp_get_wtime();
                     //H(k, k-1) = wNorm
+                    #pragma omp for nowait
+                    for (int i = 0; i < k; i++) {
+                        H->setValue(i, k - 1, dotProd[i]);
+                    }
                     #pragma omp single
                     {
                         H->setValue(k, k - 1, wNorm);
