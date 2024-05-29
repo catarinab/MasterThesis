@@ -88,7 +88,6 @@ complex<double> residues(double alpha, double beta, vector<s_star_struct> s_star
     return res.sum();
 }
 
-
 void optimal_param_RB(double phi, double phi1, double p, double q, double log_epsilon, double * mu, double * N, double * h) {
     double log_eps = -36.043653389117154;
     double fac = 1.01;
@@ -171,7 +170,6 @@ void optimal_param_RB(double phi, double phi1, double p, double q, double log_ep
 
 }
 
-
 void optimal_param_RU(double phi, double p, double log_epsilon, double * mu, double * N, double * h) {
     double sqrt_phi = sqrt(phi);
     double phi_bar;
@@ -234,7 +232,7 @@ void optimal_param_RU(double phi, double p, double log_epsilon, double * mu, dou
 
 }
 
-complex<double> calculateLTI(complex<double> lambda, double alpha, double beta, int k){
+complex<double> lti(complex<double> lambda, double alpha, double beta, int k){
 
     if(abs(lambda) <= tau)
         return factorial(k)/tgamma(beta);
@@ -375,8 +373,7 @@ complex<double> calculateLTI(complex<double> lambda, double alpha, double beta, 
 
 }
 
-
-complex<double> LTI(complex<double> lambda, double alpha, double beta, int k){
+complex<double> sf_lti(complex<double> lambda, double alpha, double beta, int k){
 
     complex<double> result = 0;
 
@@ -404,10 +401,9 @@ complex<double> LTI(complex<double> lambda, double alpha, double beta, int k){
 
     for (int j = 0; j <= k - p; j++) {
         if (abs(c[k - p][j]) > tau) {
-            result += c[k - p][j] * calculateLTI(lambda, alpha, (k - p) * alpha + beta - j, p);
+            result += c[k - p][j] * lti(lambda, alpha, (k - p) * alpha + beta - j, p);
         }
     }
-
     result = result / pow(alpha, k - p);
 
     return result;
@@ -530,10 +526,14 @@ complex<double> evaluateSingle(complex<double> tVal, double alpha, double beta, 
 
     if(abs(tVal) <= bound){
         result = series_expansion(tVal, alpha, beta, &accept, k);
+        if(k == 142)
+            cout << "st: " << result << endl;
     }
 
     if(!accept){
-        result = LTI(tVal, alpha, beta, k);
+        if(k >= 142)
+            cout << "lti" << endl;
+        result = sf_lti(tVal, alpha, beta, k);
     }
 
     if(tVal.imag() == 0){

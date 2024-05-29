@@ -1,4 +1,5 @@
 #include "headers/arnoldiIteration-shared.hpp"
+#include <omp.h>
 
 /*  Parameters
     ----------
@@ -37,8 +38,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     //auxiliary
     auto * w = new double[m];
     double * vCol;
-    double wNorm;
-    auto * dotProd = new double[k_total]();
 
     V->getCol(0, &vCol);
 
@@ -49,34 +48,41 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         for(int j = 0; j < k; j++) {
             V->getCol(j, &vCol);
 
-            dotProd[j] = cblas_ddot(m, w, 1, vCol, 1);
+            //dotprod between w and V->getCol(j)
+            double dotProd = cblas_ddot(m, w, 1, vCol, 1);
 
-            cblas_daxpy(m, -dotProd[j], vCol, 1, w, 1);
+            // w = w - dotProd[j] * V(:, j)
+            cblas_daxpy(m, -dotProd, vCol, 1, w, 1);
+
+            H->setValue(j, k - 1, dotProd);
         }
 
         if(k < k_total){
-            wNorm = cblas_dnrm2(m, w, 1);
             V->getCol(k, &vCol);
-            if(wNorm != 0) {
-                //V(:, k) = w / wNorm
-                #pragma omp parallel for
-                for (int i = 0; i < m; i++) {
-                    vCol[i] = w[i] / wNorm;
+            double tempNorm = 0;
+            #pragma omp parallel
+            {
+                #pragma omp for reduction(+:tempNorm)
+                for(int i = 0; i < m; i++){
+                    tempNorm += w[i] * w[i];
+                }
+                double wNorm = sqrt(tempNorm);
+                if(wNorm != 0)
+                    #pragma omp for nowait
+                    for(int i = 0; i < m; i++){
+                        vCol[i] = w[i] / wNorm;
+                    }
+                #pragma omp single
+                {
+                    H->setValue(k, k - 1, wNorm);
                 }
             }
-        }
 
-        for(int i = 0; i < k; i++) {
-            H->setValue(i, k - 1, dotProd[i]);
         }
-        if(k < k_total)
-            H->setValue(k, k - 1, wNorm);
-
 
     }
 
     delete[] w;
-    delete[] dotProd;
 
     return k;
 }
