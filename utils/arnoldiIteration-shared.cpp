@@ -123,6 +123,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     cout << "axpy: " << exec_time_axpy << endl;
     cout << "norm: " << exec_time_norm << endl;
     cout << "setValue: " << exec_time_setValue << endl;
+    cout << "setHValue: " << exec_time_setHValue << endl;
 
     delete[] dotProd;
 
