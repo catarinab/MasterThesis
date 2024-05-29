@@ -77,6 +77,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 {
                     dotProd[j] += localDotProd;
                 }
+                #pragma omp barrier
                 exec_time_dotProd += tempTime + omp_get_wtime();
 
                 tempTime = -omp_get_wtime();
