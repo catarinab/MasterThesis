@@ -16,7 +16,7 @@
 */
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, dense_matrix * V,
                      dense_matrix * H) {
-
+    double tempTime = -omp_get_wtime();
     int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
                                       k_total);
 
@@ -31,6 +31,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         cerr << "Error in mkl_sparse_optimize" << endl;
         return 1;
     }
+    cout << "Hint and optimize: " << tempTime + omp_get_wtime() << endl;
 
     V->setCol(0, initVec);
 
@@ -47,7 +48,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     double exec_time_norm = 0;
     double exec_time_setValue = 0;
     double exec_time_setHValue = 0;
-    double tempTime;
 
     for(k = 1; k < k_total + 1; k++) {
         double tempNorm = 0;
