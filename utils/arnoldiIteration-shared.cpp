@@ -69,15 +69,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 #pragma omp single
                     tempTime = -omp_get_wtime();
                 //dotprod between w and V->getCol(j)
-                #pragma omp for nowait
+                #pragma omp for reduction(+:dotProd[j])
                 for (int i = 0; i < m; i++) {
-                    localDotProd += (w[i] * vCol[i]);
+                    dotProd[j] += (w[i] * vCol[i]);
                 }
-                #pragma omp critical
-                {
-                    dotProd[j] += localDotProd;
-                }
-                #pragma omp barrier
                 #pragma omp single
                 {
                     exec_time_dotProd += tempTime + omp_get_wtime();
