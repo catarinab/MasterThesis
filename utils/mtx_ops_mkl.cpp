@@ -130,6 +130,3 @@ double dotProduct(const dense_vector& a, const dense_vector& b, int size) {
     return cblas_ddot(size, a.values.data(), 1, b.values.data(), 1);
 }
 
-double vec2norm(const dense_vector& vec) {
-    return cblas_dnrm2(vec.getSize(), vec.values.data(), 1.0);
-}

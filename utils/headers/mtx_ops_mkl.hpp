@@ -39,6 +39,4 @@ void addVec(dense_vector& y, const dense_vector& x, double scalar, int size);
 //dot product of two dense vectors
 double dotProduct(const dense_vector& a, const dense_vector& b, int size);
 
-double vec2norm(const dense_vector& vec);
-
 #endif

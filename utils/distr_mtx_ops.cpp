@@ -72,3 +72,13 @@ void distrMatrixVec(const csr_matrix& A, dense_vector& vec, dense_vector& res, i
     sparseMatrixVector(A, vec, res);
     MPI_Gatherv(MPI_IN_PLACE, helpSize, MPI_DOUBLE, &res.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 }
+
+double distrNorm(dense_vector& a, int size, int me) {
+    double norm = 0;
+    int func = NORM;
+    MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
+    MPI_Scatterv(&a.values[0], counts, displs, MPI_DOUBLE, MPI_IN_PLACE, helpSize, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    double temp = dotProduct(a, a, counts[me]);
+    MPI_Reduce(&temp, &norm, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
+    return sqrt(norm);
+}

@@ -5,9 +5,10 @@
 
 #define ENDTAG (-1)
 
-#define MV 3
-#define VV 4
-#define ADD 6
+#define MV 2
+#define VV 3
+#define ADD 4
+#define NORM 5
 
 #define EPS16 2.220446049250313e-16
 

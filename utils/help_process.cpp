@@ -11,12 +11,11 @@ Each node receives the necessary vectors and executes the function func for a fe
 After the function is executed, the result is sent back to the root node.
 */
 int helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, int * counts) {
-    double dotProd = 0;
+    double resNorm = 0;
     double temp = 0;
     double scalar = 0;
-    dense_vector auxBuf(counts[me]);
-    dense_vector auxBuf2(counts[me]);
-    dense_vector auxBufMV(size);
+    dense_vector auxVec1(counts[me]);
+    dense_vector auxVec2(size);
     while(true) {
         MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD);
 
@@ -24,26 +23,37 @@ int helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, i
             return 0;
 
         if(func == ADD || func == VV) {
-            MPI_Scatterv(&auxBuf.values[0], counts, displs, MPI_DOUBLE, &auxBuf.values[0], counts[me], MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-            MPI_Scatterv(&auxBuf2.values[0], counts, displs, MPI_DOUBLE, &auxBuf2.values[0], counts[me], MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+            MPI_Scatterv(&auxVec1.values[0], counts, displs, MPI_DOUBLE, &auxVec1.values[0], counts[me], MPI_DOUBLE,
+                         ROOT, MPI_COMM_WORLD);
+            MPI_Scatterv(&auxVec2.values[0], counts, displs, MPI_DOUBLE, &auxVec2.values[0], counts[me], MPI_DOUBLE,
+                         ROOT, MPI_COMM_WORLD);
         }
 
         switch(func) {
             case MV:
-                MPI_Bcast(&auxBufMV.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-                sparseMatrixVector(A, auxBufMV, auxBuf2);
-                MPI_Gatherv(&auxBuf2.values[0], counts[me], MPI_DOUBLE, &auxBuf2.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+                MPI_Bcast(&auxVec2.values[0], size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+                sparseMatrixVector(A, auxVec2, auxVec2);
+                MPI_Gatherv(&auxVec2.values[0], counts[me], MPI_DOUBLE, &auxVec2.values[0], counts, displs, MPI_DOUBLE,
+                            ROOT, MPI_COMM_WORLD);
+                break;
+
+            case NORM:
+                MPI_Scatterv(&auxVec1.values[0], counts, displs, MPI_DOUBLE, &auxVec1.values[0], counts[me], MPI_DOUBLE,
+                             ROOT, MPI_COMM_WORLD);
+                resNorm = dotProduct(auxVec1, auxVec1, counts[me]);
+                MPI_Reduce(&resNorm, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
                 break;
 
             case VV:
-                dotProd = dotProduct(auxBuf, auxBuf2, counts[me]);
-                MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+                resNorm = dotProduct(auxVec1, auxVec2, counts[me]);
+                MPI_Reduce(&resNorm, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
                 break;
 
             case ADD:
                 MPI_Bcast(&scalar, 1, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
-                addVec(auxBuf, auxBuf2, scalar, counts[me]);
-                MPI_Gatherv(&auxBuf.values[0], counts[me], MPI_DOUBLE, &auxBuf.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+                addVec(auxVec1, auxVec2, scalar, counts[me]);
+                MPI_Gatherv(&auxVec1.values[0], counts[me], MPI_DOUBLE, &auxVec1.values[0], counts, displs, MPI_DOUBLE,
+                            ROOT, MPI_COMM_WORLD);
                 break;
 
             default:

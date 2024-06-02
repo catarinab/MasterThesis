@@ -11,11 +11,10 @@ using namespace std;
 
 //Calculate the approximation of exp(A)*b
 double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal) {
-
     if(betaVal != 1)
         V = V * betaVal;
 
-    return vec2norm(denseMatrixMult(V, expH).getCol(0));
+    return denseMatrixMult(V, expH).getCol(0).getNorm2();
 }
 
 //Process input arguments

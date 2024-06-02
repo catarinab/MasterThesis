@@ -3,7 +3,6 @@
 #include "headers/arnoldiIteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
 #include "headers/help_process.hpp"
-#include "headers/mtx_ops_mkl.hpp"
 
 /*  Parameters
     ----------
@@ -49,10 +48,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if(k == k_total) break;
 
-        double wNorm = vec2norm(w);
-        H->setValue(k, k - 1, wNorm);
+        double wNorm = w.getNorm2();
 
         if(wNorm != 0) {
+            H->setValue(k, k - 1, wNorm);
             V->getCol(k, &vCol);
             #pragma omp parallel for
             for(int i = 0; i < m; i++){

@@ -17,4 +17,6 @@ void distrSumOp(dense_vector& a, dense_vector& b, double scalar, int size, int m
 
 void distrMatrixVec(const csr_matrix& A, dense_vector& vec, dense_vector& res, int size);
 
+double distrNorm(dense_vector& a, int size, int me);
+
 #endif // DISTR_MTX_OPS_HPP

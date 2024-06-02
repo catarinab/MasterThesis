@@ -14,14 +14,11 @@ using namespace std;
 
 
 //Calculate the approximation of exp(A)*b
-double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal, int krylovDegree) {
-    dense_vector unitVec = dense_vector(krylovDegree);
-    unitVec.insertValue(0, 1);
-
+double getApproximation(dense_matrix V, const dense_matrix& expH, double betaVal) {
     if(betaVal != 1)
         V = V * betaVal;
 
-    return vec2norm(denseMatrixMult(V, expH).getCol(0));
+    return denseMatrixMult(V, expH).getCol(0).getNorm2();
 }
 
 //Process input arguments
@@ -79,7 +76,7 @@ int main (int argc, char* argv[]) {
         dense_matrix expH = scalingAndSquaring(H);
         exec_time_pade += omp_get_wtime();
 
-        double resNorm = getApproximation(V, expH, betaVal, krylovDegree);
+        double resNorm = getApproximation(V, expH, betaVal);
 
         exec_time += omp_get_wtime();
 
