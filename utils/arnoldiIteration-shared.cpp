@@ -39,12 +39,13 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     //auxiliary
     auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
     double *vCol;
-    auto * dotProd = new double[k_total + 1]();
+    //auto * dotProd = new double[k_total + 1]();
+    double dotProd;
 
     for(k = 1; k < k_total + 1; k++) {
         double tempNorm = 0;
         V->getCol(k-1, &vCol);
-        memset(dotProd, 0, k * sizeof(double));
+        //memset(dotProd, 0, k * sizeof(double));
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
@@ -55,37 +56,42 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
+                #pragma omp single
+                {
+                    H->setValue(j, k - 1, dotProd);
+                    dotProd = 0;
+                };
+
                 //dotprod between w and V->getCol(j)
-                #pragma omp for reduction(+:dotProd[j]) schedule(guided)
+                #pragma omp for reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
-                    dotProd[j] += (w[i] * vCol[i]);
+                    dotProd += (w[i] * vCol[i]);
                 }
 
-                #pragma omp for nowait schedule(guided)
+                #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] -= vCol[i] * dotProd[j];
+                    w[i] -= vCol[i] * dotProd;
                 }
             }
 
             if(k < k_total) {
-                #pragma omp for reduction(+:tempNorm) schedule(guided)
+                //calculate ||w||
+                #pragma omp for reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
                 double wNorm = sqrt(tempNorm);
+
+                //only change V and H if ||w|| != 0
                 if(wNorm != 0) {
-                    //V(:, k) = w / wNorm
+
+                    //V(:, k) = w / ||w||
                     V->getCol(k, &vCol);
-                    #pragma omp for nowait schedule(guided)
+                    #pragma omp for nowait
                     for (int i = 0; i < m; i++) {
                         vCol[i] = w[i] / wNorm;
                     }
 
-                    //H(:, k-1) = dotProds
-                    #pragma omp for nowait
-                    for (int i = 0; i < k; i++) {
-                        H->setValue(i, k - 1, dotProd[i]);
-                    }
                     //H(k, k-1) = wNorm
                     #pragma omp single
                         H->setValue(k, k - 1, wNorm);
@@ -95,7 +101,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     }
 
-    delete[] dotProd;
+    //delete[] dotProd;
 
     free(w);
 
