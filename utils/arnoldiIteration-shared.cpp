@@ -101,8 +101,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     }
 
-    //delete[] dotProd;
-
     free(w);
 
     return k;

@@ -21,11 +21,11 @@ class dense_matrix {
     dense_matrix(int rows, int cols);
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = new double[0];
+        this->values = static_cast<double *>(malloc(1 * sizeof(double)));
     }
 
     dense_matrix(const dense_matrix& other) : rows(other.rows), cols(other.cols) {
-        values = new double[rows * cols];
+        values = static_cast<double *>(malloc(rows * cols * sizeof(double)));
         std::copy(other.values, other.values + rows * cols, values);
     }
 
@@ -41,7 +41,7 @@ class dense_matrix {
     }
 
     ~dense_matrix(){
-        delete[] values;
+        free(this->values);
     }
 
     void setIdentity();
