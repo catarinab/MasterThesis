@@ -63,7 +63,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
                 #pragma omp simd aligned(vCol, w: 64)
                 for(int i = 0; i < m; i++) {
-                    w[i] = w[i] - vCol[i] * dotProd;
+                    w[i] -= vCol[i] * dotProd;
                 }
 
                 #pragma omp single
