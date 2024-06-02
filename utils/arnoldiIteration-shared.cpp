@@ -50,19 +50,18 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
-
         #pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
-                #pragma omp for simd reduction(+:dotProd)
+                #pragma omp simd reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
 
-                #pragma omp for
+                #pragma omp simd
                 for(int i = 0; i < m; i++) {
                     w[i] = w[i] - vCol[i] * dotProd;
                 }
@@ -76,7 +75,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
             if(k < k_total) {
                 //calculate ||w||
-                #pragma omp for reduction(+:tempNorm)
+                #pragma omp simd reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
