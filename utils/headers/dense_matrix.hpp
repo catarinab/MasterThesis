@@ -4,6 +4,7 @@
 #include <cstdlib> //srand
 #include <string>
 #include <ctime>
+#include <cstring>
 
 using namespace std;
 
@@ -13,14 +14,34 @@ class dense_matrix {
     private:
         int rows;
         int cols;
-        vector<double> values;
+        double * values;
 
     public:
 
     dense_matrix(int rows, int cols);
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = vector<double>();
+        this->values = new double[0];
+    }
+
+    dense_matrix(const dense_matrix& other) : rows(other.rows), cols(other.cols) {
+        values = new double[rows * cols];
+        std::copy(other.values, other.values + rows * cols, values);
+    }
+
+    dense_matrix& operator=(const dense_matrix& other) {
+        if (this != &other) {
+            delete[] values;
+            rows = other.rows;
+            cols = other.cols;
+            values = new double[rows * cols];
+            std::copy(other.values, other.values + rows * cols, values);
+        }
+        return *this;
+    }
+
+    ~dense_matrix(){
+        delete[] values;
     }
 
     void setIdentity();
@@ -50,7 +71,7 @@ class dense_matrix {
 
     bool hasNanorInf();
 
-    void setColVals(int initRow, int finalRow, int col, double *vals);
+    double *getValues();
 };
 
 #endif

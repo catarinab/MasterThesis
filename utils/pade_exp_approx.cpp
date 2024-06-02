@@ -86,17 +86,17 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
     dense_matrix res6 = denseMatrixMult(res2, res4);
     *(ptr + 2) = res6;
     dense_matrix res8 = denseMatrixMult(res4, res4);
-    powers->push_back(res8);
+    *(ptr + 4) = res8;
 
     return resultingMatrix;
 
 }
 
 //Calculate the Pade approximation of the exponential of matrix H.
-dense_matrix scalingAndSquaring(dense_matrix H) {
-    vector<dense_matrix> powers(8);
+dense_matrix scalingAndSquaring(const dense_matrix& inputH) {
+    vector<dense_matrix> powers(9);
     int s = 0, m = 0;
-    H = definePadeParams(&powers, &m, &s, H);
+    dense_matrix H = definePadeParams(&powers, &m, &s, inputH);
 
     dense_matrix identity = dense_matrix(H.getColVal(), H.getRowVal());
     identity.setIdentity();

@@ -17,7 +17,7 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
 
 void checkValues(int a, int b, const string& func);
 
-dense_matrix solveEq(const dense_matrix& A, dense_matrix b);
+dense_matrix solveEq(const dense_matrix& A, const dense_matrix& b);
 
 //multiply dense matrix and dense vector
 dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b);

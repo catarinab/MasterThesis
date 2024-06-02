@@ -34,18 +34,7 @@ csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int *
     return csr;
 }
 
-
-void checkValues(int a, int b, const string& func) {
-    if(a != b) {
-        cout << "Error: " << func << ": a != b" << endl;
-        cout << "a: " << a << endl;
-        cout << "b: " << b << endl;
-        exit(1);
-    }
-
-}
-
-dense_matrix solveEq(const dense_matrix& A, dense_matrix b) {
+dense_matrix solveEq(const dense_matrix& A, const dense_matrix& b) {
     vector<lapack_int> ipiv(A.getRowVal());
     LAPACKE_dgetrf(LAPACK_COL_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),
                    A.getRowVal(), ipiv.data());
@@ -55,18 +44,11 @@ dense_matrix solveEq(const dense_matrix& A, dense_matrix b) {
     return b;
 }
 
-
-
-//multiply dense matrix and dense vector
-dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b) {
-    dense_vector m(A.getRowVal());
-    cblas_dgemv(CblasColMajor, CblasNoTrans, A.getRowVal(), A.getColVal(), 1.0,
-                A.getDataPointer(), A.getRowVal(), b.values.data(), 1, 0.0, m.values.data(), 1);
-    return m;
-}
-
 //multiply two dense matrices
 dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) {
+    if (A.getColVal() != B.getRowVal()) {
+        throw std::invalid_argument("Matrices dimensions do not match for multiplication");
+    }
     dense_matrix C(A.getRowVal(), B.getColVal());
     cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                 A.getRowVal(), B.getColVal(), A.getColVal(), 1.0,
@@ -80,8 +62,8 @@ dense_matrix denseMatrixAdd(const dense_matrix& A, const dense_matrix& B) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
-    checkValues(cols, B.getColVal(), "denseMatrixAdd");
-    checkValues(rows, B.getRowVal(), "denseMatrixAdd");
+    if(rows != B.getRowVal() || cols != B.getColVal())
+        throw std::invalid_argument("Matrices dimensions do not match for addition");
 
     dense_matrix res(rows, cols);
 
@@ -99,8 +81,8 @@ dense_matrix denseMatrixSub(const dense_matrix& A, const dense_matrix& B) {
     int rows = A.getRowVal();
     int cols = A.getColVal();
 
-    checkValues(cols, B.getColVal(), "denseMatrixSub");
-    checkValues(rows, B.getRowVal(), "denseMatrixSub");
+    if(rows != B.getRowVal() || cols != B.getColVal())
+        throw std::invalid_argument("Matrices dimensions do not match for addition");
 
     dense_matrix res(rows, cols);
 

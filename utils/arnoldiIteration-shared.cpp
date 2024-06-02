@@ -37,15 +37,15 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     int k;
 
     //auxiliary
-    auto* w = static_cast<double *>(aligned_alloc(64, m * sizeof(double)));
+    auto* w = static_cast<double *>(std::aligned_alloc(64, m * sizeof(double)));
     double *vCol;
-    //auto * dotProd = new double[k_total + 1]();
     double dotProd;
+    double tempNorm;
 
     for(k = 1; k < k_total + 1; k++) {
-        double tempNorm = 0;
+        tempNorm = 0;
+        dotProd = 0;
         V->getCol(k-1, &vCol);
-        //memset(dotProd, 0, k * sizeof(double));
 
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
@@ -57,21 +57,21 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
-                #pragma omp for reduction(+:dotProd)
+                #pragma omp for simd reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
 
                 #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] -= vCol[i] * dotProd;
+                    w[i] = w[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
                 {
                     H->setValue(j, k - 1, dotProd);
                     dotProd = 0;
-                };
+                }
             }
 
             if(k < k_total) {

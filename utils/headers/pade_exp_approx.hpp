@@ -5,6 +5,6 @@
 
 using namespace std;
 
-dense_matrix scalingAndSquaring(dense_matrix H);
+dense_matrix scalingAndSquaring(const dense_matrix& H);
 
 #endif // PADE_EXP_APPROX_UTILS_HPP

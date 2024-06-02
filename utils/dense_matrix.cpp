@@ -4,15 +4,16 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
-#include <algorithm>
 
 #include "headers/dense_matrix.hpp"
 
 using namespace std;
 
 //A Column Major Dense Matrix
+
 dense_matrix::dense_matrix(int rows, int cols): rows(rows), cols(cols) {
-        this->values = vector<double>(rows * cols, 0);
+    this->values = static_cast<double *>(std::aligned_alloc(64, rows * cols * sizeof(double))); //new double[rows * cols];
+    memset(this->values, 0, rows * cols * sizeof(double));
 }
 
 int dense_matrix::getRowVal() const {
@@ -31,16 +32,16 @@ void dense_matrix::setIdentity() {
 }
 
 const double* dense_matrix::getDataPointer() const {
-        return this->values.data();
+    return this->values;
+}
+
+double * dense_matrix::getValues() {
+    return this->values;
 }
 
 //insert column in matrix
 void dense_matrix::setCol(int col, dense_vector& vec){
-    memcpy(this->values.data() + col * this->rows, vec.values.data(), this->rows * sizeof(double));
-}
-
-void dense_matrix::setColVals(int initRow, int finalRow, int col, double * vals) {
-    memcpy(this->values.data() + col * this->rows + initRow, vals, (finalRow - initRow) * sizeof(double));
+    memcpy(this->values + col * this->rows, vec.values.data(), this->rows * sizeof(double));
 }
 
 //insert value in matrix
@@ -81,7 +82,7 @@ void dense_matrix::getCol(int col, vector<double>& res){
 }
 
 void dense_matrix::getCol(int col, double **ptr) {
-    *ptr = this->values.data() + col * this->rows;
+    *ptr = this->values + col * this->rows;
 }
 
 //get matrix norm2
@@ -102,8 +103,8 @@ void dense_matrix::printVector(const string& filename) {
             return;
         }
         myFile << this->rows << endl;
-        for(double value : this->values) {
-            myFile << std::setprecision (16) << value << endl;
+        for(int i = 0; i < this->rows; i++) {
+            myFile << std::setprecision (16) << this->values[i] << endl;
         }
         myFile.close();
     }
@@ -116,7 +117,7 @@ void dense_matrix::readVector(const string& filename) {
         inputFile >> value;
         this->rows = (int) value;
         this->cols = (int) value;
-        this->values = vector<double>(this->rows * this->cols, 0);
+        this->values = new double[this->rows * this->cols];
         while (inputFile >> value) {
             this->values[count++] = value;
         }
@@ -177,5 +178,6 @@ void dense_matrix::getCol(int col, double *ptr) {
 }
 
 bool dense_matrix::hasNanorInf() {
-    return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
+    return false;
+    //return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
 }
