@@ -37,23 +37,28 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     int k;
 
     //auxiliary
-    auto* w = static_cast<double *>(std::aligned_alloc(64, m * sizeof(double)));
+    auto* w = (double *) malloc(m * sizeof(double));
     double *vCol;
     double dotProd;
-    double tempNorm;
 
     for(k = 1; k < k_total + 1; k++) {
-        tempNorm = 0;
-        dotProd = 0;
+        double tempNorm = 0;
         V->getCol(k-1, &vCol);
-
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
+
 
         #pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
+
+
+                #pragma omp single
+                {
+                    H->setValue(j, k - 1, dotProd);
+                    dotProd = 0;
+                };
 
                 //dotprod between w and V->getCol(j)
                 #pragma omp for reduction(+:dotProd)
@@ -63,13 +68,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
                 #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] = w[i] - vCol[i] * dotProd;
-                }
-
-                #pragma omp single
-                {
-                    H->setValue(j, k - 1, dotProd);
-                    dotProd = 0;
+                    w[i] -= vCol[i] * dotProd;
                 }
             }
 
@@ -99,6 +98,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         }
 
     }
+
+    //delete[] dotProd;
 
     free(w);
 
