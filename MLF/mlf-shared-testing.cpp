@@ -4,8 +4,8 @@
 #include <fstream>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
-#include "../utils/headers/calculate-MLF.hpp"
-#include "../utils/headers/arnoldiIteration-shared.hpp"
+#include "../utils/headers/calculate_MLF.hpp"
+#include "../utils/headers/arnoldi_iteration_shared.hpp"
 
 using namespace std;
 

@@ -1,14 +1,10 @@
+#include <iostream>
 #include <omp.h>
-#include <mpi.h>
 #include <cstring>
-#include <utility>
 
-#include "../utils/headers/help_process.hpp"
-#include "../utils/headers/distr_mtx_ops.hpp"
 #include "../utils/headers/mtx_ops_mkl.hpp"
-#include "../utils/headers/pade_exp_approx.hpp"
-#include "../utils/headers/arnoldiIteration.hpp"
-#include "../utils/headers/io_ops.hpp"
+#include "../utils/headers/scaling_and_squaring.hpp"
+#include "../utils/headers/arnoldi_iteration_shared.hpp"
 
 using namespace std;
 
@@ -38,62 +34,49 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName, d
 
 
 int main (int argc, char* argv[]) {
-    int me, nprocs;
     double exec_time_pade, exec_time_arnoldi, exec_time;
 
     //input values
-    int krylovDegree; 
+    int krylovDegree;
     string mtxPath;
     double normVal;
     processArgs(argc, argv, &krylovDegree, &mtxPath, &normVal);
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-
-    int size = (int) readHeader(mtxPath).first;
-    initGatherVars(size, nprocs);
-
     //initializations of needed matrix and vectors
-    csr_matrix A = buildPartMatrix(mtxPath, me, displs, counts);
+    csr_matrix A = buildFullMtx(mtxPath);
+    int size = (int) A.getSize();
 
     dense_vector b(size);
     b.getOnesVec();
     b = b / b.getNorm2();
+    //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
 
-    MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
+    arnoldiIteration(A, b, krylovDegree, size, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
-    //root node performs pade approximation and outputs results
-    if(me == 0) {
-        exec_time_pade = -omp_get_wtime();
-        dense_matrix expH = scalingAndSquaring(H);
-        exec_time_pade += omp_get_wtime();
 
-        double resNorm = getApproximation(V, expH, betaVal);
 
-        exec_time += omp_get_wtime();
+    exec_time_pade = -omp_get_wtime();
+    dense_matrix expH = scalingAndSquaring(H);
+    exec_time_pade += omp_get_wtime();
 
-        //output results
-        printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
-        printf("exec_time_pade: %f\n", exec_time_pade);
-        printf("diff: %.15f\n", abs(normVal - resNorm));
-        printf("2Norm: %.15f\n", resNorm);
-        printf("exec_time: %f\n", exec_time);
+    double resNorm = getApproximation(V, expH, betaVal);
 
-    }
+    exec_time += omp_get_wtime();
 
+    //output results
+    printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
+    printf("exec_time_pade: %f\n", exec_time_pade);
+    printf("diff: %.15f\n", abs(normVal - resNorm));
+    printf("2Norm: %.15f\n", resNorm);
+    printf("exec_time: %f\n", exec_time);
+    
     mkl_sparse_destroy(A.getMKLSparseMatrix());
-    free(displs);
-    free(counts);
-
-    MPI_Finalize();
 
     return 0;
 }

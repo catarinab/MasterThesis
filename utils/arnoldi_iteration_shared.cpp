@@ -1,5 +1,5 @@
 #include <cstring>
-#include "headers/arnoldiIteration-shared.hpp"
+#include "headers/arnoldi_iteration_shared.hpp"
 #include <omp.h>
 
 /*  Parameters
@@ -40,9 +40,11 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     auto* w = (double *) malloc(m * sizeof(double));
     double *vCol;
     double dotProd;
+    double tempNorm;
 
     for(k = 1; k < k_total + 1; k++) {
-        double tempNorm = 0;
+        tempNorm = 0;
+        dotProd = 0;
         V->getCol(k-1, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
@@ -52,13 +54,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
-
-
-                #pragma omp single
-                {
-                    H->setValue(j, k - 1, dotProd);
-                    dotProd = 0;
-                };
 
                 //dotprod between w and V->getCol(j)
                 #pragma omp for reduction(+:dotProd)
@@ -70,6 +65,12 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 for(int i = 0; i < m; i++) {
                     w[i] -= vCol[i] * dotProd;
                 }
+
+                #pragma omp single
+                {
+                    H->setValue(j, k - 1, dotProd);
+                    dotProd = 0;
+                };
             }
 
             if(k < k_total) {

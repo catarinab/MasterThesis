@@ -1,6 +1,6 @@
 #include <mpi.h>
 
-#include "headers/arnoldiIteration.hpp"
+#include "headers/arnoldi_iteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
 #include "headers/help_process.hpp"
 

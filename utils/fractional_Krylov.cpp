@@ -3,7 +3,7 @@
 #include <autodiff/forward/real.hpp>
 #include <autodiff/forward/real/eigen.hpp>
 
-#include "headers/fractionalKrylov.hpp"
+#include "headers/fractional_Krylov.hpp"
 #include "headers/utils.hpp"
 #include "headers/dense_vector.hpp"
 

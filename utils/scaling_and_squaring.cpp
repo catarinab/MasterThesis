@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "headers/mtx_ops_mkl.hpp"
-#include "headers/pade_exp_approx.hpp"
+#include "headers/scaling_and_squaring.hpp"
 
 
 using namespace std;

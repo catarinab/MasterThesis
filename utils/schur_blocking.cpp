@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "../utils/headers/dense_matrix.hpp"
-#include "../utils/headers/schur-blocking.hpp"
+#include "../utils/headers/schur_blocking.hpp"
 
 /* 
 Algorithm based on paper "A Schur–Parlett Algorithm for Computing Matrix Functions"

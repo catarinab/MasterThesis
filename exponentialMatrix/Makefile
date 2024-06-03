@@ -21,14 +21,15 @@ distr:
 	$(mpi) $(CFLAGSDISTR) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/arnoldiIteration.cpp -o arnoldiIteration.o
+	$(mpi) $(CFLAGSDISTR) -c ../utils/arnoldi_iteration.cpp -o arnoldi_iteration.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/help_process.cpp -o help_process.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/io_ops.cpp -o io_ops.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(mpi) $(CFLAGSDISTR) -c ../utils/scaling_and_squaring.cpp -o scaling_and_squaring.o
 	$(mpi) $(CFLAGSDISTR) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(mpi) $(CFLAGSDISTR) -c exponentialMtx.cpp -o exp-mtx.o
-	$(mpi) $(CFLAGSDISTR) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration.o distr_mtx_ops.o help_process.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGET)
+	$(mpi) $(CFLAGSDISTR) -c exponential_mtx.cpp -o exp-mtx.o
+	$(mpi) $(CFLAGSDISTR) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldi_iteration.o \
+		distr_mtx_ops.o help_process.o io_ops.o scaling_and_squaring.o mtx_ops_mkl.o -o $(TARGET)
 	rm *.o
 
 shared:
@@ -36,12 +37,13 @@ shared:
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/scaling_and_squaring.cpp -o scaling_and_squaring.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c exponentialMtx-shared.cpp -o exp-mtx.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldiIteration-shared.o io_ops.o pade_exp_approx.o mtx_ops_mkl.o -o $(TARGETSHARED)
+	$(C++) $(DEBUG) $(CFLAGS) -c exponential_mtx_shared.cpp -o exp-mtx.o
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldi_iteration_shared.o \
+		io_ops.o scaling_and_squaring.o mtx_ops_mkl.o -o $(TARGETSHARED)
 	rm *.o
 
 clean:

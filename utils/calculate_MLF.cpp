@@ -7,9 +7,9 @@
 
 #include "headers/dense_matrix.hpp"
 #include "headers/utils.hpp"
-#include "headers/calculate-MLF.hpp"
-#include "headers/schur-blocking.hpp"
-#include "headers/Evaluate-Single-ML.hpp"
+#include "headers/calculate_MLF.hpp"
+#include "headers/schur_blocking.hpp"
+#include "headers/mittag_leffler_scalar.hpp"
 
 using namespace std;
 

@@ -1,4 +1,4 @@
-#include "headers/arnoldiIteration-shared-nu.hpp"
+#include "headers/arnoldi_iteration_shared_nu.hpp"
 #include <string.h>
 
 /*  Parameters

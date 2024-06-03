@@ -10,10 +10,10 @@
 #include "../utils/headers/dense_vector.hpp"
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../cubature/cubature.h"
-#include "../utils/headers/arnoldiIteration-shared-nu.hpp"
-#include "../utils/headers/arnoldiIteration-shared.hpp"
-#include "../utils/headers/fractionalKrylov.hpp"
-#include "../utils/headers/pade_exp_approx.hpp"
+#include "../utils/headers/arnoldi_iteration_shared_nu.hpp"
+#include "../utils/headers/arnoldi_iteration_shared.hpp"
+#include "../utils/headers/fractional_Krylov.hpp"
+#include "../utils/headers/scaling_and_squaring.hpp"
 
 using namespace std;
 using namespace autodiff;

@@ -1,4 +1,4 @@
-#include "headers/arnoldiIteration-shared.hpp"
+#include "headers/arnoldi_iteration_shared.hpp"
 #include <omp.h>
 
 /*  Parameters

@@ -25,67 +25,52 @@ mlf: mlf-shared mlf-shared-cblas
 
 frac-test: mlf-shared-test frac
 
-test:
-	@echo "$(YELLOW)Making testing version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
-	$(C++) $(DEBUG) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK)  csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o mtx_ops_mkl.o \
-	calculate-MLF.o Evaluate-Single-ML.o test.o -o $(TARGETTEST)
-	rm *.o
-
 mlf-shared-cblas:
 	@echo "$(GREEN)Making Mittag-Leffler calculation krylov CBLAS version: $(TARGETSHAREDCBLAS) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared-cblas.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared_cblas.cpp -o arnoldi_iteration_shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
 	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
-	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o mlf-shared.o -o $(TARGETSHAREDCBLAS)
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
+	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o $(TARGETSHAREDCBLAS)
 	rm *.o
 
 mlf-shared:
 	@echo "$(GREEN)Making Mittag-Leffler calculation krylov shared version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
 	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
-	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o mlf-shared.o -o $(TARGETSHARED)
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
+	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o $(TARGETSHARED)
 	rm *.o
 
 mlf-shared-test:
 	@echo "$(YELLOW)Making Mittag-Leffler fractional testing version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldiIteration-shared-cblas.cpp -o arnoldiIteration-shared.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared_cblas.cpp -o arnoldi_iteration_shared.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
 	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate-MLF.cpp -o calculate-MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
+	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
 	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared-testing.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldiIteration-shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o \
-	mtx_ops_mkl.o calculate-MLF.o Evaluate-Single-ML.o mlf-shared.o -o mlf-shared-test.out
+	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
+	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o mlf-shared-test.out
 	rm *.o
 
 frac:
@@ -96,12 +81,12 @@ frac:
 	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
 	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
 	$(C++) $(CFLAGS) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
-	$(C++) $(CFLAGS) -c ../utils/arnoldiIteration-shared-nu.cpp -o arnoldiIteration-shared-nu.o
-	$(C++) $(CFLAGS) -c ../utils/arnoldiIteration-shared.cpp -o arnoldiIteration-shared.o
-	$(C++) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractionalKrylov.cpp -o fractionalKrylov.o
+	$(C++) $(CFLAGS) -c ../utils/arnoldi_iteration_shared-nu.cpp -o arnoldi_iteration_shared-nu.o
+	$(C++) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
+	$(C++) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractional_Krylov.cpp -o fractional_Krylov.o
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
 	$(C++) $(CFLAGSCubature) $(CFLAGS) $(LINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
-	mtx_ops_mkl.o pade_exp_approx.o arnoldiIteration-shared.o arnoldiIteration-shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
+	mtx_ops_mkl.o pade_exp_approx.o arnoldi_iteration_shared.o arnoldi_iteration_shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
 	rm *.o
 
 testEigen:
@@ -110,13 +95,13 @@ testEigen:
 	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
 	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
 	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) -c ../utils/schur-blocking.cpp -o schur-blocking.o
+	$(C++) $(CFLAGS) -c ../utils/schur_blocking.cpp -o schur_blocking.o
 	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) -c ../utils/Evaluate-Single-ML.cpp -o Evaluate-Single-ML.o
-	$(C++) $(CFLAGS) -I ../eigen -c ../utils/calculate-MLF-Eigen.cpp -o calculate-MLF.o
+	$(C++) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
+	$(C++) $(CFLAGS) -I ../eigen -c ../utils/calculate_MLF-Eigen.cpp -o calculate_MLF.o
 	$(C++) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur-blocking.o mtx_ops_mkl.o \
-	Evaluate-Single-ML.o calculate-MLF.o test.o -o $(TARGETTESTEigen)
+	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o mtx_ops_mkl.o \
+	mittag_leffler_scalar.o calculate_MLF.o test.o -o $(TARGETTESTEigen)
 	rm *.o
 
 
