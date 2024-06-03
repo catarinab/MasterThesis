@@ -10,12 +10,6 @@
 using namespace std;
 
 //A Column Major Dense Matrix
-
-dense_matrix::dense_matrix(int rows, int cols): rows(rows), cols(cols) {
-    this->values = static_cast<double *>(std::aligned_alloc(64, rows * cols * sizeof(double))); //new double[rows * cols];
-    memset(this->values, 0, rows * cols * sizeof(double));
-}
-
 int dense_matrix::getRowVal() const {
     return this->rows;
 }

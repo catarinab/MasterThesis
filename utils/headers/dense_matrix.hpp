@@ -18,15 +18,19 @@ class dense_matrix {
 
     public:
 
-    dense_matrix(int rows, int cols);
+    dense_matrix(int rows, int cols): rows(rows), cols(cols) {
+        this->values = static_cast<double *>(std::aligned_alloc(64, rows * cols * sizeof(double)));
+        memset(this->values, 0, rows * cols * sizeof(double));
+    }
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = static_cast<double *>(malloc(1 * sizeof(double)));
+        this->values = static_cast<double *>(std::aligned_alloc(64, 1 * sizeof(double)));
+        memset(this->values, 0, 1 * sizeof(double));
     }
 
     dense_matrix(const dense_matrix& other) : rows(other.rows), cols(other.cols) {
-        values = static_cast<double *>(malloc(rows * cols * sizeof(double)));
-        std::copy(other.values, other.values + rows * cols, values);
+        this->values = static_cast<double *>(std::aligned_alloc(64, rows * cols * sizeof(double)));
+        std::copy(other.values, other.values + rows * cols, this->values);
     }
 
     dense_matrix& operator=(const dense_matrix& other) {

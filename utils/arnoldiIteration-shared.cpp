@@ -56,14 +56,14 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
-                #pragma omp simd reduction(+:dotProd) aligned(vCol, w: 64)
+                #pragma omp for reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
 
-                #pragma omp simd aligned(vCol, w: 64)
+                #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] -= vCol[i] * dotProd;
+                    w[i] = w[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
@@ -75,7 +75,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
             if(k < k_total) {
                 //calculate ||w||
-                #pragma omp simd reduction(+:tempNorm) aligned(w: 64)
+                #pragma omp for reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
