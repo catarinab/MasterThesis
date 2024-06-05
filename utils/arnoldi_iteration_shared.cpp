@@ -36,6 +36,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     int k;
 
+    //simd
+    //tirar reducao
     //auxiliary
     auto* w = (double *) malloc(m * sizeof(double));
     double *vCol;
@@ -50,17 +52,18 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                         vCol, 0.0, w);
 
 
-        #pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
+        #pragma omp parallel shared(dotProd)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
-                #pragma omp for reduction(+:dotProd)
+                #pragma omp for
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
 
+                //axpy
                 #pragma omp for
                 for(int i = 0; i < m; i++) {
                     w[i] -= vCol[i] * dotProd;
@@ -71,6 +74,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                     H->setValue(j, k - 1, dotProd);
                     dotProd = 0;
                 };
+
             }
 
             if(k < k_total) {
