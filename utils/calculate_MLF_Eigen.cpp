@@ -5,6 +5,7 @@
 
 #include "headers/mittag_leffler_scalar.hpp"
 #include "mkl.h"
+#include "headers/dense_matrix.hpp"
 
 using namespace std;
 
@@ -21,7 +22,7 @@ complex<double> evaluateSingleWrapper(complex<double> z, int k) {
 }
 
 
-complex<double> * calculate_MLF(complex<double> * T, double alphaInput, double betaInput, int size) {
+dense_matrix calculate_MLF(double * T, double alphaInput, double betaInput, int size) {
     alpha = alphaInput;
     betaVal = betaInput;
 
@@ -36,14 +37,14 @@ complex<double> * calculate_MLF(complex<double> * T, double alphaInput, double b
 
     Eigen::MatrixXcd result = A.matrixFunction(evaluateSingleWrapper);
 
-    auto * resultArray = (complex<double> *) malloc(size * size * sizeof(complex<double>));
+    dense_matrix resultMatrix = dense_matrix(size, size);
 
     for(int i = 0; i < size; i++){
         for(int j = 0; j < size; j++){
-            resultArray[i*size + j] = {result(i,j).real(), result(i,j).imag()};
+            resultMatrix.setValue(i, j, result(i,j).real());
         }
     }
 
-    return resultArray;
+    return resultMatrix;
 }
 

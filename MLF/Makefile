@@ -98,10 +98,10 @@ testEigen:
 	$(C++) $(CFLAGS) -c ../utils/schur_blocking.cpp -o schur_blocking.o
 	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
 	$(C++) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
-	$(C++) $(CFLAGS) -I ../eigen -c ../utils/calculate_MLF-Eigen.cpp -o calculate_MLF.o
+	$(C++) $(CFLAGS) -I ../eigen -c ../utils/calculate_MLF_Eigen.cpp -o calculate_MLF_Eigen.o
 	$(C++) $(CFLAGS) -c test.cpp -o test.o
 	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o mtx_ops_mkl.o \
-	mittag_leffler_scalar.o calculate_MLF.o test.o -o $(TARGETTESTEigen)
+		mittag_leffler_scalar.o calculate_MLF_Eigen.o test.o -o $(TARGETTESTEigen)
 	rm *.o
 
 
