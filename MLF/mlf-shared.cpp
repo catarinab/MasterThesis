@@ -34,7 +34,6 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName) {
 int main (int argc, char* argv[]) {
     double exec_time_schur, exec_time_arnoldi, exec_time;
 
-    double t = 1;
     //input values
     double alpha = 0.5;
     double beta = 0;

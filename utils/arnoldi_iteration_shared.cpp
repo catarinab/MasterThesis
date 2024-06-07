@@ -1,7 +1,4 @@
-#include <cstring>
 #include "headers/arnoldi_iteration_shared.hpp"
-#include <omp.h>
-
 /*  Parameters
     ----------
     A : An m × m array (csr_matrix)
@@ -39,26 +36,26 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     //simd
     //tirar reducao
     //auxiliary
-    auto* w = (double *) malloc(m * sizeof(double));
+    auto* w = static_cast<double *>(std::aligned_alloc(64, m * sizeof(double)));
     double *vCol;
     double dotProd;
     double tempNorm;
 
-    for(k = 1; k < k_total + 1; k++) {
+    for(k = 0; k < k_total; k++) {
         tempNorm = 0;
         dotProd = 0;
-        V->getCol(k-1, &vCol);
+        V->getCol(k, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
 
         #pragma omp parallel shared(dotProd)
         {
-            for(int j = 0; j < k; j++) {
+            for(int j = 0; j <= k; j++) {
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
-                #pragma omp for
+                #pragma omp for reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
@@ -71,13 +68,13 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
                 #pragma omp single
                 {
-                    H->setValue(j, k - 1, dotProd);
+                    H->setValue(j, k, dotProd);
                     dotProd = 0;
                 };
 
             }
 
-            if(k < k_total) {
+            if(k < k_total - 1) {
                 //calculate ||w||
                 #pragma omp for reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
@@ -89,22 +86,19 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 if(wNorm != 0) {
 
                     //V(:, k) = w / ||w||
-                    V->getCol(k, &vCol);
+                    V->getCol(k + 1, &vCol);
                     #pragma omp for nowait
                     for (int i = 0; i < m; i++) {
                         vCol[i] = w[i] / wNorm;
                     }
-
                     //H(k, k-1) = wNorm
                     #pragma omp single
-                        H->setValue(k, k - 1, wNorm);
+                        H->setValue(k + 1, k, wNorm);
                 }
             }
         }
 
     }
-
-    //delete[] dotProd;
 
     free(w);
 

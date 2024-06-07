@@ -82,13 +82,10 @@ int uTCalcV(unsigned ndim, size_t npts, const double *x, void *fdata, unsigned f
         autodiff::real newU = totalRNG(q, u, t);
         if(newU.val() < 1e5) {
             dense_matrix expHT = scalingAndSquaring(H * -newU.val());
-            if(expHT.hasNanorInf())
-                memset(&fval[j*fdim], 0, fdim * sizeof(double));
-            else
-                denseMatrixMult(V, expHT).getCol(0, &fval[j * fdim]);
+            denseMatrixMult(V, expHT).getCol(0, &fval[j * fdim]);
         }
         else
-            memset(&fval[j*fdim], 0, fdim * sizeof(double));
+            memset(&fval[j*fdim], 0, fdim * sizeof(double)); //tends to 0
     }
     return 0; // success
 }

@@ -413,7 +413,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
     vector<complex<double>> sumArgs = vector<complex<double>>(maxJArgs + 1 - kd);
     vector<double> absSumArgs = vector<double>(maxJArgs + 1 - kd);
-    vector<bool> iAbsSumArg = vector<bool>();
+    vector<bool> iAbsSumArg = vector<bool>(maxJArgs + 1 - kd, false);
     complex<double> result = complex<double>(0,0);
 
     double numerator = 1.0;
@@ -436,15 +436,16 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
 
     int count = 0;
-    for (const auto& val : absSumArgs) {
-        if(val > EPS16 / 2) {
-            iAbsSumArg.push_back(true);
+
+    for(int i = 0; i < absSumArgs.size(); i++){
+        if(absSumArgs[i] > EPS16/2){
+            iAbsSumArg[i] = true;
             count++;
         }
     }
 
     if (!count) {
-        iAbsSumArg.push_back(true);
+        iAbsSumArg[0] = true;
     }
 
 
