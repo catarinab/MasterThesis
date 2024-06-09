@@ -26,16 +26,7 @@ void dense_matrix::setIdentity() {
 }
 
 const double* dense_matrix::getDataPointer() const {
-    return this->values;
-}
-
-double * dense_matrix::getValues() {
-    return this->values;
-}
-
-//insert column in matrix
-void dense_matrix::setCol(int col, dense_vector& vec){
-    memcpy(this->values + col * this->rows, vec.values.data(), this->rows * sizeof(double));
+    return this->values.data();
 }
 
 //insert value in matrix
@@ -62,46 +53,46 @@ dense_vector dense_matrix::getCol(int col) {
 
 //get specific column (in an existing dense_vector)
 void dense_matrix::getCol(int col, dense_vector * res) {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int row = 0; row < this->rows; row++) {
         res->setValue(row, this->values[row + col * this->rows]);
     }
 }
 
 void dense_matrix::getCol(int col, vector<double>& res){
-    #pragma omp for
+#pragma omp for
     for (int row = 0; row < this->rows; row++) {
         res[row] = this->values[row + col * this->rows];
     }
 }
 
 void dense_matrix::getCol(int col, double **ptr) {
-    *ptr = this->values + col * this->rows;
+    *ptr = this->values.data() + col * this->rows;
 }
 
 //get matrix norm2
 double dense_matrix::getNorm2() {
     double res = 0;
-     for(int row = 0; row < this->rows; row++) {
-         for(int col = 0; col < this->cols; col++)
-             res += pow(this->values[row + col * this->rows], 2);
+    for(int row = 0; row < this->rows; row++) {
+        for(int col = 0; col < this->cols; col++)
+            res += pow(this->values[row + col * this->rows], 2);
     }
     return sqrt(res);
 }
 
 void dense_matrix::printVector(const string& filename) {
-        ofstream myFile;
-        myFile.open(filename);
-        if(!myFile.is_open()) {
-            cout << "Error opening file" << endl;
-            return;
-        }
-        myFile << this->rows << endl;
-        for(int i = 0; i < this->rows; i++) {
-            myFile << std::setprecision (16) << this->values[i] << endl;
-        }
-        myFile.close();
+    ofstream myFile;
+    myFile.open(filename);
+    if(!myFile.is_open()) {
+        cout << "Error opening file" << endl;
+        return;
     }
+    myFile << this->rows << endl;
+    for(double value : this->values) {
+        myFile << std::setprecision (16) << value << endl;
+    }
+    myFile.close();
+}
 
 void dense_matrix::readVector(const string& filename) {
     int count = 0;
@@ -111,7 +102,7 @@ void dense_matrix::readVector(const string& filename) {
         inputFile >> value;
         this->rows = (int) value;
         this->cols = (int) value;
-        this->values = new double[this->rows * this->cols];
+        this->values = vector<double>(this->rows * this->cols, 0);
         while (inputFile >> value) {
             this->values[count++] = value;
         }
@@ -169,9 +160,4 @@ void dense_matrix::getCol(int col, double *ptr) {
     for(int row = 0; row < this->rows; row++) {
         ptr[row] = this->values[row + col * this->rows];
     }
-}
-
-bool dense_matrix::hasNanorInf() {
-    return false;
-    //return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
 }
