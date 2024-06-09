@@ -37,57 +37,40 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     int k;
 
     //auxiliary
-    auto* w = new double[m];
+    auto* w = (double *) malloc(m * sizeof(double));
     double *vCol;
     double dotProd;
     double tempNorm;
-    double exec_time_mv = 0;
-    double exec_time_dot = 0;
-    double exec_time_axpy = 0;
-    double temp_time;
 
     for(k = 1; k < k_total + 1; k++) {
         tempNorm = 0;
         dotProd = 0;
         V->getCol(k-1, &vCol);
-
-        temp_time = -omp_get_wtime();
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
-        exec_time_mv += omp_get_wtime() + temp_time;
 
-        #pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
+
+#pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
-                #pragma omp single
-                {
-                    temp_time = -omp_get_wtime();
-                }
                 //dotprod between w and V->getCol(j)
                 #pragma omp for reduction(+:dotProd)
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
 
-                #pragma omp single
-                {
-                    exec_time_dot += omp_get_wtime() + temp_time;
-                    temp_time = -omp_get_wtime();
-                }
-
                 #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] = w[i] - vCol[i] * dotProd;
+                    w[i] -= vCol[i] * dotProd;
                 }
 
                 #pragma omp single
                 {
-                    exec_time_axpy += omp_get_wtime() + temp_time;
                     H->setValue(j, k - 1, dotProd);
                     dotProd = 0;
-                }
+                };
             }
 
             if(k < k_total) {
@@ -114,13 +97,12 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 }
             }
         }
+
     }
 
-    cout << "MV: " << exec_time_mv << endl;
-    cout << "Dot: " << exec_time_dot << endl;
-    cout << "Axpy: " << exec_time_axpy << endl;
+    //delete[] dotProd;
 
-    delete[] w;
+    free(w);
 
     return k;
 }
