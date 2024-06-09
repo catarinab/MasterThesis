@@ -53,7 +53,7 @@ class dense_matrix {
 
     bool hasNanorInf();
 
-    double *getValues();
+    const double *getValues();
 };
 
 #endif

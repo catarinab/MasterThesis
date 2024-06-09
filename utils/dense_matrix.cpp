@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
+#include <algorithm>
 
 #include "headers/dense_matrix.hpp"
 
@@ -29,6 +30,11 @@ const double* dense_matrix::getDataPointer() const {
     return this->values.data();
 }
 
+//insert column in matrix
+void dense_matrix::setCol(int col, dense_vector& vec){
+    memcpy(this->values.data() + col * this->rows, vec.values.data(), this->rows * sizeof(double));
+}
+
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
     this->values[row + col * this->rows] = val;
@@ -37,6 +43,10 @@ void dense_matrix::setValue(int row, int col, double val){
 
 double dense_matrix::getValue(int row, int col) const{
     return this->values[row + col * this->rows];
+}
+
+const double * dense_matrix::getValues() {
+    return this->values.data();
 }
 
 //get specific column (as a dense_vector)
@@ -160,4 +170,8 @@ void dense_matrix::getCol(int col, double *ptr) {
     for(int row = 0; row < this->rows; row++) {
         ptr[row] = this->values[row + col * this->rows];
     }
+}
+
+bool dense_matrix::hasNanorInf() {
+    return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
 }
