@@ -114,13 +114,11 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 }
             }
         }
-
-        cout << "Arnoldi Iteration: " << k << endl;
-        cout << "MV: " << exec_time_mv << endl;
-        cout << "Dot: " << exec_time_dot << endl;
-        cout << "Axpy: " << exec_time_axpy << endl;
-
     }
+
+    cout << "MV: " << exec_time_mv << endl;
+    cout << "Dot: " << exec_time_dot << endl;
+    cout << "Axpy: " << exec_time_axpy << endl;
 
     delete[] w;
 
