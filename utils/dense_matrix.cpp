@@ -27,12 +27,12 @@ void dense_matrix::setIdentity() {
 }
 
 const double* dense_matrix::getDataPointer() const {
-    return this->values.data();
+    return this->values;
 }
 
 //insert column in matrix
 void dense_matrix::setCol(int col, dense_vector& vec){
-    memcpy(this->values.data() + col * this->rows, vec.values.data(), this->rows * sizeof(double));
+    memcpy(this->values + col * this->rows, vec.values.data(), this->rows * sizeof(double));
 }
 
 //insert value in matrix
@@ -45,8 +45,8 @@ double dense_matrix::getValue(int row, int col) const{
     return this->values[row + col * this->rows];
 }
 
-const double * dense_matrix::getValues() {
-    return this->values.data();
+double * dense_matrix::getValues() {
+    return this->values;
 }
 
 //get specific column (as a dense_vector)
@@ -77,7 +77,7 @@ void dense_matrix::getCol(int col, vector<double>& res){
 }
 
 void dense_matrix::getCol(int col, double **ptr) {
-    *ptr = this->values.data() + col * this->rows;
+    *ptr = this->values + col * this->rows;
 }
 
 //get matrix norm2
@@ -98,7 +98,8 @@ void dense_matrix::printVector(const string& filename) {
         return;
     }
     myFile << this->rows << endl;
-    for(double value : this->values) {
+    for(int i = 0; i < this->rows; i++) {
+        double value = this->values[i];
         myFile << std::setprecision (16) << value << endl;
     }
     myFile.close();
@@ -112,7 +113,7 @@ void dense_matrix::readVector(const string& filename) {
         inputFile >> value;
         this->rows = (int) value;
         this->cols = (int) value;
-        this->values = vector<double>(this->rows * this->cols, 0);
+        this->values = static_cast<double *>(calloc(this->rows * this->cols, sizeof(double)));
         while (inputFile >> value) {
             this->values[count++] = value;
         }
@@ -170,8 +171,4 @@ void dense_matrix::getCol(int col, double *ptr) {
     for(int row = 0; row < this->rows; row++) {
         ptr[row] = this->values[row + col * this->rows];
     }
-}
-
-bool dense_matrix::hasNanorInf() {
-    return std::any_of(this->values.begin(), this->values.end(), [](double x) { return isnan(x) || isinf(x); });
 }

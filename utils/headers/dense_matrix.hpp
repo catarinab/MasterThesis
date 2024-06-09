@@ -14,16 +14,36 @@ class dense_matrix {
     private:
         int rows;
         int cols;
-        vector<double> values;
+        double * values;
 
     public:
 
     dense_matrix(int rows, int cols): rows(rows), cols(cols) {
-        this->values = vector<double>(rows * cols, 0);
+        this->values = static_cast<double *>(calloc(rows * cols, sizeof(double)));
     }
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = vector<double>(0);
+        this->values = static_cast<double *>(calloc(1, sizeof(double)));
+    }
+
+    dense_matrix(const dense_matrix& other) : rows(other.rows), cols(other.cols) {
+        this->values = this->values = static_cast<double *>(calloc(rows * cols, sizeof(double)));
+        std::copy(other.values, other.values + rows * cols, this->values);
+    }
+
+    dense_matrix& operator=(const dense_matrix& other) {
+        if (this != &other) {
+            delete[] values;
+            rows = other.rows;
+            cols = other.cols;
+            values = new double[rows * cols];
+            std::copy(other.values, other.values + rows * cols, values);
+        }
+        return *this;
+    }
+
+    ~dense_matrix(){
+        free(this->values);
     }
 
     void setIdentity();
@@ -53,7 +73,7 @@ class dense_matrix {
 
     bool hasNanorInf();
 
-    const double *getValues();
+    double *getValues();
 };
 
 #endif
