@@ -39,12 +39,12 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     //auxiliary
     auto* w = (double *) malloc(m * sizeof(double));
     double *vCol;
-    double dotProd;
+
     double tempNorm;
 
     for(k = 1; k < k_total + 1; k++) {
         tempNorm = 0;
-        dotProd = 0;
+        //dotProd = 0;
         V->getCol(k-1, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
@@ -54,9 +54,9 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         {
             for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
-
+                double dotProd = 0;
                 //dotprod between w and V->getCol(j)
-                #pragma omp for //reduction(+:dotProd)
+                #pragma omp for
                 for (int i = 0; i < m; i++) {
                     dotProd += (w[i] * vCol[i]);
                 }
