@@ -11,7 +11,7 @@ Each node receives the necessary vectors and executes the function func for a fe
 After the function is executed, the result is sent back to the root node.
 */
 int helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, int * counts) {
-    double resNorm = 0;
+    double dotProd = 0;
     double temp = 0;
     double scalar = 0;
     dense_vector auxVec1(counts[me]);
@@ -40,13 +40,13 @@ int helpProcess(const csr_matrix& A, int me, int size, int func, int * displs, i
             case NORM:
                 MPI_Scatterv(&auxVec1.values[0], counts, displs, MPI_DOUBLE, &auxVec1.values[0], counts[me], MPI_DOUBLE,
                              ROOT, MPI_COMM_WORLD);
-                resNorm = dotProduct(auxVec1, auxVec1, counts[me]);
-                MPI_Reduce(&resNorm, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
+                dotProd = dotProduct(auxVec1, auxVec1, counts[me]);
+                MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
                 break;
 
             case VV:
-                resNorm = dotProduct(auxVec1, auxVec2, counts[me]);
-                MPI_Reduce(&resNorm, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
+                dotProd = dotProduct(auxVec1, auxVec2, counts[me]);
+                MPI_Reduce(&dotProd, &temp, 1, MPI_DOUBLE, MPI_SUM, ROOT, MPI_COMM_WORLD);
                 break;
 
             case ADD:

@@ -1,4 +1,7 @@
+#include <cstring>
 #include "headers/arnoldi_iteration_shared.hpp"
+#include <omp.h>
+
 /*  Parameters
     ----------
     A : An m × m array (csr_matrix)
@@ -33,25 +36,23 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     int k;
 
-    //simd
-    //tirar reducao
     //auxiliary
-    auto* w = static_cast<double *>(std::aligned_alloc(64, m * sizeof(double)));
+    auto* w = new double[m];
     double *vCol;
     double dotProd;
     double tempNorm;
 
-    for(k = 0; k < k_total; k++) {
+    for(k = 1; k < k_total + 1; k++) {
         tempNorm = 0;
         dotProd = 0;
-        V->getCol(k, &vCol);
+        V->getCol(k-1, &vCol);
+
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
-
-        #pragma omp parallel shared(dotProd)
+        #pragma omp parallel shared(dotProd) private(vCol) firstprivate(w)
         {
-            for(int j = 0; j <= k; j++) {
+            for(int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
@@ -60,21 +61,19 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                     dotProd += (w[i] * vCol[i]);
                 }
 
-                //axpy
                 #pragma omp for
                 for(int i = 0; i < m; i++) {
-                    w[i] -= vCol[i] * dotProd;
+                    w[i] = w[i] - vCol[i] * dotProd;
                 }
 
                 #pragma omp single
                 {
-                    H->setValue(j, k, dotProd);
+                    H->setValue(j, k - 1, dotProd);
                     dotProd = 0;
-                };
-
+                }
             }
 
-            if(k < k_total - 1) {
+            if(k < k_total) {
                 //calculate ||w||
                 #pragma omp for reduction(+:tempNorm)
                 for(int i = 0; i < m; i++) {
@@ -86,21 +85,22 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 if(wNorm != 0) {
 
                     //V(:, k) = w / ||w||
-                    V->getCol(k + 1, &vCol);
+                    V->getCol(k, &vCol);
                     #pragma omp for nowait
                     for (int i = 0; i < m; i++) {
                         vCol[i] = w[i] / wNorm;
                     }
+
                     //H(k, k-1) = wNorm
                     #pragma omp single
-                        H->setValue(k + 1, k, wNorm);
+                    H->setValue(k, k - 1, wNorm);
                 }
             }
         }
 
     }
 
-    free(w);
+    delete[] w;
 
     return k;
 }

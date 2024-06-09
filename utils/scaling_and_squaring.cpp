@@ -48,7 +48,7 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
     2.097847961257068e+000,  // m_val = 9
     5.371920351148152e+000}; // m_val = 13
 
-    dense_matrix resultingMatrix = A;
+    dense_matrix finalMtx = A;
 
     *m = 0;
 
@@ -71,24 +71,27 @@ dense_matrix definePadeParams(vector<dense_matrix> * powers, int * m, int * powe
     if(*m == 0) {
         int s = findM(normA, theta[4], power);
         *m = 13;
-        resultingMatrix = A/(s);
+        finalMtx = A / (s);
     }
-    
 
-    auto ptr = powers->begin();
+    auto powIter = powers->begin();
 
-    *ptr++ = identity;
-    *ptr++ = resultingMatrix;
-    dense_matrix res2 = denseMatrixMult(resultingMatrix, resultingMatrix);
-    *ptr++ = res2;
-    dense_matrix res4 = denseMatrixMult(res2, res2);
-    *++ptr = res4;
-    dense_matrix res6 = denseMatrixMult(res2, res4);
-    *(ptr + 2) = res6;
-    dense_matrix res8 = denseMatrixMult(res4, res4);
-    *(ptr + 4) = res8;
+    *powIter++ = identity;
+    *powIter++ = finalMtx;
+    dense_matrix A_2 = denseMatrixMult(finalMtx, finalMtx);
+    *powIter++ = A_2;
+    if(*m == 3)
+        return finalMtx;
+    dense_matrix A_4 = denseMatrixMult(A_2, A_2);
+    *++powIter = A_4;
+    if(*m == 5)
+        return finalMtx;
+    *(powIter + 2) = denseMatrixMult(A_2, A_4);
+    if(*m == 7 || *m == 13)
+        return finalMtx;
+    *(powIter + 4) = denseMatrixMult(A_4, A_4);
 
-    return resultingMatrix;
+    return finalMtx;
 
 }
 

@@ -1,4 +1,4 @@
-mpi = mpiicpx
+mpi = mpiicpc
 C++ = g++
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native
 CFLAGSEigen= -I ../eigen
