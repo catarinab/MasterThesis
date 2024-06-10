@@ -80,6 +80,10 @@ void dense_matrix::getCol(int col, double **ptr) {
     *ptr = this->values + col * this->rows;
 }
 
+void dense_matrix::getCol(int col, double ** ptr, int startingRow) {
+    *ptr = this->values + startingRow + col * this->rows;
+}
+
 //get matrix norm2
 double dense_matrix::getNorm2() {
     double res = 0;

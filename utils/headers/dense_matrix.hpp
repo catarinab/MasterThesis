@@ -74,6 +74,8 @@ class dense_matrix {
     bool hasNanorInf();
 
     double *getValues();
+
+    void getCol(int col, double **ptr, int startingRow);
 };
 
 #endif
