@@ -1,6 +1,4 @@
-#include <cstring>
 #include "headers/arnoldi_iteration_shared.hpp"
-#include <omp.h>
 
 /*  Parameters
     ----------

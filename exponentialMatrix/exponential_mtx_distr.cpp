@@ -1,7 +1,6 @@
 #include <omp.h>
 #include <mpi.h>
 #include <cstring>
-#include <utility>
 
 #include "../utils/headers/help_process.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
@@ -68,7 +67,7 @@ int main (int argc, char* argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
     exec_time_arnoldi = -omp_get_wtime();
-    arnoldiIteration(A, b, krylovDegree, size, me, nprocs, &V, &H);
+    arnoldiIteration(A, b, krylovDegree, size, me, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
     //root node performs pade approximation and outputs results
     if(me == 0) {
