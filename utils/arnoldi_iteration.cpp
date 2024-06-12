@@ -23,21 +23,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     int func = 0;
     int sendEnd = ENDTAG;
 
-    int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
-                                      k_total);
-
-    if (stat != SPARSE_STATUS_SUCCESS) {
-        cerr << "Error in mkl_sparse_set_mv_hint" << endl;
-        return 1;
-    }
-
-    stat = mkl_sparse_optimize(A.getMKLSparseMatrix());
-
-    if (stat != SPARSE_STATUS_SUCCESS) {
-        cerr << "Error in mkl_sparse_optimize" << endl;
-        return 1;
-    }
-
     //helper nodes
     if(me != 0)
         return helpProcess(A, me, m, func, displs, counts);
