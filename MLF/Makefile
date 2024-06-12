@@ -122,4 +122,5 @@ clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
 	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
 
+#even if there is a file name clean, the Makefile will still execute that command instead of saying its up to date
 .PHONY: clean
