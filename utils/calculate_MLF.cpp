@@ -219,12 +219,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
-        //if f contains inf or nan, return
-        if(isinf(f.real()) || isnan(f.real()) || isinf(f.imag()) || isnan(f.imag())){
-            cerr << lambda << " " << alpha << " " << beta << " " << k << endl;
-            cerr << "f contains inf or nan" << endl;
-            break;
-        }
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
