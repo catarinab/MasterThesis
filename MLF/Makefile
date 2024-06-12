@@ -1,112 +1,125 @@
-mpi = mpiicpc
+mpi = mpiicpx
 C++ = g++
+
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
 DEBUG = -g
-TARGET=MLF-distr
+
+TARGET=mlf-distr.out
 TARGETSHARED=mlf-shared.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
-TARGETTEST=test.out
 TARGETFRACSHARED=frac.out
 TARGETTESTEigen=testEigen.out
-TARGETHESS=hess.out
+
 LINK= -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+
 GREEN=\033[0;32m
 RED=\033[0;31m
 YELLOW=\033[0;33m
 NORMAL=\033[0m
 
+OBJDIR = obj
+OBJDIR_DISTR = obj_distr
 
-all: mlf-shared
+# Source files for each build
+SRCS_SHARED = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
+              ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
+              ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
 
-mlf: mlf-shared mlf-shared-cblas
+SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
+                    ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
+                    ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
+
+SRCS_DISTR = ../utils/arnoldi_iteration.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
+             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
+
+SRCS_FRAC_SHARED = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp ../utils/io_ops.cpp \
+                   ../utils/mtx_ops_mkl.cpp ../utils/pade_exp_approx.cpp ../utils/arnoldi_iteration_shared-nu.cpp \
+                   ../utils/arnoldi_iteration_shared.cpp ../utils/fractional_Krylov.cpp frac-krylov.cpp
+
+SRCS_TEST_EIGEN = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp ../utils/io_ops.cpp \
+                  ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp ../utils/mittag_leffler_scalar.cpp \
+                  ../utils/calculate_MLF_Eigen.cpp test.cpp
+
+# Convert source files to object files in the object directory
+OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
+OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLAS)))
+OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
+OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
+OBJS_TEST_EIGEN = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_TEST_EIGEN)))
+
+all: mlf-shared mlf-distr
+
+distr: mlf-distr
+
+shared: mlf-shared mlf-shared-cblas
 
 frac-test: mlf-shared-test frac
 
-mlf-shared-cblas:
-	@echo "$(GREEN)Making Mittag-Leffler calculation krylov CBLAS version: $(TARGETSHAREDCBLAS) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared_cblas.cpp -o arnoldi_iteration_shared.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
-	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
-	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o $(TARGETSHAREDCBLAS)
-	rm *.o
+# Create OBJDIR and OBJDIR_DISTR if they don't exist
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-mlf-shared:
-	@echo "$(GREEN)Making Mittag-Leffler calculation krylov shared version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
-	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
-	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o $(TARGETSHARED)
-	rm *.o
+$(OBJDIR_DISTR):
+	mkdir -p $(OBJDIR_DISTR)
 
-mlf-shared-test:
-	@echo "$(YELLOW)Making Mittag-Leffler fractional testing version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared_cblas.cpp -o arnoldi_iteration_shared.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -I ../eigen -c ../utils/schur_blocking.cpp -o schur_blocking.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/calculate_MLF.cpp -o calculate_MLF.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
-	$(C++) $(DEBUG) $(CFLAGS) -c mlf-shared-testing.cpp -o mlf-shared.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) arnoldi_iteration_shared.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o \
-	mtx_ops_mkl.o calculate_MLF.o mittag_leffler_scalar.o mlf-shared.o -o mlf-shared-test.out
-	rm *.o
+# Pattern rules for object files
+$(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
 
-frac:
-	@echo "$(GREEN)Making fractional Arnoldi version: $(TARGETFRACSHARED) $(NORMAL)"
-	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) -c ../utils/pade_exp_approx.cpp -o pade_exp_approx.o
-	$(C++) $(CFLAGS) -c ../utils/arnoldi_iteration_shared-nu.cpp -o arnoldi_iteration_shared-nu.o
-	$(C++) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
-	$(C++) $(CFLAGS) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c ../utils/fractional_Krylov.cpp -o fractional_Krylov.o
-	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c frac-krylov.cpp -o frac-krylov.o
-	$(C++) $(CFLAGSCubature) $(CFLAGS) $(LINK) ../cubature/hcubature.o csr_matrix.o dense_vector.o io_ops.o dense_matrix.o \
-	mtx_ops_mkl.o pade_exp_approx.o arnoldi_iteration_shared.o arnoldi_iteration_shared-nu.o fractionalKrylov.o frac-krylov.o -o $(TARGETFRACSHARED)
-	rm *.o
+$(OBJDIR_DISTR)/%.o: ../utils/%.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
-testEigen:
-	@echo "$(YELLOW)Making eigen version: $(TARGETTEST) $(NORMAL)"
-	$(C++) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(CFLAGS) -c ../utils/schur_blocking.cpp -o schur_blocking.o
-	$(C++) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(CFLAGS) -c ../utils/mittag_leffler_scalar.cpp -o mittag_leffler_scalar.o
-	$(C++) $(CFLAGS) -I ../eigen -c ../utils/calculate_MLF_Eigen.cpp -o calculate_MLF_Eigen.o
-	$(C++) $(CFLAGS) -c test.cpp -o test.o
-	$(C++) $(CFLAGS) $(LINK) csr_matrix.o dense_vector.o io_ops.o dense_matrix.o schur_blocking.o mtx_ops_mkl.o \
-		mittag_leffler_scalar.o calculate_MLF_Eigen.o test.o -o $(TARGETTESTEigen)
-	rm *.o
+$(OBJDIR)/mlf_shared.o: mlf_shared.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
+
+$(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
+
+$(OBJDIR)/test.o: test.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
+
+# Targets
+
+mlf-shared: $(OBJS_SHARED)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation shared version: $(TARGETSHARED) $(NORMAL)"
+
+
+mlf-shared-cblas: $(OBJS_SHARED_CBLAS)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHAREDCBLAS)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation shared CBLAS version: $(TARGETSHAREDCBLAS) $(NORMAL)"
+
+
+mlf-distr: $(OBJS_DISTR)
+	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGET)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGET) $(NORMAL)"
+
+
+mlf-shared-test: $(OBJS_SHARED)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation frac shared test version: $(TARGETSHARED) $(NORMAL)"
+
+
+frac: $(OBJS_FRAC_SHARED)
+	$(C++) $(CFLAGSCubature) $(CFLAGS) $(LINK) $^ -o $(TARGETFRACSHARED)
+	@echo "$(GREEN)Compiled fractional Krylov shared version: $(TARGETFRACSHARED) $(NORMAL)"
+
+
+testEigen: $(OBJS_TEST_EIGEN)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETTESTEigen)
+	@echo "$(YELLOW)Compiled test eigen version: $(TARGETTESTEigen) $(NORMAL)"
 
 
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
-	rm -f *.o $(TARGET) $(TARGETSHARED) $(TARGETTEST) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
+	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
 
-
+.PHONY: clean

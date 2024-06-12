@@ -1,53 +1,74 @@
 mpi = mpiicpx
 C++ = g++
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
-DEBUG = -g
-CFLAGSEigen= -I ../eigen
-TARGET=exp
-TARGETSHARED=exp-shared
-TARGETTEST=test
-LINK=  -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
-GREEN=\033[0;32m
-RED=\033[0;31m
-YELLOW=\033[0;33m
-NORMAL=\033[0m
 
+CFLAGS = -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
+CFLAGSDISTR = -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
+DEBUG = -g
+
+TARGETDISTR = exp-distr
+TARGETSHARED = exp-shared
+TARGETTEST = test
+
+LINK = -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl
+
+GREEN = \033[0;32m
+RED = \033[0;31m
+YELLOW = \033[0;33m
+NORMAL = \033[0m
+
+OBJDIR = obj
+OBJDIR_DISTR = obj_distr
+
+# Source files
+SRCS_SHARED = ../utils/csr_matrix.cpp ../utils/dense_vector.cpp ../utils/dense_matrix.cpp \
+              ../utils/arnoldi_iteration_shared.cpp ../utils/io_ops.cpp ../utils/scaling_and_squaring.cpp \
+              ../utils/mtx_ops_mkl.cpp exponential_mtx_shared.cpp
+
+SRCS_DISTR = ../utils/csr_matrix.cpp ../utils/dense_vector.cpp ../utils/dense_matrix.cpp \
+             ../utils/arnoldi_iteration.cpp ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp \
+             ../utils/io_ops.cpp ../utils/scaling_and_squaring.cpp ../utils/mtx_ops_mkl.cpp \
+             exponential_mtx_distr.cpp
+
+# Object files
+OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
+OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
 
 all: distr shared
 
-distr:
-	@echo "$(GREEN)Making distributed memory version: $(TARGET) $(NORMAL)"
-	$(mpi) $(CFLAGSDISTR) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/arnoldi_iteration.cpp -o arnoldi_iteration.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/distr_mtx_ops.cpp -o distr_mtx_ops.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/help_process.cpp -o help_process.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/io_ops.cpp -o io_ops.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/scaling_and_squaring.cpp -o scaling_and_squaring.o
-	$(mpi) $(CFLAGSDISTR) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(mpi) $(CFLAGSDISTR) -c exponential_mtx.cpp -o exp-mtx.o
-	$(mpi) $(CFLAGSDISTR) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldi_iteration.o \
-		distr_mtx_ops.o help_process.o io_ops.o scaling_and_squaring.o mtx_ops_mkl.o -o $(TARGET)
-	rm *.o
+# Create OBJDIR and OBJDIR_DISTR if they don't exist
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
-shared:
-	@echo "$(GREEN)Making shared memory version: $(TARGETSHARED) $(NORMAL)"
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/csr_matrix.cpp -o csr_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_vector.cpp -o dense_vector.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/dense_matrix.cpp -o dense_matrix.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/arnoldi_iteration_shared.cpp -o arnoldi_iteration_shared.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/io_ops.cpp -o io_ops.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/scaling_and_squaring.cpp -o scaling_and_squaring.o
-	$(C++) $(DEBUG) $(CFLAGS) -c ../utils/mtx_ops_mkl.cpp -o mtx_ops_mkl.o
-	$(C++) $(DEBUG) $(CFLAGS) -c exponential_mtx_shared.cpp -o exp-mtx.o
-	$(C++) $(DEBUG) $(CFLAGS) $(LINK) exp-mtx.o csr_matrix.o dense_vector.o dense_matrix.o arnoldi_iteration_shared.o \
-		io_ops.o scaling_and_squaring.o mtx_ops_mkl.o -o $(TARGETSHARED)
-	rm *.o
+$(OBJDIR_DISTR):
+	mkdir -p $(OBJDIR_DISTR)
+
+# Pattern rules for object files
+$(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR_DISTR)/%.o: ../utils/%.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
+
+$(OBJDIR)/exponential_mtx_shared.o: exponential_mtx_shared.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR_DISTR)/exponential_mtx_distr.o: exponential_mtx_distr.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
+
+# Targets
+
+distr: $(OBJDIR_DISTR) $(OBJS_DISTR)
+	$(mpi) $(CFLAGSDISTR) $(LINK) $(OBJS_DISTR) -o $(TARGETDISTR)
+	@echo "$(GREEN)Compiled exponential computation distributed memory version: $(TARGETDISTR) $(NORMAL)"
+
+
+shared: $(OBJDIR) $(OBJS_SHARED)
+	$(C++) $(CFLAGS) $(LINK) $(OBJS_SHARED) -o $(TARGETSHARED)
+	@echo "$(GREEN)Compiled exponential computation shared memory version: $(TARGETSHARED) $(NORMAL)"
+
 
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
-	rm -f *.o $(TARGET) $(TARGETSHARED) $(TARGETTEST)
+	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(TARGETDISTR) $(TARGETSHARED) $(TARGETTEST)
 
-
+.PHONY: clean
