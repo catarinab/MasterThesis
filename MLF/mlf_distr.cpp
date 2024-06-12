@@ -76,7 +76,6 @@ int main (int argc, char* argv[]) {
     exec_time_arnoldi += omp_get_wtime();
 
     if(me == 0){
-        H.printMatrix();
         exec_time_schur = -omp_get_wtime();
         dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
         exec_time_schur += omp_get_wtime();

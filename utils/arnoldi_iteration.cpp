@@ -1,4 +1,5 @@
 #include <mpi.h>
+#include <omp.h>
 
 #include "headers/arnoldi_iteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
@@ -35,14 +36,29 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     dense_vector w(m);
     double * vCol;
 
+    double temp_exec_time;
+
     for(k = 1; k < k_total + 1; k++) {
+
+        cout << "iteration k " << endl;
         V->getCol(k-1, &b);
+        temp_exec_time = -omp_get_wtime();
         distrMatrixVec(A, b, w, m);
+        temp_exec_time += omp_get_wtime();
+
+        cout << "distr matrix vec: " << temp_exec_time << endl;
 
         for(int j = 0; j < k; j++) {
             V->getCol(j, &b);
+            temp_exec_time = -omp_get_wtime();
             double dotProd = distrDotProduct(w, b, m, me);
+            temp_exec_time += omp_get_wtime();
+            cout << "distr dot product: " << temp_exec_time << endl;
+
+            temp_exec_time = -omp_get_wtime();
             distrSumOp(w, b, -dotProd, m, me);
+            temp_exec_time += omp_get_wtime();
+            cout << "distr axpy: " << temp_exec_time << endl;
             H->setValue(j, k-1, dotProd);
         }
 
@@ -53,10 +69,13 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         if(wNorm != 0) {
             H->setValue(k, k - 1, wNorm);
             V->getCol(k, &vCol);
+            temp_exec_time = -omp_get_wtime();
             #pragma omp parallel for
             for(int i = 0; i < m; i++){
                 vCol[i] = w.values[i] / wNorm;
             }
+            temp_exec_time += omp_get_wtime();
+            cout << "vCol change: " << temp_exec_time << endl;
         }
     }
     MPI_Bcast(&sendEnd, 1, MPI_INT, 0, MPI_COMM_WORLD);
