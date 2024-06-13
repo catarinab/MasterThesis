@@ -25,7 +25,7 @@ SRCS_SHARED = ../utils/csr_matrix.cpp ../utils/dense_vector.cpp ../utils/dense_m
               ../utils/mtx_ops_mkl.cpp exponential_mtx_shared.cpp
 
 SRCS_DISTR = ../utils/csr_matrix.cpp ../utils/dense_vector.cpp ../utils/dense_matrix.cpp \
-             ../utils/arnoldi_iteration.cpp ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp \
+             ../utils/arnoldi_iteration-new.cpp ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp \
              ../utils/io_ops.cpp ../utils/scaling_and_squaring.cpp ../utils/mtx_ops_mkl.cpp \
              exponential_mtx_distr.cpp
 
@@ -43,6 +43,8 @@ $(OBJDIR_DISTR):
 	mkdir -p $(OBJDIR_DISTR)
 
 # Pattern rules for object files
+# | $(OBJDIR) diz apenas que esta pasta tem de existir mas mudancas na pasta nao dao retrigger a um novo build
+
 $(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) -c $< -o $@
 

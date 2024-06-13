@@ -27,20 +27,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     if(me != 0)
         return helpProcess(A, me, m, func, displs, counts);
 
-    int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
-                                      k_total);
-
-    if (stat != SPARSE_STATUS_SUCCESS) {
-        cerr << "Error in mkl_sparse_set_mv_hint" << endl;
-        return 1;
-    }
-
-    stat = mkl_sparse_optimize(A.getMKLSparseMatrix());
-
-    if (stat != SPARSE_STATUS_SUCCESS) {
-        cerr << "Error in mkl_sparse_optimize" << endl;
-        return 1;
-    }
 
     V->setCol(0, initVec);
 
@@ -51,30 +37,17 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     dense_vector w(m);
     double * vCol;
 
-    double temp_exec_time;
-
     for(k = 1; k < k_total + 1; k++) {
 
-        cout << "iteration: " << k << endl;
-        V->getCol(k-1, vCol);
-        temp_exec_time = -omp_get_wtime();
-        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol, 0.0, w.values.data());
-        temp_exec_time += omp_get_wtime();
+        V->getCol(k-1, &b);
 
-        cout << "distr matrix vec: " << temp_exec_time << endl;
+        distrMatrixVec(A, b, w, m);
 
         for(int j = 0; j < k; j++) {
             V->getCol(j, &b);
-            temp_exec_time = -omp_get_wtime();
             double dotProd = distrDotProduct(w, b, m, me);
-            temp_exec_time += omp_get_wtime();
-            cout << "distr dot product: " << temp_exec_time << endl;
 
-            temp_exec_time = -omp_get_wtime();
             distrSumOp(w, b, -dotProd, m, me);
-            temp_exec_time += omp_get_wtime();
-            cout << "distr axpy: " << temp_exec_time << endl;
             H->setValue(j, k-1, dotProd);
         }
 
@@ -85,13 +58,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         if(wNorm != 0) {
             H->setValue(k, k - 1, wNorm);
             V->getCol(k, &vCol);
-            temp_exec_time = -omp_get_wtime();
             #pragma omp parallel for
             for(int i = 0; i < m; i++){
                 vCol[i] = w.values[i] / wNorm;
             }
-            temp_exec_time += omp_get_wtime();
-            cout << "vCol change: " << temp_exec_time << endl;
         }
     }
     MPI_Bcast(&sendEnd, 1, MPI_INT, 0, MPI_COMM_WORLD);
