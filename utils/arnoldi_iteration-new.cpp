@@ -19,45 +19,38 @@
 
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
-
+    double dotProd = 0;
     V->setCol(0, initVec);
 
-    int k;
-
     //auxiliary
-    dense_vector vectorVCol(m);
-    dense_vector tempW(counts[me]);
+    dense_vector privW(counts[me]);
     dense_vector w(m);
     double * vCol;
 
-    double dotProd = 0;
+    for(int k = 1; k < k_total + 1; k++) {
 
-    for(k = 1; k < k_total + 1; k++) {
-
-        V->getCol(k-1, &vectorVCol);
-
-        //cada um tem a sua parte de w
+        V->getCol(k-1, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vectorVCol.values.data(), 0.0, tempW.values.data());
+                        vCol, 0.0, privW.values.data());
 
         for(int j = 0; j < k; j++) {
             V->getCol(j, &vCol, displs[me]);
 
-            double temp = cblas_ddot(counts[me], tempW.values.data(), 1, vCol, 1);
+            double temp = cblas_ddot(counts[me], privW.values.data(), 1, vCol, 1);
             MPI_Allreduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-            cblas_daxpy(counts[me], -dotProd, vCol, 1, tempW.values.data(), 1);
+            cblas_daxpy(counts[me], -dotProd, vCol, 1, privW.values.data(), 1);
 
             H->setValue(j, k-1, dotProd);
         }
 
-        MPI_Allgatherv(&tempW.values[0], helpSize, MPI_DOUBLE, &w.values[0], counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Allgatherv(&privW.values[0], helpSize, MPI_DOUBLE, &w.values[0], counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 
-        if(k == k_total) return k;
+        if(k == k_total) break;
 
         double wNorm = w.getNorm2();
 
-        if(wNorm == 0)
+        if(wNorm < 1e-52)
             return k;
 
         H->setValue(k, k - 1, wNorm);
@@ -65,8 +58,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         #pragma omp parallel for
         for(int i = 0; i < m; i++){
             vCol[i] = w.values[i] / wNorm;
-
         }
     }
-    return k;
+
+    return k_total;
 }
