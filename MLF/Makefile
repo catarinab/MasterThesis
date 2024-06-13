@@ -33,7 +33,7 @@ SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_mat
                     ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
                     ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
 
-SRCS_DISTR = ../utils/arnoldi_iteration.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+SRCS_DISTR = ../utils/arnoldi_iteration-new.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
 
