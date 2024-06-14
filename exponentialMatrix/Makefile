@@ -5,8 +5,8 @@ CFLAGS = -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../util
 CFLAGSDISTR = -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -I../utils/headers -O3
 DEBUG = -g
 
-TARGETDISTR = exp-distr
-TARGETSHARED = exp-shared
+TARGETDISTR = exp-distr.out
+TARGETSHARED = exp-shared.out
 TARGETTEST = test
 
 LINK = -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -lm -ldl

@@ -23,6 +23,7 @@ NORMAL=\033[0m
 
 OBJDIR = obj
 OBJDIR_DISTR = obj_distr
+OBJDIR_FRAC = obj_frac
 
 # Source files for each build
 SRCS_SHARED = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
@@ -37,19 +38,19 @@ SRCS_DISTR = ../utils/arnoldi_iteration-new.cpp ../utils/csr_matrix.cpp ../utils
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
 
-SRCS_FRAC_SHARED = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp ../utils/io_ops.cpp \
-                   ../utils/mtx_ops_mkl.cpp ../utils/pade_exp_approx.cpp ../utils/arnoldi_iteration_shared-nu.cpp \
-                   ../utils/arnoldi_iteration_shared.cpp ../utils/fractional_Krylov.cpp frac-krylov.cpp
+SRCS_FRAC_SHARED = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
+                   ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
+                   ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp frac-krylov.cpp
 
 SRCS_TEST_EIGEN = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp ../utils/io_ops.cpp \
                   ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp ../utils/mittag_leffler_scalar.cpp \
-                  ../utils/calculate_MLF_Eigen.cpp test.cpp
+                  ../utils/calculate_MLF_Eigen.cpp mlf_shared.cpp
 
 # Convert source files to object files in the object directory
 OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
 OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLAS)))
 OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
-OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
+OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR_FRAC)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
 OBJS_TEST_EIGEN = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_TEST_EIGEN)))
 
 all: mlf-shared mlf-distr
@@ -67,6 +68,9 @@ $(OBJDIR):
 $(OBJDIR_DISTR):
 	mkdir -p $(OBJDIR_DISTR)
 
+$(OBJDIR_FRAC):
+	mkdir -p $(OBJDIR_FRAC)
+
 # Pattern rules for object files
 $(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) -c $< -o $@
@@ -74,17 +78,17 @@ $(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
 $(OBJDIR_DISTR)/%.o: ../utils/%.cpp | $(OBJDIR_DISTR)
 	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
+$(OBJDIR_FRAC)/%.o: ../utils/%.cpp | $(OBJDIR_FRAC)
+	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
+
 $(OBJDIR)/mlf_shared.o: mlf_shared.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
 	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
-$(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
+$(OBJDIR_FRAC)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR_FRAC)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
-
-$(OBJDIR)/test.o: test.cpp | $(OBJDIR)
-	$(C++) $(CFLAGS) -c $< -o $@
 
 # Targets
 
@@ -109,7 +113,7 @@ mlf-shared-test: $(OBJS_SHARED)
 
 
 frac: $(OBJS_FRAC_SHARED)
-	$(C++) $(CFLAGSCubature) $(CFLAGS) $(LINK) $^ -o $(TARGETFRACSHARED)
+	$(C++) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) $(CFLAGS) $(LINK) $^ -o $(TARGETFRACSHARED)
 	@echo "$(GREEN)Compiled fractional Krylov shared version: $(TARGETFRACSHARED) $(NORMAL)"
 
 
@@ -120,7 +124,7 @@ testEigen: $(OBJS_TEST_EIGEN)
 
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
-	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
+	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(OBJDIR_FRAC) $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
 
 #even if there is a file name clean, the Makefile will still execute that command instead of saying its up to date
 .PHONY: clean

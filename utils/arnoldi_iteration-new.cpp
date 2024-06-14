@@ -46,18 +46,11 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if(k == k_total) break;
 
-        temp = cblas_ddot(counts[me], privW, 1, privW, 1);
-        if(me == 0)
-            cout << "me: " << me <<", tempnorm: " << temp << endl;
-        MPI_Allreduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
         MPI_Allgatherv(privW, helpSize, MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
 
-        double wNorm = sqrt(dotProd);
-        if(me == 0)
-            cout << "me: " << me <<", norm: " << wNorm << endl;
+        double wNorm = cblas_dnrm2(m, w, 1.0);
 
-        if(wNorm < EPS52 || isinf(wNorm)) break;
+        if(wNorm < EPS52) break;
 
         H->setValue(k, k - 1, wNorm);
         V->getCol(k, &vCol);
