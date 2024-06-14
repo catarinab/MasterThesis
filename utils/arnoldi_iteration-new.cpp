@@ -19,6 +19,7 @@
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
     double dotProd = 0;
+    double temp = 0;
     V->setCol(0, initVec);
 
     //auxiliary
@@ -35,7 +36,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         for(int j = 0; j < k; j++) {
             V->getCol(j, &vCol, displs[me]);
 
-            double temp = cblas_ddot(counts[me], privW, 1, vCol, 1);
+            temp = cblas_ddot(counts[me], privW, 1, vCol, 1);
             MPI_Allreduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
             cblas_daxpy(counts[me], -dotProd, vCol, 1, privW, 1);
@@ -43,16 +44,20 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             H->setValue(j, k-1, dotProd);
         }
 
-        MPI_Allgatherv(privW, helpSize, MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
-
         if(k == k_total) break;
 
-        double wNorm = cblas_dnrm2(m, w, 1);
+        temp = cblas_ddot(counts[me], privW, 1, privW, 1);
+        MPI_Allreduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        if(wNorm < 1e-52) break;
+        MPI_Allgatherv(privW, helpSize, MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+
+        double wNorm = sqrt(dotProd);
+
+        if(wNorm < EPS52) break;
 
         H->setValue(k, k - 1, wNorm);
         V->getCol(k, &vCol);
+        //fazer isto em cada nó
         #pragma omp parallel for
         for(int i = 0; i < m; i++){
             vCol[i] = w[i] / wNorm;
