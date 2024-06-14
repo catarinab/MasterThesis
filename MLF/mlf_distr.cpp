@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    printf("Me: %d, omp max threads: %d, mkl max threads: %d\n", me, omp_get_max_threads(), mkl_get_max_threads());
+    fprintf(stderr, "Me: %d, omp max threads: %d, mkl max threads: %d\n", me, omp_get_max_threads(), mkl_get_max_threads());
 
     //initializations of needed matrix and vectors
     int size = (int) readHeader(mtxPath).first;
