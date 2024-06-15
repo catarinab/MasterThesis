@@ -527,13 +527,9 @@ complex<double> evaluateSingle(complex<double> tVal, double alpha, double beta, 
 
     if(abs(tVal) <= bound){
         result = series_expansion(tVal, alpha, beta, &accept, k);
-        if(k == 142)
-            cout << "st: " << result << endl;
     }
 
     if(!accept){
-        if(k >= 142)
-            cout << "lti" << endl;
         result = sf_lti(tVal, alpha, beta, k);
     }
 
