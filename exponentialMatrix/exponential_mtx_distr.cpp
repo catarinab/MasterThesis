@@ -6,7 +6,7 @@
 #include "../utils/headers/distr_mtx_ops.hpp"
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/scaling_and_squaring.hpp"
-#include "../utils/headers/arnoldi_iteration.hpp"
+#include "../utils/headers/arnoldi_iteration-v1.hpp"
 #include "../utils/headers/io_ops.hpp"
 
 using namespace std;
