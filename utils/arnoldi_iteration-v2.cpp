@@ -26,6 +26,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     auto * privW = (double *) malloc(counts[me] * sizeof(double));
     auto * w = (double *) malloc(m * sizeof(double));
     double * vCol;
+    double wNorm;
+    MPI_Request requests[2];
 
     for(int k = 1; k < k_total + 1; k++) {
 
@@ -46,9 +48,15 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if(k == k_total) break;
 
-        MPI_Allgatherv(privW, helpSize, MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+        MPI_Iallgatherv(privW, counts[me], MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
 
-        double wNorm = cblas_dnrm2(m, w, 1.0);
+        temp = cblas_ddot(counts[me], privW, 1, privW, 1);
+
+        MPI_Iallreduce(&temp, &wNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requests[1]);
+
+        MPI_Waitall(2, requests, MPI_STATUSES_IGNORE);
+
+        wNorm = sqrt(wNorm);
 
         if(wNorm < EPS52) break;
 
@@ -57,7 +65,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         //fazer isto em cada nó?
         #pragma omp parallel for
         for(int i = 0; i < m; i++){
-            vzCol[i] = w[i] / wNorm;
+            vCol[i] = w[i] / wNorm;
         }
     }
 

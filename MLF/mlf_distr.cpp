@@ -5,7 +5,7 @@
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/calculate_MLF.hpp"
-#include "../utils/headers/arnoldi_iteration-v1.hpp"
+#include "../utils/headers/arnoldi_iteration.hpp"
 #include "../utils/headers/io_ops.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
 

@@ -1,4 +1,4 @@
-mpi = mpiicpx
+mpi = mpiicpc
 C++ = g++
 
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
@@ -8,7 +8,7 @@ CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
 DEBUG = -g
 
-TARGET=mlf-distr.out
+TARGET=mlf-distr-v3.out
 TARGETSHARED=mlf-shared.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out

@@ -1,6 +1,6 @@
 #include <mpi.h>
 
-#include "headers/arnoldi_iteration-v1.hpp"
+#include "headers/arnoldi_iteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
 
 /*  Parameters
@@ -28,14 +28,13 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     double * vCol;
     double wNorm;
     MPI_Request requests[2];
+    V->getCol(0, &vCol);
 
     for(int k = 1; k < k_total + 1; k++) {
-
-        V->getCol(k-1, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, privW);
 
-        for(int j = 0; j < k; j++) {
+        for (int j = 0; j < k; j++) {
             V->getCol(j, &vCol, displs[me]);
 
             temp = cblas_ddot(counts[me], privW, 1, vCol, 1);
@@ -43,10 +42,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
             cblas_daxpy(counts[me], -dotProd, vCol, 1, privW, 1);
 
-            H->setValue(j, k-1, dotProd);
+            H->setValue(j, k - 1, dotProd);
         }
 
-        if(k == k_total) break;
+        if (k == k_total) break;
 
         MPI_Iallgatherv(privW, counts[me], MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &requests[0]);
 
@@ -58,17 +57,17 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         wNorm = sqrt(wNorm);
 
-        if(wNorm < EPS52) break;
+        if (wNorm < EPS52) break;
 
         H->setValue(k, k - 1, wNorm);
         V->getCol(k, &vCol);
-        //fazer isto em cada nó?
+        //dividir pelos nós
         #pragma omp parallel for
-        for(int i = 0; i < m; i++){
+        for (int i = displs[me]; i < displs[me] + counts[me]; i++) {
             vCol[i] = w[i] / wNorm;
         }
+        MPI_Allgatherv(MPI_IN_PLACE, counts[me], MPI_DOUBLE, vCol, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
     }
-
     free(w);
     free(privW);
 
