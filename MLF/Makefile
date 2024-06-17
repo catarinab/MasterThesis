@@ -1,4 +1,4 @@
-mpi = mpiicpc
+mpi = mpiicpx
 C++ = g++
 
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
@@ -8,7 +8,7 @@ CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
 DEBUG = -g
 
-TARGET=mlf-distr-v3.out
+TARGET=mlf-distr-v2.out
 TARGETSHARED=mlf-shared.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out
@@ -34,7 +34,7 @@ SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_mat
                     ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
                     ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
 
-SRCS_DISTR = ../utils/arnoldi_iteration-new.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+SRCS_DISTR = ../utils/arnoldi_iteration-v2.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
 
@@ -123,6 +123,10 @@ testEigen: $(OBJS_TEST_EIGEN)
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"
 	rm -rf $(OBJDIR) $(OBJDIR_DISTR) $(OBJDIR_FRAC) $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
+
+clean-target:
+	@echo "$(RED)Warning: deleting executables!$(NORMAL)"
+	rm -rf $(TARGET) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
 
 #even if there is a file name clean, the Makefile will still execute that command instead of saying its up to date
 .PHONY: clean

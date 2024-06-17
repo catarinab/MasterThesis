@@ -57,7 +57,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         //fazer isto em cada nó?
         #pragma omp parallel for
         for(int i = 0; i < m; i++){
-            vzCol[i] = w[i] / wNorm;
+            vCol[i] = w[i] / wNorm;
         }
     }
 

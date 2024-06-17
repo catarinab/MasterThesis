@@ -76,6 +76,10 @@ class dense_matrix {
     double *getValues();
 
     void getCol(int col, double **ptr, int startingRow);
+
+    void setCol(int col, double *ptr);
+
+    void setCol(int col, double *ptr, int elements);
 };
 
 #endif
