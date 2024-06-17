@@ -16,91 +16,96 @@
     H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
 */
 
+/*
+ * Paper: HIDING GLOBAL COMMUNICATION LATENCY IN THE GMRES ALGORITHM ON MASSIVELY PARALLEL MACHINES
+ * Section 3, Algorithm 2
+ * */
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
-    double temp = 0;
-    V->setCol(0, initVec);
-
     //auxiliary
-    auto * privW = (double *) malloc(counts[me] * sizeof(double));
-    auto * w = (double *) malloc(m * sizeof(double));
+    auto * privZ = (double *) malloc(counts[me] * sizeof(double));
+    auto * z = (double *) malloc(m * sizeof(double));
     double * vCol;
-    double * recvVCol;
+    auto vValVec = new double[m]();
     auto dotProds = new double[k_total]();
     double wDot = 0;
     MPI_Request request;
 
+    V->setCol(0, initVec);
     V->getCol(0, &vCol);
 
     for(int k = 1; k < k_total + 1; k++) {
+
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol, 0.0, privW);
+                        vCol, 0.0, privZ);
 
         for (int j = 0; j < k; j++) {
             V->getCol(j, &vCol, displs[me]);
-
-            dotProds[j] = cblas_ddot(counts[me], privW, 1, vCol, 1);
+            dotProds[j] = cblas_ddot(counts[me], vCol, 1, privZ, 1);
         }
 
         if (k == k_total) break;
 
-        wDot = cblas_ddot(counts[me], privW, 1, privW, 1);
-
-        MPI_Allreduce(MPI_IN_PLACE, dotProds, k, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        wDot = cblas_ddot(counts[me], privZ, 1, privZ, 1);
         MPI_Allreduce(MPI_IN_PLACE, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        fprintf(stderr, "me: %d, wDot: %f\n", me, wDot);
+        MPI_Allreduce(MPI_IN_PLACE, dotProds, k, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-        if(wDot < EPS52) break;
+        MPI_Iallgatherv(privZ, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &request);
 
         double hVal = 0;
+        for (int i = 0; i < k; i++) {
+            hVal += pow(dotProds[i], 2);
+        }
+
+        //Check for breakdown and restart or reorthogonalize if necessary
+        if(wDot - hVal <= 0) {
+            MPI_Wait(&request, MPI_STATUS_IGNORE);
+            wDot = sqrt(wDot);
+            #pragma omp parallel for
+            for(int i = 0; i < m; i++) {
+                z[i] /= wDot;
+                V->setValue(i, 0, z[i]);
+            }
+            V->getCol(0, &vCol);
+            k = 0;
+            continue;
+        }
+        hVal = sqrt(wDot - hVal);
+        H->setValue(k, k - 1, hVal);
+
+        memset(vValVec, 0, k_total * sizeof(double));
         double vVal = 0;
-        #pragma omp parallel
-        {
-            #pragma omp for reduction(+:hVal)
-            for (int i = 0; i < k; i++) {
-                hVal += pow(dotProds[i], 2);
+        #pragma omp parallel for reduction(+:vValVec[:m]) private(vCol)
+        for (int i = 0; i < k; i++) {
+            V->getCol(i, &vCol);
+            for(int j = 0; j < m; j++) {
+                vValVec[j] += vCol[j] * dotProds[i];
             }
-            hVal = wDot - hVal;
-            H->setValue(k, k - 1, sqrt(hVal));
+        }
 
-            for (int i = 0; i < k; i++) {
-                V->getCol(i, &vCol);
-                #pragma omp for reduction(+:vVal)
-                for(int j = displs[me]; j < displs[me] + counts[me]; j++) {
-                    vVal += (privW[j] - vCol[j] * dotProds[j]);
-                }
-                if(me == 0)
-                    fprintf(stderr, "current vVal for k: %d, i: %d: %f\n", k, i, vVal);
-            }
-
-            vVal /= hVal;
-
-            if(me == 0) {
-                fprintf(stderr, "me: %d, vVal: %f, hVal: %f\n", me, vVal, hVal);
-            }
-            #pragma omp for
-            for (int i = 0; i < counts[me]; i++) {
-                privW[i] = (privW[i] - vVal) / hVal;
-            }
+        for (int i = 0; i < k; i++) {
+            H->setValue(i, k-1, dotProds[i]);
         }
 
         V->getCol(k, &vCol);
 
-        MPI_Allgatherv(vCol, counts[me], MPI_DOUBLE, privW, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
-        fprintf(stderr, "me: %d, done AllGather\n", me);
+        cout << "vVal: " << vVal << ", hVal: " << hVal << endl;
 
-        //print vCol
-        if(me == 0) {
-            for (int i = 0; i < m; i++) {
-                fprintf(stderr, "vCol[%d]: %f, ", i, vCol[i]);
-            }
-            fprintf(stderr, "\n");
+        MPI_Wait(&request, MPI_STATUS_IGNORE);
+
+        for (int i = 0; i < m; i++) {
+            vCol[i] = (z[i] - vValVec[i]) / hVal;
         }
+
+        cout << "vCol in iteration " << k << ": ";
 
 
     }
-    free(w);
-    free(privW);
+    free(z);
+    free(privZ);
+
+    delete[] vValVec;
+    delete[] dotProds;
 
     return k_total;
 }

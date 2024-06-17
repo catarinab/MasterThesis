@@ -59,6 +59,14 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         for(int i = 0; i < m; i++){
             vCol[i] = w[i] / wNorm;
         }
+
+        //print vCol
+        if(me == 0) {
+            for (int i = 0; i < m; i++) {
+                cout << vCol[i] << " ";
+            }
+            cout << endl;
+        }
     }
 
     free(w);

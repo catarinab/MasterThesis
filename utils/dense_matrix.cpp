@@ -180,3 +180,9 @@ void dense_matrix::getCol(int col, double *ptr) {
         ptr[row] = this->values[row + col * this->rows];
     }
 }
+
+void dense_matrix::setCol(int col, const double *ptr) {
+    for(int row = 0; row < this->rows; row++) {
+        this->values[row + col * this->rows] = ptr[row];
+    }
+}

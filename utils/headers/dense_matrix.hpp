@@ -71,13 +71,11 @@ class dense_matrix {
     dense_matrix operator- () const;
     void getCol(int col, double ** ptr);
 
-    bool hasNanorInf();
-
     double *getValues();
 
     void getCol(int col, double **ptr, int startingRow);
 
-    void setCol(int col, double *ptr);
+    void setCol(int col, const double *ptr);
 
     void setCol(int col, double *ptr, int elements);
 };
