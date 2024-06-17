@@ -59,6 +59,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         //Check for breakdown and restart or reorthogonalize if necessary
         if(wDot - hVal <= 0) {
+            fprintf(stderr, "Should be Restarting Arnoldi iteration at k = %d\n", k);
+            return k;
             MPI_Wait(&request, MPI_STATUS_IGNORE);
             wDot = sqrt(wDot);
             #pragma omp parallel for
