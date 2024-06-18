@@ -26,6 +26,7 @@ private:
 
 public:
     inline explicit csr_matrix(long long int size) : size(size), nz(0), rowPtr(vector<long long int>(size + 1)) {}
+    inline explicit csr_matrix() : size(0), nz(0) {}
     [[nodiscard]] long long int getNZ() const;
     [[nodiscard]] long long int getSize() const;
     void insertRow(vector<SparseTriplet> row, int rowId);

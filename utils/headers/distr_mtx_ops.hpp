@@ -10,6 +10,7 @@ extern int *counts;
 extern int helpSize;
 
 void initGatherVars(int size, int nprocs);
+void initGatherVarsFullMtx(int size, int nprocs);
 
 double distrDotProduct(dense_vector& a, dense_vector& b, int size, int me);
 

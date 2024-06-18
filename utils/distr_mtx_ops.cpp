@@ -35,9 +35,23 @@ void initGatherVars(int size, int nprocs) {
     counts[nprocs - 1] += size % nprocs;
 }
 
+void initGatherVarsFullMtx(int size, int nprocs) {
+    helpSize = size/(nprocs - 1);
+    displs = (int *)malloc(nprocs*sizeof(int));
+    counts = (int *)malloc(nprocs*sizeof(int));
+
+    displs[0] = 0;
+    counts[0] = 0;
+
+    for(int i = 1; i < nprocs; i++) {
+        displs[i] = (i - 1) * helpSize;
+        counts[i] = helpSize;
+    }
+    counts[nprocs - 1] += size % nprocs;
+}
+
+
 //send necessary vectors to all processes
-
-
 void sendVectors(dense_vector& a, dense_vector& b, int func, int size) {
     MPI_Bcast(&func, 1, MPI_INT, ROOT, MPI_COMM_WORLD); //broadcast need for help in function func
 

@@ -78,6 +78,8 @@ class dense_matrix {
     void setCol(int col, const double *ptr);
 
     void setCol(int col, double *ptr, int elements);
+
+    void setCol(int col, const double *ptr, int changedRows);
 };
 
 #endif
