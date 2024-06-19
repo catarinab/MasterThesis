@@ -11,9 +11,9 @@
 using namespace std;
 
 //build sparse matrix from matrix market file
-csr_matrix buildFullMtx(const string& input_file);
+csr_matrix buildFullMatrix(const string& input_file);
 
-csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) ;
+csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, int * counts) ;
 
 void checkValues(int a, int b, const string& func);
 

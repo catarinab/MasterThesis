@@ -50,8 +50,8 @@ pair<double, double> readHeader(ifstream& file) {
     return make_pair(values[0], values[2]);
 }
 
-vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long long int * rows, long long int * cols,
-                                                long long int * nz) {
+vector<vector<SparseTriplet>> readFileFullMtx(const string& inputFile, long long int * rows, long long int * cols,
+                                              long long int * nz) {
     ifstream file(inputFile);
     vector<vector<SparseTriplet>> rowValues;
     pair<double, double> header = readHeader(file);
@@ -108,8 +108,8 @@ vector<vector<SparseTriplet>> readFile_full_mtx(const string& inputFile, long lo
 }
 
 
-vector<vector<SparseTriplet>> readFile_part_mtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz,
-                                                const int * displs, const int * counts, int me) {
+vector<vector<SparseTriplet>> readFilePartialMtx(const string& inputFile, long long int * rows, long long int * cols, long long int * nz,
+                                                 const int * displs, const int * counts, int me) {
     ifstream file(inputFile);
     vector<vector<SparseTriplet>> rowValues;
     pair<double, double> header = readHeader(file);

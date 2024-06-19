@@ -12,9 +12,9 @@
 using namespace std;
 
 //build sparse matrix from matrix market file
-csr_matrix buildFullMtx(const string& input_file) {
+csr_matrix buildFullMatrix(const string& input_file) {
     long long int rows, cols, nz;
-    vector<vector<SparseTriplet>> rowValues = readFile_full_mtx(input_file, &rows, &cols, &nz);
+    vector<vector<SparseTriplet>> rowValues = readFileFullMtx(input_file, &rows, &cols, &nz);
     csr_matrix csr(rows);
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
@@ -23,9 +23,9 @@ csr_matrix buildFullMtx(const string& input_file) {
     return csr;
 }
 
-csr_matrix buildPartMatrix(const string& input_file, int me, int * displs, int * counts) {
+csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, int * counts) {
     long long int rows, cols, nz;
-    vector<vector<SparseTriplet>> rowValues = readFile_part_mtx(input_file, &rows, &cols, &nz, displs, counts, me);
+    vector<vector<SparseTriplet>> rowValues = readFilePartialMtx(input_file, &rows, &cols, &nz, displs, counts, me);
     csr_matrix csr(counts[me]);
     for (int i = 0; i < rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);

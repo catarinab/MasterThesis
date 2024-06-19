@@ -54,7 +54,7 @@ int main (int argc, char* argv[]) {
     initGatherVars(size, nprocs);
 
     //initializations of needed matrix and vectors
-    csr_matrix A = buildPartMatrix(mtxPath, me, displs, counts);
+    csr_matrix A = buildPartialMatrix(mtxPath, me, displs, counts);
 
     dense_vector b(size);
     b.getOnesVec();

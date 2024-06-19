@@ -72,7 +72,7 @@ int main (int argc, char* argv[]) {
     readJuliaVec(juliaPath);
 
     //initializations of needed matrix and vectors
-    csr_matrix A = buildFullMtx(mtxPath);
+    csr_matrix A = buildFullMatrix(mtxPath);
     int size = (int) A.getSize();
 
     dense_vector b = dense_vector(size);
