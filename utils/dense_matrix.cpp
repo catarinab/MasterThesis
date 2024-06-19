@@ -35,6 +35,10 @@ void dense_matrix::setCol(int col, dense_vector& vec){
     memcpy(this->values + col * this->rows, vec.values.data(), this->rows * sizeof(double));
 }
 
+void dense_matrix::setCol(int col, dense_vector& vec, int start, int count){
+    memcpy(this->values + col * this->rows, vec.values.data() + start, count * sizeof(double));
+}
+
 void dense_matrix::setCol(int col, double * ptr, int elements){
     memcpy(this->values + col * this->rows, ptr, elements * sizeof(double));
 }
