@@ -18,59 +18,55 @@
 
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
+
     double dotProd = 0;
-    double temp = 0;
     V->setCol(0, initVec);
 
     //auxiliary
-    auto * privW = (double *) malloc(counts[me] * sizeof(double));
-    auto * w = (double *) malloc(m * sizeof(double));
+    auto * privZ = (double *) malloc(counts[me] * sizeof(double));
+    auto * z = (double *) malloc(m * sizeof(double));
+    memcpy(z, initVec.values.data(), m * sizeof(double));
     double * vCol;
 
-    for(int k = 1; k < k_total + 1; k++) {
+    V->setCol(0, initVec, displs[me], counts[me]);
 
-        V->getCol(k-1, &vCol);
+    for(int k = 0; k < k_total; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        vCol, 0.0, privW);
-
+                        z, 0.0, privZ);
         for(int j = 0; j < k; j++) {
-            V->getCol(j, &vCol, displs[me]);
+            V->getCol(j, &vCol);
 
-            temp = cblas_ddot(counts[me], privW, 1, vCol, 1);
-            MPI_Allreduce(&temp, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            dotProd = cblas_ddot(counts[me], privZ, 1, vCol, 1);
 
-            cblas_daxpy(counts[me], -dotProd, vCol, 1, privW, 1);
+            MPI_Allreduce(MPI_IN_PLACE, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-            H->setValue(j, k-1, dotProd);
+            //w = w - dotProd * vCol
+            cblas_daxpy(counts[me], -dotProd, vCol, 1, privZ, 1);
+
+            H->setValue(j, k, dotProd);
         }
 
-        if(k == k_total) break;
+        if(k == k_total - 1) break;
 
-        MPI_Allgatherv(privW, helpSize, MPI_DOUBLE, w, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+        double wNorm = cblas_ddot(counts[me], privZ, 1, privZ, 1);
 
-        double wNorm = cblas_dnrm2(m, w, 1.0);
+        MPI_Allreduce(MPI_IN_PLACE, &wNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        wNorm = sqrt(wNorm);
 
         if(wNorm < EPS52) break;
 
-        H->setValue(k, k - 1, wNorm);
-        V->getCol(k, &vCol);
-        //fazer isto em cada nó?
-        #pragma omp parallel for
-        for(int i = 0; i < m; i++){
-            vCol[i] = w[i] / wNorm;
-        }
+        H->setValue(k + 1, k, wNorm);
 
-        //print vCol
-        if(me == 0) {
-            for (int i = 0; i < m; i++) {
-                cout << vCol[i] << " ";
-            }
-            cout << endl;
+        V->getCol(k + 1, &vCol);
+        for(int i = 0; i < counts[me]; i++){
+            vCol[i] = privZ[i] / wNorm;
+
         }
+        MPI_Allgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
     }
-
-    free(w);
-    free(privW);
+    free(z);
+    free(privZ);
 
     return k_total;
 }

@@ -12,8 +12,7 @@
 using namespace std;
 
 //Calculate the approximation of MLF(A)*b
-dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double betaVal) {
-
+dense_vector getApproximation(dense_matrix& V, const dense_matrix& mlfH, double betaVal) {
     if(betaVal != 1)
         V = V * betaVal;
 
@@ -41,9 +40,6 @@ int main (int argc, char* argv[]) {
     double alpha = 0.5;
     double beta = 0;
 
-    /*cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
-    cerr << "omp max threads: " << omp_get_max_threads() << endl;*/
-
     int krylovDegree = 3;
     string mtxPath = "A.mtx";
     processArgs(argc, argv, &krylovDegree, &mtxPath);
@@ -59,14 +55,13 @@ int main (int argc, char* argv[]) {
     initGatherVars(size, nprocs);
 
     //initializations of needed matrix and vectors
-    csr_matrix A = buildPartMatrix(mtxPath, me, displs, counts);
+    csr_matrix A = buildPartialMatrix(mtxPath, me, displs, counts);
 
     dense_vector b = dense_vector(size);
     b.insertValue(0, 1);
-    //b.insertValue(floor(size/2), 1);
-    double betaVal = b.getNorm2();
+    double betaNormB = b.getNorm2();
 
-    dense_matrix V(size, krylovDegree);
+    dense_matrix V(counts[me], krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -77,20 +72,27 @@ int main (int argc, char* argv[]) {
 
     if(me == 0){
         exec_time_schur = -omp_get_wtime();
-        dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
+        H = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
         exec_time_schur += omp_get_wtime();
-
-        dense_vector res = getApproximation(V, mlfH, betaVal);
-
-        exec_time += omp_get_wtime();
-
-        cout << exec_time_arnoldi << "," << exec_time_schur << "," << exec_time << endl;
-        cerr << res.getNorm2() << endl;
     }
 
-    mkl_sparse_destroy(A.getMKLSparseMatrix());
+    //broadcast mlf(H)
+    MPI_Bcast(H.getValues(), krylovDegree * krylovDegree, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+
+    dense_vector res = getApproximation(V, H, betaNormB);
+
+    MPI_Gatherv(&res.values[0], counts[me], MPI_DOUBLE, &b.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+
+    exec_time += omp_get_wtime();
+
+    if(me == 0) {
+        cout << exec_time_arnoldi << "," << exec_time_schur << "," << exec_time << endl;
+        cerr << b.getNorm2() << endl;
+    }
+
     free(displs);
     free(counts);
+    mkl_sparse_destroy(A.getMKLSparseMatrix());
 
     MPI_Finalize();
 
