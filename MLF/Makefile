@@ -8,10 +8,9 @@ CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
 DEBUG = -g
 
-TARGET=mlf-distr-v1.out
-TARGETFULL=mlf-distr-v1-full.out
-TARGETV4=mlf-distr-v4.out
-TARGETV0=mlf-distr-v0.out
+TARGET=mlf-distr.out
+TARGETV2=mlf-distr-v2.out
+TARGETV3=mlf-distr-v3.out
 TARGETSHARED=mlf-shared.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out
@@ -36,21 +35,17 @@ SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_mat
                     ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
                     ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
 
+SRCS_DISTRV2 = ../utils/arnoldi_iteration-v2-paper.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
+             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
+
+SRCS_DISTRV3 = ../utils/arnoldi_iteration-v3-explicit-paper.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
+             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
+
 SRCS_DISTR = ../utils/arnoldi_iteration-v1.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
-
-SRCS_DISTRV4 = ../utils/arnoldi_iteration-v4-paper.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
-             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
-             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
-
-SRCS_DISTRV0 = ../utils/arnoldi_iteration-v0.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
-             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
-             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
-
-SRCS_DISTR_FULL = ../utils/arnoldi_iteration-v1-full.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
-             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
-             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr-fullmtx.cpp
 
 SRCS_FRAC_SHARED = ../utils/arnoldi_iteration_shared_nu.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
                    ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
@@ -65,15 +60,14 @@ SRCS_TEST_EIGEN = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/den
 OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
 OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLAS)))
 OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
-OBJS_DISTR_V0 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV0)))
-OBJS_DISTR_V4 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV4)))
-OBJS_DISTR_FULL = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR_FULL)))
+OBJS_DISTR_V2 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV2)))
+OBJS_DISTR_V3 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV3)))
 OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
 OBJS_TEST_EIGEN = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_TEST_EIGEN)))
 
 all: mlf-shared mlf-distr
 
-distr: mlf-distr mlf-distr-v4
+distr: mlf-distr mlf-distr-v2 mlf-distr-v3
 
 shared: mlf-shared mlf-shared-cblas
 
@@ -102,9 +96,6 @@ $(OBJDIR)/mlf_shared.o: mlf_shared.cpp | $(OBJDIR)
 $(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
 	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
-$(OBJDIR_DISTR)/mlf_distr-fullmtx.o: mlf_distr-fullmtx.cpp | $(OBJDIR_DISTR)
-	$(mpi) $(CFLAGSDISTR) -c $< -o $@
-
 $(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
 
@@ -124,17 +115,13 @@ mlf-distr: $(OBJS_DISTR)
 	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGET)
 	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGET) $(NORMAL)"
 
-mlf-distr-v4: $(OBJS_DISTR_V4)
-	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV4)
-	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV4) $(NORMAL)"
+mlf-distr-v2: $(OBJS_DISTR_V2)
+	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV2)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV2) $(NORMAL)"
 
-mlf-distr-v0: $(OBJS_DISTR_V0)
-	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV0)
-	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV0) $(NORMAL)"
-
-mlf-distr-full: $(OBJS_DISTR_FULL)
-	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETFULL)
-	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETFULL) $(NORMAL)"
+mlf-distr-v3: $(OBJS_DISTR_V3)
+	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV3)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV3) $(NORMAL)"
 
 mlf-shared-test: $(OBJS_SHARED)
 	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
