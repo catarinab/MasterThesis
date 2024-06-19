@@ -76,14 +76,14 @@ vector<vector<SparseTriplet>> readFileFullMtx(const string& inputFile, long long
 
             // Find the end of the last complete line
             char* last = file ? std::strrchr(ptr, '\n') : &input.back();
-            int backtrace = last - &input.back();
+            int backtrace = int (last - &input.back());
 
             // If the last line is truncated, rewind file pointer
             // to the beginning of this line, so it can be read again
             // in the next block.
             if (backtrace < 0)
             {
-                file.seekg(backtrace, file.cur);
+                file.seekg(backtrace, std::ifstream::cur);
                 std::fill(last + 1, &input.back(), '\0');
             }
 
@@ -134,14 +134,14 @@ vector<vector<SparseTriplet>> readFilePartialMtx(const string& inputFile, long l
 
             // Find the end of the last complete line
             char* last = file ? std::strrchr(ptr, '\n') : &input.back();
-            int backtrace = last - &input.back();
+            int backtrace = int (last - &input.back());
 
             // If the last line is truncated, rewind file pointer
             // to the beginning of this line, so it can be read again
             // in the next block.
             if (backtrace < 0)
             {
-                file.seekg(backtrace, file.cur);
+                file.seekg(backtrace, std::ifstream::cur);
                 std::fill(last + 1, &input.back(), '\0');
             }
 

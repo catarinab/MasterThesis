@@ -37,6 +37,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         cerr << "Error in mkl_sparse_optimize" << endl;
         return 1;
     }
+
     //auxiliary
     auto * privZ = (double *) malloc(counts[me] * sizeof(double));
     auto * z = (double *) malloc(m * sizeof(double));
@@ -49,7 +50,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     V->setCol(0, initVec, displs[me], counts[me]);
 
-    for(int k = 0; k < k_total ; k++) {
+    for(int k = 1; k < k_total + 1; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
 
@@ -58,7 +59,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             dotProds[j] = cblas_ddot(counts[me], privZ, 1, vCol, 1);
         }
 
-        if (k == k_total - 1) break;
+        if (k == k_total) break;
 
         wDot = cblas_ddot(counts[me], privZ, 1, privZ, 1);
         MPI_Allreduce(MPI_IN_PLACE, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -87,7 +88,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 vValVec[j] += vCol[j] * dotProds[i];
             }
         }
-        V->getCol(k + 1, &vCol);
+        V->getCol(k, &vCol);
         for (int i = 0; i < counts[me]; i++) {
             vCol[i] = (privZ[i] - vValVec[i]) / hVal;
         }
@@ -96,9 +97,9 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if(me == 0) {
             for (int i = 0; i < k; i++) {
-                H->setValue(i, k, dotProds[i]);
+                H->setValue(i, k - 1, dotProds[i]);
             }
-            H->setValue(k + 1, k, hVal);
+            H->setValue(k, k - 1, hVal);
         }
 
         MPI_Wait(&r1, MPI_STATUS_IGNORE);
