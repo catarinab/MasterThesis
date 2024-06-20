@@ -85,7 +85,7 @@ $(OBJDIR)/%.o: ../utils/%.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR_DISTR)/%.o: ../utils/%.cpp | $(OBJDIR_DISTR)
-	$(mpi) $(CFLAGSDISTR) $(DEBUG) -c $< -o $@
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
 $(OBJDIR)/fractional_Krylov.o: ../utils/fractional_Krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
