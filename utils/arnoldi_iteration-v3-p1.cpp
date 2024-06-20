@@ -56,6 +56,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
             V->getCol(i - 1, &vCol);
             Z.getCol(i, &zCol);
+
+            #pragma omp parallel for
             for(int idx = 0; idx < counts[me]; idx++) {
                 vCol[idx] = vCol[idx] / prevH;
                 zCol[idx] = z_i[idx + displs[me]] / prevH;
@@ -81,6 +83,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         }
 
         Z.getCol(i + 1, &zCol);
+        #pragma omp parallel for
         for (int idx = 0; idx < counts[me]; idx++) {
             zCol[idx] = w[idx] - updateVec[idx];
         }
@@ -101,6 +104,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             V->getCol(i, &vCol);
             Z.getCol(i, &zCol);
 
+            #pragma omp parallel for
             for (int idx = 0; idx < counts[me]; idx++) {
                 vCol[idx] = zCol[idx] - updateVec[idx];
             }
