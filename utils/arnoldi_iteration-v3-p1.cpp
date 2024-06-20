@@ -50,9 +50,8 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         }
 
         if(i > 1) {
-            MPI_Wait(&requestHDot, MPI_STATUS_IGNORE);
-            prevH = sqrt(vDot);
-            if(prevH < EPS52) break;
+            prevH = sqrt(dotProds[i]);
+            if(abs(prevH) < EPS52) break;
             H->setValue(i - 1, i - 2, prevH);
 
             V->getCol(i - 1, &vCol);
@@ -88,7 +87,6 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         MPI_Iallgatherv(zCol, counts[me], MPI_DOUBLE, z_i, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &requestZ);
 
-
         if (i > 0) {
             memset(updateVec, 0, counts[me] * sizeof(double));
             #pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
@@ -107,9 +105,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 vCol[idx] = zCol[idx] - updateVec[idx];
             }
 
-            vDot = cblas_ddot(counts[me], vCol, 1, vCol, 1);
-
-            MPI_Iallreduce(MPI_IN_PLACE, &vDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requestHDot);
+            dotProds[i + 1] = cblas_ddot(counts[me], vCol, 1, vCol, 1);
         }
 
         Z.getCol(i + 1, &zCol);
@@ -117,7 +113,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             V->getCol(j, &prevVCol);
             dotProds[j] = cblas_ddot(counts[me], zCol, 1, prevVCol, 1);
         }
-        MPI_Iallreduce(MPI_IN_PLACE, dotProds, i + 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requestH);
+        MPI_Iallreduce(MPI_IN_PLACE, dotProds, i + 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requestH);
         MPI_Wait(&requestZ, MPI_STATUS_IGNORE);
     }
     free(z_i);
