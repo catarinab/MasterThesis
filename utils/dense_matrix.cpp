@@ -168,7 +168,8 @@ dense_matrix dense_matrix::operator- () const {
 }
 
 
-void dense_matrix::printMatrix() {
+void dense_matrix::printMatrix(const string& name) {
+    cout <<"Matrix " << name << " : " << this->rows << " x :" << this->cols << endl;
     for(int row = 0; row < this->rows; row++) {
         for(int col = 0; col < this->cols; col++) {
             cout << this->values[row + col * this->rows] << " ";

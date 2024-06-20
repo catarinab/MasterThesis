@@ -64,7 +64,7 @@ class dense_matrix {
 
     void printVector(const string& filename);
     void readVector(const string& currFolder);
-    void printMatrix();
+    void printMatrix(const string &name);
 
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
