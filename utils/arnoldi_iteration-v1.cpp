@@ -30,10 +30,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     V->setCol(0, initVec, displs[me], counts[me]);
 
-    for(int k = 1; k < k_total + 1; k++) {
+    for(int k = 0; k < k_total; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
-        for(int j = 0; j < k; j++) {
+        for(int j = 0; j <= k; j++) {
             V->getCol(j, &vCol);
 
             dotProd = cblas_ddot(counts[me], privZ, 1, vCol, 1);
@@ -43,10 +43,10 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             //w = w - dotProd * vCol
             cblas_daxpy(counts[me], -dotProd, vCol, 1, privZ, 1);
 
-            H->setValue(j, k - 1, dotProd);
+            H->setValue(j, k, dotProd);
         }
 
-        if(k == k_total) break;
+        if(k == k_total - 1) break;
 
         double wNorm = cblas_ddot(counts[me], privZ, 1, privZ, 1);
 
@@ -56,9 +56,9 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if(wNorm < EPS52) break;
 
-        H->setValue(k, k - 1, wNorm);
+        H->setValue(k + 1, k, wNorm);
 
-        V->getCol(k, &vCol);
+        V->getCol(k + 1, &vCol);
         for(int i = 0; i < counts[me]; i++){
             vCol[i] = privZ[i] / wNorm;
 

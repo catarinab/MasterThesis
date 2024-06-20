@@ -17,7 +17,7 @@
 */
 
 /*
- * Paper: HIDING GLOBAL COMMUNICATION LATENCY IN THE GMRES ALGORITHM ON MASSIVELY PARALLEL MACHINES
+ * Paper: Hiding Global Communication Latency in the GMRES Algorithm on Massively Parallel Machines
  * Section 3, Algorithm 2
  * */
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
@@ -28,32 +28,35 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     auto * z = (double *) malloc(m * sizeof(double));
     memcpy(z, initVec.values.data(), m * sizeof(double));
     double * vCol;
-    auto vValVec = new double[m]();
+    auto vValVec = new double[counts[me]]();
     auto dotProds = new double[k_total]();
     double wDot = 0;
     MPI_Request r1;
 
     V->setCol(0, initVec, displs[me], counts[me]);
 
-    for(int k = 1; k < k_total + 1; k++) {
+    // k_new = k_old - 1
+    // k_old = k_new + 1
+
+    for(int k = 0; k < k_total; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
 
-        for (int j = 0; j < k; j++) {
+        for (int j = 0; j <= k; j++) {
             V->getCol(j, &vCol);
             dotProds[j] = cblas_ddot(counts[me], privZ, 1, vCol, 1);
         }
 
-        if (k == k_total) break;
+        if (k == k_total - 1) break;
 
-        wDot = cblas_ddot(counts[me], privZ, 1, privZ, 1);
-        MPI_Allreduce(MPI_IN_PLACE, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        double temp  = cblas_ddot(counts[me], privZ, 1, privZ, 1);
+        MPI_Allreduce(&temp, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         if(sqrt(wDot) < EPS52) break;
 
-        MPI_Allreduce(MPI_IN_PLACE, dotProds, k, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, dotProds, k + 1 , MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
         double hVal = 0;
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i <= k; i++) {
             hVal += pow(dotProds[i], 2);
         }
 
@@ -65,15 +68,15 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         hVal = sqrt(wDot - hVal);
 
-        memset(vValVec, 0, k_total * sizeof(double));
-        #pragma omp parallel for reduction(+:vValVec[:m]) private(vCol)
-        for (int i = 0; i < k; i++) {
+        memset(vValVec, 0, counts[me] * sizeof(double));
+        #pragma omp parallel for reduction(+:vValVec[:counts[me]]) private(vCol)
+        for (int i = 0; i <= k; i++) {
             V->getCol(i, &vCol);
             for(int j = 0; j < counts[me]; j++) {
                 vValVec[j] += vCol[j] * dotProds[i];
             }
         }
-        V->getCol(k, &vCol);
+        V->getCol(k + 1, &vCol);
         for (int i = 0; i < counts[me]; i++) {
             vCol[i] = (privZ[i] - vValVec[i]) / hVal;
         }
@@ -81,14 +84,22 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         MPI_Iallgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &r1);
 
         if(me == 0) {
-            for (int i = 0; i < k; i++) {
-                H->setValue(i, k - 1, dotProds[i]);
+            for (int i = 0; i <= k; i++) {
+                H->setValue(i, k, dotProds[i]);
             }
-            H->setValue(k, k - 1, hVal);
+            H->setValue(k + 1, k, hVal);
         }
 
         MPI_Wait(&r1, MPI_STATUS_IGNORE);
 
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, dotProds, k_total - 1 , MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    if(me == 0) {
+        for (int i = 0; i < k_total; i++) {
+            H->setValue(i, k_total - 1, dotProds[i]);
+        }
     }
     free(z);
     free(privZ);
