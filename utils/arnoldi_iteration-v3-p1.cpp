@@ -29,7 +29,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     dense_matrix Z(counts[me], k_total + 1);
     auto * z_i = (double *) malloc(m * sizeof(double));
     memcpy(z_i, initVec.values.data(), m * sizeof(double));
-    double vDot = 0, prevH;
+    double prevH;
     double * vCol, *prevVCol, * zCol;
     auto updateVec = new double[counts[me]]();
     auto dotProds = new double[k_total + 2]();
@@ -57,58 +57,70 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             V->getCol(i - 1, &vCol);
             Z.getCol(i, &zCol);
 
-            //#pragma omp parallel for
-            for(int idx = 0; idx < counts[me]; idx++) {
-                vCol[idx] = vCol[idx] / prevH;
-                zCol[idx] = z_i[idx + displs[me]] / prevH;
-                w[idx] = w[idx] / prevH;
-            }
+            #pragma omp parallel
+            {
+                #pragma omp for nowait
+                for(int idx = 0; idx < counts[me]; idx++) {
+                    vCol[idx] = vCol[idx] / prevH;
+                    zCol[idx] = z_i[idx + displs[me]] / prevH;
+                    w[idx] = w[idx] / prevH;
+                }
 
-            for (int j = 0; j <= i - 2; j++) {
-                H->setValue(j, i - 1, H->getValue(j, i - 1) / prevH);
+                #pragma omp for nowait
+                for (int j = 0; j <= i - 2; j++) {
+                    H->setValue(j, i - 1, H->getValue(j, i - 1) / prevH);
+                }
+                #pragma omp single
+                    H->setValue(i - 1, i - 1, H->getValue(i - 1, i - 1) / pow(prevH, 2));
             }
-            H->setValue(i - 1, i - 1, H->getValue(i - 1, i - 1) / pow(prevH, 2));
         }
 
         if(i == k_total) break;
 
         memset(updateVec, 0, counts[me] * sizeof(double));
-        //#pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
-        for (int j = 0; j <= i - 1; j++) {
-            double hVal = H->getValue(j, i - 1);
-            Z.getCol(j + 1, &zCol);
+
+        #pragma omp parallel private(vCol, zCol)
+        {
+            #pragma omp for reduction(+:updateVec[:counts[me]])
+            for (int j = 0; j <= i - 1; j++) {
+                double hVal = H->getValue(j, i - 1);
+                Z.getCol(j + 1, &zCol);
+                for (int idx = 0; idx < counts[me]; idx++) {
+                    updateVec[idx] += hVal * zCol[idx];
+                }
+            }
+            Z.getCol(i + 1, &zCol);
+            #pragma omp for
             for (int idx = 0; idx < counts[me]; idx++) {
-                updateVec[idx] += hVal * zCol[idx];
+                zCol[idx] = w[idx] - updateVec[idx];
             }
         }
 
         Z.getCol(i + 1, &zCol);
-        //#pragma omp parallel for
-        for (int idx = 0; idx < counts[me]; idx++) {
-            zCol[idx] = w[idx] - updateVec[idx];
-        }
-
         MPI_Iallgatherv(zCol, counts[me], MPI_DOUBLE, z_i, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &requestZ);
 
         if (i > 0) {
             memset(updateVec, 0, counts[me] * sizeof(double));
-            //#pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
-            for (int j = 0; j <= i - 1; j++) {
-                double hVal = H->getValue(j, i - 1);
-                V->getCol(j, &vCol);
+            #pragma omp parallel private(vCol, zCol)
+            {
+                #pragma omp for reduction(+:updateVec[:counts[me]])
+                for (int j = 0; j <= i - 1; j++) {
+                    double hVal = H->getValue(j, i - 1);
+                    V->getCol(j, &vCol);
+                    for (int idx = 0; idx < counts[me]; idx++) {
+                        updateVec[idx] += hVal * vCol[idx];
+                    }
+                }
+
+                V->getCol(i, &vCol);
+                Z.getCol(i, &zCol);
+
+                #pragma omp for
                 for (int idx = 0; idx < counts[me]; idx++) {
-                    updateVec[idx] += hVal * vCol[idx];
+                    vCol[idx] = zCol[idx] - updateVec[idx];
                 }
             }
-
             V->getCol(i, &vCol);
-            Z.getCol(i, &zCol);
-
-            #pragma omp parallel for
-            for (int idx = 0; idx < counts[me]; idx++) {
-                vCol[idx] = zCol[idx] - updateVec[idx];
-            }
-
             dotProds[i + 1] = cblas_ddot(counts[me], vCol, 1, vCol, 1);
         }
 

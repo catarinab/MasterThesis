@@ -3,18 +3,19 @@
 #include "headers/arnoldi_iteration.hpp"
 #include "headers/distr_mtx_ops.hpp"
 
-/*  Parameters
-    ----------
-    A : An m × m array (csr_matrix)
-    b : Initial mx1 vector (dense_vector)
-    n : Degree of the Krylov space (int)
-    m : Dimension of the matrix (int)
+/*   Parameters
+ *   ----------
+ *   A : An m × m array (csr_matrix)
+ *   b : Initial mx1 vector (dense_vector)
+ *   n : Degree of the Krylov space (int)
+ *   m : Dimension of the matrix (int)
+ *
+ *   Returns
+ *   -------
+ *   V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
+ *   H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
+ */
 
-    Returns
-    -------
-    V : An m x n array (dense_matrix), where the columns are an orthonormal basis of the Krylov subspace.
-    H : An n x n array (dense_matrix). A on basis V. It is upper Hessenberg.
-*/
 
 /*
  * Paper: Hiding Global Communication Latency in the GMRES Algorithm on Massively Parallel Machines
@@ -38,7 +39,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     // k_new = k_old - 1
     // k_old = k_new + 1
 
-    for(int k = 0; k < k_total; k++) {
+    for(int k = 0; k <= k_total; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
 
@@ -47,7 +48,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             dotProds[j] = cblas_ddot(counts[me], privZ, 1, vCol, 1);
         }
 
-        if (k == k_total - 1) break;
+        if (k == k_total) break;
 
         double temp  = cblas_ddot(counts[me], privZ, 1, privZ, 1);
         MPI_Allreduce(&temp, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

@@ -21,12 +21,15 @@
  * Section 3, Algorithm 2
  * */
 
-int restartedArnoldiIteration
-
-
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
-                     dense_matrix * H) {
+                              dense_matrix * H) {
 
+    return 0;
+}
+
+
+int restartedArnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
+                     dense_matrix * H) {
     //auxiliary
     auto * privZ = (double *) malloc(counts[me] * sizeof(double));
     auto * z = (double *) malloc(m * sizeof(double));
