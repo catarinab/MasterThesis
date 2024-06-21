@@ -2,7 +2,7 @@ mpi = mpiicpx
 C++ = g++
 
 CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -O3
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
@@ -16,7 +16,7 @@ TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out
 TARGETTESTEigen=testEigen.out
 
-LINK= -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lpthread -ldl
+LINK= -m64  -L${MKLROOT}/lib -Wl,--no-as-needed -lmkl_intel_ilp64 -lmkl_gnu_thread -lmkl_core -lgomp -lm -lpthread -ldl
 
 GREEN=\033[0;32m
 RED=\033[0;31m
