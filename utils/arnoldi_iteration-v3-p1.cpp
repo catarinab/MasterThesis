@@ -33,7 +33,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     double * vCol, *prevVCol, * zCol;
     auto updateVec = new double[counts[me]]();
     auto dotProds = new double[k_total + 2]();
-    MPI_Request requestZ, requestH, requestHDot;
+    MPI_Request requestZ, requestH;
 
     V->setCol(0, initVec, displs[me], counts[me]);
     Z.setCol(0, initVec, displs[me], counts[me]);
@@ -57,7 +57,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             V->getCol(i - 1, &vCol);
             Z.getCol(i, &zCol);
 
-            #pragma omp parallel for
+            //#pragma omp parallel for
             for(int idx = 0; idx < counts[me]; idx++) {
                 vCol[idx] = vCol[idx] / prevH;
                 zCol[idx] = z_i[idx + displs[me]] / prevH;
@@ -73,7 +73,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         if(i == k_total) break;
 
         memset(updateVec, 0, counts[me] * sizeof(double));
-        #pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
+        //#pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
         for (int j = 0; j <= i - 1; j++) {
             double hVal = H->getValue(j, i - 1);
             Z.getCol(j + 1, &zCol);
@@ -83,7 +83,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         }
 
         Z.getCol(i + 1, &zCol);
-        #pragma omp parallel for
+        //#pragma omp parallel for
         for (int idx = 0; idx < counts[me]; idx++) {
             zCol[idx] = w[idx] - updateVec[idx];
         }
@@ -92,7 +92,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         if (i > 0) {
             memset(updateVec, 0, counts[me] * sizeof(double));
-            #pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
+            //#pragma omp parallel for reduction(+:updateVec[:counts[me]]) private(vCol)
             for (int j = 0; j <= i - 1; j++) {
                 double hVal = H->getValue(j, i - 1);
                 V->getCol(j, &vCol);

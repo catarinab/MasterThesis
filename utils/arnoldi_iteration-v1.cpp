@@ -54,7 +54,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         wNorm = sqrt(wNorm);
 
-        if(wNorm < EPS52) break;
+        if(abs(wNorm) < EPS52) break;
 
         H->setValue(k + 1, k, wNorm);
 

@@ -20,6 +20,10 @@
  * Paper: Hiding Global Communication Latency in the GMRES Algorithm on Massively Parallel Machines
  * Section 3, Algorithm 2
  * */
+
+int restartedArnoldiIteration
+
+
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
 
@@ -51,7 +55,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         double temp  = cblas_ddot(counts[me], privZ, 1, privZ, 1);
         MPI_Allreduce(&temp, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        if(abs(sqrt(wDot))< EPS52) break;
+        if(sqrt(wDot) < EPS52) break;
 
         MPI_Allreduce(MPI_IN_PLACE, dotProds, k + 1 , MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
