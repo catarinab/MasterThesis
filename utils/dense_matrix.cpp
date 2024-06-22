@@ -197,14 +197,3 @@ void dense_matrix::setCol(int col, const double *ptr, int changedRows) {
         this->values[row + col * this->rows] = ptr[row];
     }
 }
-
-void dense_matrix::checkNanorInf() {
-    for(int row = 0; row < this->rows; row++) {
-        for(int col = 0; col < this->cols; col++) {
-            if(isnan(this->values[row + col * this->rows]) || isinf(this->values[row + col * this->rows])) {
-                cout << "Nan or Inf found in matrix" << endl;
-                exit(1);
-            }
-        }
-    }
-}
