@@ -23,21 +23,21 @@ class dense_matrix {
     }
 
     dense_matrix() : rows(0), cols(0) {
-        this->values = static_cast<double *>(calloc(1, sizeof(double)));
+        this->values = nullptr;
     }
 
     dense_matrix(const dense_matrix& other) : rows(other.rows), cols(other.cols) {
-        this->values = this->values = static_cast<double *>(calloc(rows * cols, sizeof(double)));
-        std::copy(other.values, other.values + rows * cols, this->values);
+        this->values = static_cast<double *>(malloc(rows * cols * sizeof(double)));
+        memcpy(this->values, other.values, rows * cols * sizeof(double));
     }
 
     dense_matrix& operator=(const dense_matrix& other) {
         if (this != &other) {
-            delete[] values;
-            rows = other.rows;
-            cols = other.cols;
-            values = new double[rows * cols];
-            std::copy(other.values, other.values + rows * cols, values);
+            free(values);
+            this->rows = other.rows;
+            this->cols = other.cols;
+            this->values = static_cast<double *>(malloc(rows * cols * sizeof(double)));
+            memcpy(this->values, other.values, rows * cols * sizeof(double));
         }
         return *this;
     }
@@ -82,6 +82,8 @@ class dense_matrix {
     void setCol(int col, const double *ptr, int changedRows);
 
     void setCol(int col, dense_vector &vec, int start, int count);
+
+    void checkNanorInf();
 };
 
 #endif
