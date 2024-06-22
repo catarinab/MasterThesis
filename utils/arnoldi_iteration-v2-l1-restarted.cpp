@@ -1,7 +1,10 @@
 #include <mpi.h>
 
 #include "headers/arnoldi_iteration.hpp"
+#include "headers/mtx_ops_mkl.hpp"
+#include "headers/calculate_MLF.hpp"
 #include "headers/distr_mtx_ops.hpp"
+
 
 /*  Parameters
     ----------
@@ -21,14 +24,50 @@
  * Section 3, Algorithm 2
  * */
 
-int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
-                              dense_matrix * H) {
+//Calculate the approximation of MLF(A)*b
+dense_vector getApproximation(dense_matrix& V, const dense_matrix& mlfH, double betaVal) {
+    if(betaVal != 1)
+        V = V * betaVal;
 
-    return 0;
+    return denseMatrixMult(V, mlfH).getCol(0);
+}
+
+double restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
+                              dense_matrix * H, double alpha, double beta) {
+    int k = 0;
+    double approx = 0;
+
+    while(true) {
+        H->resize(k_total - k);
+        V->resizeCols(k_total - k);
+        int currK = arnoldiIteration(A, initVec, k_total - k, m, me, V, H);
+        H->resize(currK);
+        V->resizeCols(currK);
+        dense_matrix mlfH(currK, currK);
+        if(me == 0) {
+            cout << "k: " << k << endl;
+            cout << "currK: " << currK << endl;
+            mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, currK);
+        }
+        k += currK;
+
+        MPI_Bcast(mlfH.getValues(), currK * currK, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+
+        dense_vector res = getApproximation(*V, mlfH, 1);
+
+        double temp = cblas_ddot(counts[me], res.values.data(), 1, res.values.data(), 1);
+
+        MPI_Allreduce(MPI_IN_PLACE, &temp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        approx += sqrt(temp);
+        if (k >= k_total - 1) break;
+        V->getLastCol(initVec);
+    }
+
+    return approx;
 }
 
 
-int restartedArnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
+int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
     //auxiliary
     auto * privZ = (double *) malloc(counts[me] * sizeof(double));
@@ -42,10 +81,9 @@ int restartedArnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_
 
     V->setCol(0, initVec, displs[me], counts[me]);
 
-    // k_new = k_old - 1
-    // k_old = k_new + 1
+    int k = 0;
 
-    for(int k = 0; k < k_total; k++) {
+    for(k = 0; k < k_total; k++) {
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
 
@@ -69,25 +107,30 @@ int restartedArnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_
 
         //Check for breakdown and restart or reorthogonalize if necessary
         if(wDot - hVal <= 0) {
-            fprintf(stderr, "Should be Restarting Arnoldi iteration at k = %d\n", k);
-            return k;
+            cout << "Breakdown at k = " << k << endl;
+            break;
         }
 
         hVal = sqrt(wDot - hVal);
 
         memset(vValVec, 0, counts[me] * sizeof(double));
-        #pragma omp parallel for reduction(+:vValVec[:counts[me]]) private(vCol)
-        for (int i = 0; i <= k; i++) {
-            V->getCol(i, &vCol);
-            for(int j = 0; j < counts[me]; j++) {
-                vValVec[j] += vCol[j] * dotProds[i];
+        #pragma omp parallel private(vCol)
+        {
+            #pragma omp for reduction(+:vValVec[:counts[me]]) private(vCol)
+            for (int i = 0; i <= k; i++) {
+                V->getCol(i, &vCol);
+                for(int j = 0; j < counts[me]; j++) {
+                    vValVec[j] += vCol[j] * dotProds[i];
+                }
+            }
+            V->getCol(k + 1, &vCol);
+            #pragma omp for
+            for (int i = 0; i < counts[me]; i++) {
+                vCol[i] = (privZ[i] - vValVec[i]) / hVal;
             }
         }
-        V->getCol(k + 1, &vCol);
-        for (int i = 0; i < counts[me]; i++) {
-            vCol[i] = (privZ[i] - vValVec[i]) / hVal;
-        }
 
+        V->getCol(k + 1, &vCol);
         MPI_Iallgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &r1);
 
         if(me == 0) {
@@ -114,5 +157,5 @@ int restartedArnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_
     delete[] vValVec;
     delete[] dotProds;
 
-    return k_total;
+    return k;
 }

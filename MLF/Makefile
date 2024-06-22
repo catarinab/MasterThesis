@@ -35,9 +35,9 @@ SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_mat
                     ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
                     ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
 
-SRCS_DISTRV2 = ../utils/arnoldi_iteration-v2-l1.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+SRCS_DISTRV2 = ../utils/arnoldi_iteration-v2-l1-restarted.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
-             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
+             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf-distr-restarted.cpp
 
 SRCS_DISTRV3 = ../utils/arnoldi_iteration-v3-p1.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
@@ -96,6 +96,9 @@ $(OBJDIR)/mlf_shared.o: mlf_shared.cpp | $(OBJDIR)
 $(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
 	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
+$(OBJDIR_DISTR)/mlf-distr-restarted.o: mlf-distr-restarted.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
+
 $(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
 
@@ -136,7 +139,6 @@ frac: $(OBJS_FRAC_SHARED)
 testEigen: $(OBJS_TEST_EIGEN)
 	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETTESTEigen)
 	@echo "$(YELLOW)Compiled test eigen version: $(TARGETTESTEigen) $(NORMAL)"
-
 
 clean:
 	@echo "$(RED)Warning: deleting executables and binary files!$(NORMAL)"

@@ -26,6 +26,15 @@ void dense_matrix::setIdentity() {
     }
 }
 
+void dense_matrix::resize(int size) {
+    this->rows = size;
+    this->cols = size;
+}
+
+void dense_matrix::resizeCols(int newCols) {
+    this->cols = newCols;
+}
+
 const double* dense_matrix::getDataPointer() const {
     return this->values;
 }
@@ -196,4 +205,11 @@ void dense_matrix::setCol(int col, const double *ptr, int changedRows) {
     for(int row = 0; row < changedRows; row++) {
         this->values[row + col * this->rows] = ptr[row];
     }
+}
+
+void dense_matrix::getLastCol(dense_vector &b) {
+    for(int row = 0; row < this->rows; row++) {
+        b.setValue(row, this->values[row + (this->cols - 1) * this->rows]);
+    }
+
 }

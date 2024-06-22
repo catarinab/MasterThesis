@@ -83,7 +83,11 @@ class dense_matrix {
 
     void setCol(int col, dense_vector &vec, int start, int count);
 
-    void checkNanorInf();
+    void getLastCol(dense_vector & b);
+
+    void resize(int size);
+
+    void resizeCols(int cols);
 };
 
 #endif
