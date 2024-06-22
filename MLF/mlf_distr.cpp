@@ -63,6 +63,7 @@ int main (int argc, char* argv[]) {
 
     dense_matrix V(counts[me], krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
+    dense_matrix mlfH(krylovDegree, krylovDegree);
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time = -omp_get_wtime();
@@ -72,14 +73,14 @@ int main (int argc, char* argv[]) {
 
     if(me == 0){
         exec_time_schur = -omp_get_wtime();
-        H = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
+        mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
         exec_time_schur += omp_get_wtime();
     }
 
     //broadcast mlf(H)
-    MPI_Bcast(H.getValues(), krylovDegree * krylovDegree, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+    MPI_Bcast(mlfH.getValues(), krylovDegree * krylovDegree, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
-    dense_vector res = getApproximation(V, H, betaNormB);
+    dense_vector res = getApproximation(V, mlfH, betaNormB);
 
     MPI_Gatherv(&res.values[0], counts[me], MPI_DOUBLE, &b.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
