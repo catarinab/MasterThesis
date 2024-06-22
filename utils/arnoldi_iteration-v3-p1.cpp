@@ -121,17 +121,19 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 }
             }
         }
+        if(i < k_total) {
+            V->getCol(i, &vCol);
+            dotProds[i + 1] = cblas_ddot(counts[me], vCol, 1, vCol, 1);
 
-        V->getCol(i, &vCol);
-        dotProds[i + 1] = cblas_ddot(counts[me], vCol, 1, vCol, 1);
-
-        Z.getCol(i + 1, &zCol);
-        for(int j = 0; j <= i; j++) {
-            V->getCol(j, &prevVCol);
-            dotProds[j] = cblas_ddot(counts[me], zCol, 1, prevVCol, 1);
+            Z.getCol(i + 1, &zCol);
+            for(int j = 0; j <= i; j++) {
+                V->getCol(j, &prevVCol);
+                dotProds[j] = cblas_ddot(counts[me], zCol, 1, prevVCol, 1);
+            }
+            MPI_Iallreduce(MPI_IN_PLACE, dotProds, i + 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requestH);
+            MPI_Wait(&requestZ, MPI_STATUS_IGNORE);
         }
-        MPI_Iallreduce(MPI_IN_PLACE, dotProds, i + 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD, &requestH);
-        MPI_Wait(&requestZ, MPI_STATUS_IGNORE);
+
     }
     free(z_i);
     free(w);
