@@ -57,9 +57,13 @@ int main (int argc, char* argv[]) {
     dense_matrix H(krylovDegree, krylovDegree);
 
     MPI_Barrier(MPI_COMM_WORLD);
+    exec_time_arnoldi = -omp_get_wtime();
     double norm =  restartedArnoldiIteration_MLF(A, b, krylovDegree, size, me, &V, &H, alpha, beta);
-    if(me == 0)
-        cout << norm << endl;
+    exec_time_arnoldi += omp_get_wtime();
+    if(me == 0) {
+        cout << exec_time_arnoldi << "," << 0 << "," << exec_time_arnoldi << endl;
+        cerr << norm << endl;
+    }
 
     free(displs);
     free(counts);

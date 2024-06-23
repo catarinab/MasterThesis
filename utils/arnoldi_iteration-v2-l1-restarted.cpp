@@ -45,11 +45,11 @@ double restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec,
         V->resizeCols(currK);
         dense_matrix mlfH(currK, currK);
         if(me == 0) {
-            cout << "k: " << k << endl;
-            cout << "currK: " << currK << endl;
+            cerr << "k: " << k << endl;
+            cerr << "currK: " << currK << endl;
             mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, currK);
         }
-        k += currK;
+        k += currK + 1;
 
         MPI_Bcast(mlfH.getValues(), currK * currK, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
@@ -96,7 +96,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         double temp  = cblas_ddot(counts[me], privZ, 1, privZ, 1);
         MPI_Allreduce(&temp, &wDot, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        if(sqrt(wDot) < EPS52) break;
+        if(abs(sqrt(wDot)) < EPS52) break;
 
         MPI_Allreduce(MPI_IN_PLACE, dotProds, k + 1 , MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
@@ -107,7 +107,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
         //Check for breakdown and restart or reorthogonalize if necessary
         if(wDot - hVal <= 0) {
-            cout << "Breakdown at k = " << k << endl;
+            cerr << "Breakdown at k = " << k << endl;
             break;
         }
 
