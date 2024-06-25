@@ -59,6 +59,9 @@ void dense_matrix::setValue(int row, int col, double val){
 
 
 double dense_matrix::getValue(int row, int col) const{
+    if(row >= this->rows || col >= this->cols) {
+        return 0;
+    }
     return this->values[row + col * this->rows];
 }
 
