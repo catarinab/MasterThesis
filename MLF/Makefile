@@ -1,8 +1,8 @@
 mpi = mpiicpx
 C++ = g++
 
-CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3
-CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -O3
+CFLAGS= -fopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -march=native -O3 -Wall
+CFLAGSDISTR= -qopenmp -std=c++17 -DMKL_ILP64  -m64  -I"${MKLROOT}/include" -O3 -Wall -g
 CFLAGSEigen= -I ../eigen
 CFLAGSAutoDiff= -I ../autodiff
 CFLAGSCubature= -I ../cubature
@@ -11,6 +11,7 @@ DEBUG = -g
 TARGET=mlf-distr.out
 TARGETV2=mlf-distr-v2.out
 TARGETV3=mlf-distr-v3.out
+TARGETV4=mlf-distr-v4.out
 TARGETSHARED=mlf-shared.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out
@@ -43,6 +44,10 @@ SRCS_DISTRV3 = ../utils/arnoldi_iteration-v3-p1.cpp ../utils/csr_matrix.cpp ../u
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
 
+SRCS_DISTRV4 = ../utils/arnoldi_iteration-v4-p(l).cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+             ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
+             ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf-distr-restarted-v4.cpp
+
 SRCS_DISTR = ../utils/arnoldi_iteration-v1.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
@@ -62,6 +67,7 @@ OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLA
 OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
 OBJS_DISTR_V2 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV2)))
 OBJS_DISTR_V3 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV3)))
+OBJS_DISTR_V4 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV4)))
 OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
 OBJS_TEST_EIGEN = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_TEST_EIGEN)))
 
@@ -99,6 +105,9 @@ $(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
 $(OBJDIR_DISTR)/mlf-distr-restarted.o: mlf-distr-restarted.cpp | $(OBJDIR_DISTR)
 	$(mpi) $(CFLAGSDISTR) -c $< -o $@
 
+$(OBJDIR_DISTR)/mlf-distr-restarted-v4.o: mlf-distr-restarted-v4.cpp | $(OBJDIR_DISTR)
+	$(mpi) $(CFLAGSDISTR) -c $< -o $@
+
 $(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
 
@@ -125,6 +134,10 @@ mlf-distr-v2: $(OBJS_DISTR_V2)
 mlf-distr-v3: $(OBJS_DISTR_V3)
 	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV3)
 	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV3) $(NORMAL)"
+
+mlf-distr-v4: $(OBJS_DISTR_V4)
+	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV4)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV4) $(NORMAL)"
 
 mlf-shared-test: $(OBJS_SHARED)
 	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
