@@ -24,8 +24,8 @@ struct SparseTriplet {
     long long int col;
     long long int row;
     double value;
-    SparseTriplet(long long int row, long long int col, double value) : row(row), col(col), value(value) {}
-    SparseTriplet() : row(0), col(0), value(0) {}
+    SparseTriplet(long long int row, long long int col, double value) : col(col), row(row), value(value) {}
+    SparseTriplet() : col(0), row(0), value(0) {}
 };
 
 inline bool operator<(const SparseTriplet& a, const SparseTriplet& b) {
