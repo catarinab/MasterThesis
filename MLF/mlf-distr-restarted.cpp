@@ -4,7 +4,6 @@
 #include <mpi.h>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
-#include "../utils/headers/calculate_MLF.hpp"
 #include "../utils/headers/arnoldi_iteration.hpp"
 #include "../utils/headers/io_ops.hpp"
 #include "../utils/headers/distr_mtx_ops.hpp"
@@ -26,7 +25,7 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxName) {
 
 int main (int argc, char* argv[]) {
     int me, nprocs;
-    double exec_time_schur, exec_time_arnoldi, exec_time;
+    double exec_time_arnoldi;
 
     //input values
     double alpha = 0.5;
@@ -58,11 +57,11 @@ int main (int argc, char* argv[]) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     exec_time_arnoldi = -omp_get_wtime();
-    double norm =  restartedArnoldiIteration_MLF(A, b, krylovDegree, size, me, &V, &H, alpha, beta);
+    b =  restartedArnoldiIteration_MLF(A, b, krylovDegree, size, me, &V, &H, alpha, beta, betaNormB);
     exec_time_arnoldi += omp_get_wtime();
     if(me == 0) {
         cout << exec_time_arnoldi << "," << 0 << "," << exec_time_arnoldi << endl;
-        cerr << norm << endl;
+        cerr << cblas_dnrm2(size, &b.values[0], 1.0) << endl;
     }
 
     free(displs);
