@@ -32,10 +32,13 @@ dense_vector getApproximation(dense_matrix& V, const dense_matrix& mlfH, double 
     return denseMatrixMult(V, mlfH).getCol(0);
 }
 
-double restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
-                              dense_matrix * H, double alpha, double beta) {
+dense_vector restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
+                              dense_matrix * H, double alpha, double beta, double betaNormB) {
     int k = 0;
-    double approx = 0;
+
+    dense_vector b(m);
+    dense_vector temp(counts[me]);
+
 
     while(true) {
         H->resize(k_total - k);
@@ -49,23 +52,22 @@ double restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec,
             cerr << "currK: " << currK << endl;
             mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, currK);
         }
-        k += currK + 1;
 
         MPI_Bcast(mlfH.getValues(), currK * currK, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
-        dense_vector res = getApproximation(*V, mlfH, 1);
+        dense_vector res = getApproximation(*V, mlfH, betaNormB);
 
-        double temp = cblas_ddot(counts[me], res.values.data(), 1, res.values.data(), 1);
+        cblas_daxpy(counts[me], 1, res.values.data(), 1, temp.values.data(), 1);
 
-        MPI_Allreduce(MPI_IN_PLACE, &temp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        approx += sqrt(temp);
+        k += currK + 1;
         if (k >= k_total - 1) break;
         V->getLastCol(initVec);
     }
 
-    return approx;
-}
+    MPI_Gatherv(&temp.values[0], counts[me], MPI_DOUBLE, &b.values[0], counts, displs, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
+    return b;
+}
 
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H) {
@@ -128,10 +130,11 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             for (int i = 0; i < counts[me]; i++) {
                 vCol[i] = (privZ[i] - vValVec[i]) / hVal;
             }
+            #pragma omp single
+                MPI_Iallgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &r1);
         }
 
-        V->getCol(k + 1, &vCol);
-        MPI_Iallgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD, &r1);
+
 
         if(me == 0) {
             for (int i = 0; i <= k; i++) {
