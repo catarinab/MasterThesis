@@ -44,7 +44,7 @@ SRCS_DISTRV3 = ../utils/arnoldi_iteration-v3-p1.cpp ../utils/csr_matrix.cpp ../u
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_distr.cpp
 
-SRCS_DISTRV4 = ../utils/arnoldi_iteration-v4-p(l).cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
+SRCS_DISTRV4 = ../utils/arnoldi_iteration-v4-pl.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/dense_vector.cpp \
              ../utils/distr_mtx_ops.cpp ../utils/help_process.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp \
              ../utils/mtx_ops_mkl.cpp ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf-distr-restarted-v4.cpp
 
