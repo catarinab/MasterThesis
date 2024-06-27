@@ -5,6 +5,7 @@
 #include <fstream>
 #include <cstring>
 #include <algorithm>
+#include <mkl.h>
 
 #include "headers/dense_matrix.hpp"
 
@@ -54,12 +55,16 @@ void dense_matrix::setCol(int col, double * ptr, int elements){
 
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
+    if(row >= this->rows || col >= this->cols) {
+        return;
+    }
     this->values[row + col * this->rows] = val;
 }
 
 
 double dense_matrix::getValue(int row, int col) const{
-    if(row >= this->rows || col >= this->cols) {
+    if(row >= this->rows || col >= this->cols || row < 0 || col < 0) {
+        //cerr << "getVal, Error: Index out of bounds" << endl;
         return 0;
     }
     return this->values[row + col * this->rows];
@@ -106,12 +111,7 @@ void dense_matrix::getCol(int col, double ** ptr, int startingRow) {
 
 //get matrix norm2
 double dense_matrix::getNorm2() {
-    double res = 0;
-    for(int row = 0; row < this->rows; row++) {
-        for(int col = 0; col < this->cols; col++)
-            res += pow(this->values[row + col * this->rows], 2);
-    }
-    return sqrt(res);
+    return cblas_dnrm2(this->rows * this->cols, this->values, 1);
 }
 
 void dense_matrix::printVector(const string& filename) {
@@ -183,6 +183,7 @@ dense_matrix dense_matrix::operator- () const {
 void dense_matrix::printMatrix(const string& name) {
     cout <<"Matrix " << name << " : " << this->rows << " x :" << this->cols << endl;
     for(int row = 0; row < this->rows; row++) {
+        cout << "Row " << row << " : ";
         for(int col = 0; col < this->cols; col++) {
             cout << this->values[row + col * this->rows] << " ";
         }
@@ -195,18 +196,6 @@ void dense_matrix::printMatrix(const string& name) {
 void dense_matrix::getCol(int col, double *ptr) {
     for(int row = 0; row < this->rows; row++) {
         ptr[row] = this->values[row + col * this->rows];
-    }
-}
-
-void dense_matrix::setCol(int col, const double *ptr) {
-    for(int row = 0; row < this->rows; row++) {
-        this->values[row + col * this->rows] = ptr[row];
-    }
-}
-
-void dense_matrix::setCol(int col, const double *ptr, int changedRows) {
-    for(int row = 0; row < changedRows; row++) {
-        this->values[row + col * this->rows] = ptr[row];
     }
 }
 
