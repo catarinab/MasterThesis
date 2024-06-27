@@ -33,34 +33,37 @@ dense_vector getApproximation(dense_matrix& V, const dense_matrix& mlfH, double 
 }
 
 dense_vector restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
-                              dense_matrix * H, double alpha, double beta, double betaNormB) {
+                                           dense_matrix * H, double alpha, double beta, double betaNormB, int l) {
     int k = 0;
 
     dense_vector b(m);
     dense_vector temp(counts[me]);
 
-
     while(true) {
         H->resize(k_total - k);
         V->resizeCols(k_total - k);
-        int currK = arnoldiIteration(A, initVec, k_total - k, m, me, V, H);
-        H->resize(currK);
-        V->resizeCols(currK);
-        dense_matrix mlfH(currK, currK);
-        if(me == 0) {
-            cerr << "k: " << k << endl;
-            cerr << "currK: " << currK << endl;
-            mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, currK);
-        }
+        int currK = arnoldiIteration(A, initVec, k_total - k, m, me, V, H, l);
+        int size = currK >= (k_total + l) ? k_total : currK - l;
+        H->resize(size);
+        V->resizeCols(size);
+        dense_matrix mlfH(size, size);
+        cout << "currK: " << currK << endl;
 
-        MPI_Bcast(mlfH.getValues(), currK * currK, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
+        if(me == 0) {
+            cerr << "currK: " << currK << endl;
+            H->printMatrix("H");
+            mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, size);
+        }
+        k += size;
+        cerr << "k: " << k << endl;
+
+        MPI_Bcast(mlfH.getValues(), size * size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
         dense_vector res = getApproximation(*V, mlfH, betaNormB);
 
         cblas_daxpy(counts[me], 1, res.values.data(), 1, temp.values.data(), 1);
 
-        k += currK + 1;
-        if (k >= k_total - 1) break;
+        if (k >= k_total) break;
         V->getLastCol(initVec);
     }
 
