@@ -45,19 +45,14 @@ dense_vector restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& in
         H->resize(k_total - k);
         V->resizeCols(k_total - k);
         int currK = arnoldiIteration(A, initVec, k_total - k, m, me, V, H, l);
-        H->resize(currK);
-        V->resizeCols(currK);
-        dense_matrix mlfH(currK, currK);
-        cout << "currK: " << currK << endl;
+        int size = (currK - k_total) >= 0 ? k_total : currK - l;
+        H->resize(size);
+        V->resizeCols(size);
+        dense_matrix mlfH(size, size);
 
         if(me == 0) {
-            cerr << "currK: " << currK << endl;
-            H->printMatrix("H");
-            mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, currK);
+            mlfH = calculate_MLF((double *) H->getDataPointer(), alpha, beta, size);
         }
-        int size = currK >= (k_total + l) ? k_total : currK - l;
-        k += size;
-        cerr << "k: " << k << endl;
 
         MPI_Bcast(mlfH.getValues(), size * size, MPI_DOUBLE, ROOT, MPI_COMM_WORLD);
 
