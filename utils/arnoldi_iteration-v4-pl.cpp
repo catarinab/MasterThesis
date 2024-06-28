@@ -128,7 +128,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             double gVal = G.getValue(a + 1, a + 1);
             //Check for breakdown and restart or reorthogonalize if necessary
             if (gVal - sumH2 < 0) {
-                fprintf(stderr, "Breakdown at k = %d\n", i);
+                //fprintf(stderr, "Breakdown at k = %d\n", i);
                 break;
             }
 
