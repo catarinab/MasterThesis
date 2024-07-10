@@ -34,6 +34,15 @@ csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, in
     return csr;
 }
 
+csr_matrix buildPartIndentityMatrix(int me, int * displs, int * counts) {
+    csr_matrix csr(counts[me]);
+    for (int i = 0; i < counts[me]; i++) {
+        csr.insertRow({SparseTriplet(i, i, 1)}, i);
+    }
+    csr.defineMKLSparseMatrix();
+    return csr;
+}
+
 dense_matrix solveEq(const dense_matrix& A, const dense_matrix& b) {
     vector<lapack_int> ipiv(A.getRowVal());
     LAPACKE_dgetrf(LAPACK_COL_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),

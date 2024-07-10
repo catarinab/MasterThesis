@@ -24,6 +24,10 @@ sparse_matrix_t csr_matrix::getMKLSparseMatrix() const{
     return this->mklSparseMatrix;
 }
 
+sparse_matrix_t * csr_matrix::getMKLSparseMatrixPointer(){
+    return &this->mklSparseMatrix;
+}
+
 matrix_descr csr_matrix::getMKLDescription() const {
     return this->mklDescription;
 }
@@ -54,7 +58,7 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
     return rowValues;
 }
 
-void csr_matrix::printAttr() {
+void csr_matrix::printAttr() const{
     cout << "size: " << this->size << endl;
     cout << "nz: " << this->nz << endl;
     cout << "nzValues: ";

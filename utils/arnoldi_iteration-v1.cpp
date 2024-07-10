@@ -63,6 +63,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
             vCol[i] = privZ[i] / wNorm;
 
         }
+        if(k == k_total - 1) break;
         MPI_Allgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
     }
     free(z);

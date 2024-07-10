@@ -31,10 +31,11 @@ public:
     [[nodiscard]] long long int getSize() const;
     void insertRow(vector<SparseTriplet> row, int rowId);
     vector<SparseTriplet> getRow(int row);
-    void printAttr();
+    void printAttr() const;
 
     void defineMKLSparseMatrix();
     [[nodiscard]] sparse_matrix_t getMKLSparseMatrix() const;
+    [[nodiscard]] sparse_matrix_t * getMKLSparseMatrixPointer();
     [[nodiscard]] matrix_descr getMKLDescription() const;
 };
 

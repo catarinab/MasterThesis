@@ -39,12 +39,12 @@ dense_vector restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& in
     dense_vector b(m);
     dense_vector temp(counts[me]);
     dense_vector res(counts[me]);
-
+    csr_matrix identity = buildPartIndentityMatrix(me, displs, counts);
 
     while(true) {
         H->resize(k_total - k);
         V->resizeCols(k_total - k);
-        int currK = arnoldiIteration(A, initVec, k_total - k, m, me, V, H, l);
+        int currK = arnoldiIteration(A, identity, initVec, k_total - k, m, me, V, H, l);
         int size = (currK - k_total) >= 0 ? k_total : currK - l;
         H->resize(size);
         V->resizeCols(size);
@@ -71,7 +71,7 @@ dense_vector restartedArnoldiIteration_MLF(const csr_matrix& A, dense_vector& in
 }
 
 
-int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
+int arnoldiIteration(const csr_matrix& A, const csr_matrix& identity, dense_vector& initVec, int k_total, int m, int me, dense_matrix * V,
                      dense_matrix * H, int l) {
     //auxiliary
     auto * privZ = (double *) malloc(counts[me] * sizeof(double));
@@ -84,6 +84,9 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     auto vValVec = new double[counts[me]]();
     auto dotProds = new double[k_total + l + 2];
     MPI_Request r1, r2;
+    csr_matrix C = csr_matrix();
+    auto * shifts = new double[l + 1]();
+    double dotProd;
 
     V->setCol(0, initVec, displs[me], counts[me]);
     Z.setCol(0, initVec, displs[me], counts[me]);
@@ -91,10 +94,61 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
     int i;
 
+    //compute l + 1 ritz values
+
+    for(int k = 0; k < k_total; k++) {
+        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                        z, 0.0, privZ);
+        for(int j = 0; j <= k; j++) {
+            V->getCol(j, &vCol);
+
+            dotProd = cblas_ddot(counts[me], privZ, 1, vCol, 1);
+
+            MPI_Allreduce(MPI_IN_PLACE, &dotProd, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+            //w = w - dotProd * vCol
+            cblas_daxpy(counts[me], -dotProd, vCol, 1, privZ, 1);
+
+            H->setValue(j, k, dotProd);
+        }
+
+        if(k == k_total - 1) break;
+
+        double wNorm = cblas_ddot(counts[me], privZ, 1, privZ, 1);
+
+        MPI_Allreduce(MPI_IN_PLACE, &wNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        wNorm = sqrt(wNorm);
+
+        if(abs(wNorm) < EPS52) break;
+
+        H->setValue(k + 1, k, wNorm);
+
+        V->getCol(k + 1, &vCol);
+        for(i = 0; i < counts[me]; i++){
+            vCol[i] = privZ[i] / wNorm;
+        }
+        if(k == k_total - 1) break;
+        MPI_Allgatherv(vCol, counts[me], MPI_DOUBLE, z, counts, displs, MPI_DOUBLE, MPI_COMM_WORLD);
+    }
+
+
+
+
     for(i = 0; i <= k_total + l; i++) {
         Z.getCol(i + 1, &zCol);
-        mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
-                        z, 0.0, zCol);
+        if(i < l) {
+            mkl_sparse_d_add(SPARSE_OPERATION_NON_TRANSPOSE, identity.getMKLSparseMatrix(), shifts[i],
+                             A.getMKLSparseMatrix(), C.getMKLSparseMatrixPointer());
+
+            mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, C.getMKLSparseMatrix(), C.getMKLDescription(),
+                            z, 0.0, zCol);
+        }
+        else {
+            mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
+                            z, 0.0, zCol);
+        }
+
 
         int a = i - l;
         if(i > 0) {
@@ -141,7 +195,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                         for (int k = 0; k <= a - 1; k++) {
                             sumH1 += H->getValue(j, k) * G.getValue(k, a);
                         }
-                        H->setValue(j, a, (G.getValue(j, a + 1) + G.getValue(j, a) - sumH1) / G.getValue(a, a));
+                        H->setValue(j, a, (G.getValue(j, a + 1) + shifts[a] * G.getValue(j, a) - sumH1) / G.getValue(a, a));
                     }
                     #pragma omp single
                         H->setValue(a + 1, a, G.getValue(a + 1, a + 1) / G.getValue(a, a));
