@@ -16,7 +16,7 @@ csr_matrix buildFullMatrix(const string& input_file) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFileFullMtx(input_file, &rows, &cols, &nz);
     csr_matrix csr(rows);
-    for (int i = 0; i < rowValues.size(); i++) {
+    for (int i = 0; i < (int) rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
     csr.defineMKLSparseMatrix();
@@ -27,7 +27,7 @@ csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, in
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFilePartialMtx(input_file, &rows, &cols, &nz, displs, counts, me);
     csr_matrix csr(counts[me]);
-    for (int i = 0; i < rowValues.size(); i++) {
+    for (int i = 0; i < (int) rowValues.size(); i++) {
         csr.insertRow(rowValues[i], i);
     }
     csr.defineMKLSparseMatrix();

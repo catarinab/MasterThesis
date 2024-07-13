@@ -13,6 +13,7 @@ TARGETV2=mlf-distr-v2.out
 TARGETV3=mlf-distr-v3.out
 TARGETV4=mlf-distr-v4.out
 TARGETSHARED=mlf-shared.out
+TARGETSHAREDTEST=mlf-shared-test.out
 TARGETSHAREDCBLAS=mlf-shared-cblas.out
 TARGETFRACSHARED=frac.out
 TARGETTESTEigen=testEigen.out
@@ -31,6 +32,10 @@ OBJDIR_DISTR = obj_distr
 SRCS_SHARED = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
               ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
               ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
+
+SRCS_SHARED_TEST = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
+              ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
+              ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf-shared-testing.cpp
 
 SRCS_SHARED_CBLAS = ../utils/arnoldi_iteration_shared_cblas.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
                     ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
@@ -64,12 +69,11 @@ SRCS_TEST_EIGEN = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/den
 # Convert source files to object files in the object directory
 OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
 OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLAS)))
+OBJS_SHARED_TEST = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_TEST)))
 OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
 OBJS_DISTR_V2 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV2)))
 OBJS_DISTR_V3 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV3)))
 OBJS_DISTR_V4 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV4)))
-OBJS_FRAC_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_FRAC_SHARED)))
-OBJS_TEST_EIGEN = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_TEST_EIGEN)))
 
 all: mlf-shared mlf-distr
 
@@ -77,7 +81,7 @@ distr: mlf-distr mlf-distr-v2 mlf-distr-v3
 
 shared: mlf-shared mlf-shared-cblas
 
-frac-test: mlf-shared-test frac
+test: mlf-shared-test
 
 # Create OBJDIR and OBJDIR_DISTR if they don't exist
 $(OBJDIR):
@@ -97,6 +101,9 @@ $(OBJDIR)/fractional_Krylov.o: ../utils/fractional_Krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
 
 $(OBJDIR)/mlf_shared.o: mlf_shared.cpp | $(OBJDIR)
+	$(C++) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/mlf-shared-testing.o: mlf-shared-testing.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR_DISTR)/mlf_distr.o: mlf_distr.cpp | $(OBJDIR_DISTR)
@@ -139,9 +146,9 @@ mlf-distr-v4: $(OBJS_DISTR_V4)
 	$(mpi) $(CFLAGSDISTR) $(LINK) $^ -o $(TARGETV4)
 	@echo "$(GREEN)Compiled Mittag-Leffler computation distributed version: $(TARGETV4) $(NORMAL)"
 
-mlf-shared-test: $(OBJS_SHARED)
-	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
-	@echo "$(GREEN)Compiled Mittag-Leffler computation frac shared test version: $(TARGETSHARED) $(NORMAL)"
+mlf-shared-test: $(OBJS_SHARED_TEST)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHAREDTEST)
+	@echo "$(GREEN)Compiled Mittag-Leffler computation frac shared test version: $(TARGETSHAREDTEST) $(NORMAL)"
 
 
 frac: $(OBJS_FRAC_SHARED)
@@ -160,7 +167,8 @@ clean:
 
 clean-target:
 	@echo "$(RED)Warning: deleting executables!$(NORMAL)"
-	rm -rf $(TARGET) $(TARGETV2) $(TARGETV3) $(TARGETSHARED) $(TARGETTESTEigen) $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
+	rm -rf $(TARGET) $(TARGETV2) $(TARGETV3) $(TARGETV4) $(TARGETSHARED) $(TARGETSHAREDTEST) $(TARGETTESTEigen) \
+    $(TARGETSHAREDCBLAS) $(TARGETFRACSHARED)
 
 #even if there is a file name clean, the Makefile will still execute that command instead of saying its up to date
 .PHONY: clean

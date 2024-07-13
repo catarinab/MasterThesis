@@ -27,7 +27,7 @@ void getSubMatrix(double ** subMatrix, const double * matrix, int row, int subSi
 
 vector<int> findIndices(const vector<int>& q, int val) {
     vector<int> indices = vector<int>();
-    for (int i = 0; i < q.size(); ++i) {
+    for (int i = 0; i < (int) q.size(); ++i) {
         if (q[i] == val)
             indices.push_back(i);
     }
@@ -158,7 +158,7 @@ vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * I
 
             //f(f!=g) = fValNotG
             //g(f!=g) = gValNotF
-            for(int j = 0; j < f.size(); j++){
+            for(int j = 0; j < (int) f.size(); j++){
                 if(f[j] != g_indices[j]){
                     fValNotG.push_back(f[j]);
                     gValNotF.push_back(g_indices[j]);
@@ -198,7 +198,7 @@ vector<vector<int>> swapping(vector<int>& q, vector<int> * ILST, vector<int> * I
     //create vector of block/element indices
     vector<int> current_group;
     current_group.push_back(0);
-    for (int i = 1; i < q.size(); ++i) {
+    for (int i = 1; i < (int) q.size(); ++i) {
         if (q[i] != q[i - 1]) {
             ind.push_back(current_group);
             current_group.clear();
@@ -288,7 +288,7 @@ vector<vector<int>> schurDecomposition(double * A, complex<double> ** T, complex
 
 
 
-    for(int i = 0; i < ILST.size(); i++) {
+    for(int i = 0; i < (int) ILST.size(); i++) {
         info = LAPACKE_ztrexc(LAPACK_COL_MAJOR, 'V', size, reinterpret_cast<MKL_Complex16 *>(*T),
                               size, reinterpret_cast<MKL_Complex16 *>(*U), size, IFST[i] + 1, ILST[i] + 1);
         if(info != 0)

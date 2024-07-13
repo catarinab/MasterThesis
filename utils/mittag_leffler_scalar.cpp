@@ -75,7 +75,7 @@ complex<double> residues(double alpha, double beta, vector<s_star_struct> s_star
     }
 
     valarray<complex<double>> res = valarray<complex<double>>(s_star_vec.size());
-    for(int i = 0; i < res.size(); i++) {
+    for(int i = 0; i < (int) res.size(); i++) {
         //calculate polynomial P_k(s_star)
         complex<double> polyVal = complex<double>(0,0);
         for(int deg = 0; deg <= k; deg ++)
@@ -99,7 +99,7 @@ void optimal_param_RB(double phi, double phi1, double p, double q, double log_ep
     double sqrt_phi1 = min(sqrt(phi1), threshold - sqrt_phi);
     double sqrt_phibar;
     double sqrt_phibar1;
-    double f_bar;
+    double f_bar = 0;
     int admRegion;
 
     if(p < 1e-14 && q < 1e-14) {
@@ -262,7 +262,7 @@ complex<double> lti(complex<double> lambda, double alpha, double beta, int k){
         {return a.phi_star < b.phi_star;});
 
 
-    for (int i = 0; i < temp_s_star_vec.size(); i++) {
+    for (int i = 0; i < (int) temp_s_star_vec.size(); i++) {
         if(temp_s_star_vec[i].phi_star > 1e-15) {
             s_star_vec [i] = temp_s_star_vec[i];
         }
@@ -286,7 +286,7 @@ complex<double> lti(complex<double> lambda, double alpha, double beta, int k){
                                         numeric_limits<double>::infinity()});
 
     vector<int> admissable_regions;
-    for(int i = 0; i < s_star_vec.size() - 1; i++) {
+    for(int i = 0; i < (int) s_star_vec.size() - 1; i++) {
         if(s_star_vec[i].phi_star < (log_epsilon - log_eps) && s_star_vec[i].phi_star < s_star_vec[i+1].phi_star){
         admissable_regions.push_back(i);
         }
@@ -365,7 +365,7 @@ complex<double> lti(complex<double> lambda, double alpha, double beta, int k){
 
     vector<s_star_struct> ss_star;
 
-    for(int i = index + 1; i < s_star_vec.size() - 1; i++) {
+    for(int i = index + 1; i < (int) s_star_vec.size() - 1; i++) {
         ss_star.push_back(s_star_vec[i]);
     }
     complex<double> res = residues(alpha, beta, ss_star, k);
@@ -437,7 +437,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
     int count = 0;
 
-    for(int i = 0; i < absSumArgs.size(); i++){
+    for(int i = 0; i < (int) absSumArgs.size(); i++){
         if(absSumArgs[i] > EPS16/2){
             iAbsSumArg[i] = true;
             count++;
@@ -451,7 +451,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
     vector<double> filterAbsSumArg;
     vector<complex<double>> filterSumArg;
-    for (int i = 0; i < absSumArgs.size(); ++i) {
+    for (int i = 0; i < (int) absSumArgs.size(); ++i) {
         if (iAbsSumArg[i]) {
             filterAbsSumArg.push_back(absSumArgs[i]);
             filterSumArg.push_back(sumArgs[i]);
@@ -467,7 +467,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
     vector<double> sortAbsSumArg(filterAbsSumArg.size());
     vector<complex<double>> sortSumArg(filterSumArg.size());
-    for (size_t i = 0; i < filterAbsSumArg.size(); ++i) {
+    for (int i = 0; i < (int) filterAbsSumArg.size(); ++i) {
         sortAbsSumArg[i] = filterAbsSumArg[indices[i]];
         sortSumArg[i] = filterSumArg[indices[i]];
     }
@@ -490,7 +490,7 @@ complex<double> series_expansion(complex<double> z, double alpha, double beta, b
 
     //Err_Round1
     double sumJJAbs = 0.0;
-    for (size_t i = 0; i < sortAbsSumArg.size(); ++i) {
+    for (int i = 0; i < (int) sortAbsSumArg.size(); ++i) {
         sumJJAbs += JJ[i] * abs(sortAbsSumArg[i]);
     }
     Err_Round1 = sumJJAbs * EPS16;

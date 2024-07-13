@@ -55,7 +55,7 @@ dense_vector dense_vector::operator/= (double x) {
 
 dense_vector dense_vector::operator-(const dense_vector& other) const {
     dense_vector result(this->size);
-    for (int i = 0; i < this->values.size(); i++) {
+    for (int i = 0; i < this->size; i++) {
         result.insertValue(i, this->values[i] - other.values[i]);
     }
     return result;
