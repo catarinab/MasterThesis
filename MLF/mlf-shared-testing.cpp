@@ -9,7 +9,7 @@
 
 using namespace std;
 
-dense_vector juliares;
+dense_vector matlabRes;
 
 //Calculate the approximation of MLF(A)*b
 dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double betaVal) {
@@ -20,12 +20,12 @@ dense_vector getApproximation(dense_matrix V, const dense_matrix& mlfH, double b
     return denseMatrixMult(V, mlfH).getCol(0);
 }
 
-void readJuliaVec(const string& filename = "juliares.txt") {
+void readVec(const string& filename) {
     ifstream inputFile(filename);
     if (inputFile) {
         double value;
         while (inputFile >> value) {
-            juliares.values.push_back(value);
+            matlabRes.values.push_back(value);
         }
         inputFile.close();
     }
@@ -39,9 +39,9 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
         if(strcmp(argv[i], "-k") == 0) {
             *krylovDegree = stoi(argv[i+1]);
         }
-        else if(strcmp(argv[i], "-m") == 0) {
-            *mtxPath = "A-" + std::string(argv[i + 1]) + ".mtx";
-            *juliaPath = "juliares-" + std::string(argv[i + 1]) + ".txt";
+        else if(strcmp(argv[i], "-p") == 0) {
+            *mtxPath = std::string(argv[i + 1]) + ".mtx";
+            *juliaPath = std::string(argv[i + 1]) + "-res.txt";
         }
     }
 }
@@ -49,14 +49,12 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
 
 int main (int argc, char* argv[]) {
     double exec_time_schur, exec_time_arnoldi, exec_time;
-
-    double t = 1;
     //input values
-    double alpha = 0.15135433606127727;
-    double beta = 1;
+    double alpha = 0.8;
+    double beta = 0;
 
     string mtxPath;
-    string juliaPath;
+    string vectorPath;
     int krylovDegree;
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
@@ -64,12 +62,17 @@ int main (int argc, char* argv[]) {
 
 
     if(argc != 5){
-        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -m <mtxSize>" << endl;
+        cerr << "Usage: " << argv[0] << " -k <krylov-degree> -p <problemName>" << endl;
         return 1;
     }
 
-    processArgs(argc, argv, &krylovDegree, &mtxPath, &juliaPath);
-    readJuliaVec(juliaPath);
+    processArgs(argc, argv, &krylovDegree, &mtxPath, &vectorPath);
+
+    cerr << "krylov degree: " << krylovDegree << endl;
+    cerr << "mtxPath: " << mtxPath << endl;
+    cerr << "vectorPath: " << vectorPath << endl;
+
+    readVec(vectorPath);
 
     //initializations of needed matrix and vectors
     csr_matrix A = buildFullMatrix(mtxPath);
@@ -99,15 +102,14 @@ int main (int argc, char* argv[]) {
 
     exec_time += omp_get_wtime();
 
-    dense_vector diff = res - juliares;
+    dense_vector diff = res - matlabRes;
 
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
-    double trueNorm = cblas_dnrm2(size, juliares.values.data(), 1);
+    double trueNorm = cblas_dnrm2(size, matlabRes.values.data(), 1);
 
     cout << exec_time_schur << "," << std::scientific << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
-
 
     return 0;
 }
