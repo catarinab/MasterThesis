@@ -40,8 +40,8 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
             *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-p") == 0) {
-            *mtxPath = std::string(argv[i + 1]) + ".mtx";
-            *juliaPath = std::string(argv[i + 1]) + "-res.txt";
+            *mtxPath = "problems/" + std::string(argv[i + 1]) + ".mtx";
+            *juliaPath = "problems/" + std::string(argv[i + 1]) + "-res.txt";
         }
     }
 }
