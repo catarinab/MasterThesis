@@ -48,7 +48,6 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
 
 
 int main (int argc, char* argv[]) {
-    double exec_time_schur, exec_time_arnoldi, exec_time;
     //input values
     double alpha = 0.8;
     double beta = 0;
@@ -85,17 +84,11 @@ int main (int argc, char* argv[]) {
     dense_matrix V(size, krylovDegree);
     dense_matrix H(krylovDegree, krylovDegree);
 
-    exec_time = -omp_get_wtime();
-    exec_time_arnoldi = -omp_get_wtime();
     arnoldiIteration(A, b, krylovDegree, size, &V, &H);
-    exec_time_arnoldi += omp_get_wtime();
 
-    exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
 
     dense_vector res = getApproximation(V, mlfH, betaVal);
-
-    exec_time += omp_get_wtime();
 
     dense_vector diff = res - matlabRes;
 
