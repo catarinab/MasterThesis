@@ -80,7 +80,6 @@ int main (int argc, char* argv[]) {
 
     dense_vector b = dense_vector(size);
     b.insertValue(0, 1);
-    //b.insertValue(floor(size/2), 1);
     double betaVal = b.getNorm2();
 
     dense_matrix V(size, krylovDegree);
@@ -91,12 +90,8 @@ int main (int argc, char* argv[]) {
     arnoldiIteration(A, b, krylovDegree, size, &V, &H);
     exec_time_arnoldi += omp_get_wtime();
 
-    H = -H;
-
     exec_time_schur = -omp_get_wtime();
     dense_matrix mlfH = calculate_MLF((double *) H.getDataPointer(), alpha, beta, krylovDegree);
-
-    exec_time_schur += omp_get_wtime();
 
     dense_vector res = getApproximation(V, mlfH, betaVal);
 
@@ -107,7 +102,7 @@ int main (int argc, char* argv[]) {
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, matlabRes.values.data(), 1);
 
-    cout << exec_time_schur << "," << std::scientific << (double) diffNorm / trueNorm << endl;
+    cout << std::scientific << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
