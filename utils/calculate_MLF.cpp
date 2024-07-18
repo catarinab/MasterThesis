@@ -24,56 +24,6 @@ complex<double> betaMult = {0, 0};
 
 bool hasPrinted = false;
 
-void printMtxFile(std::complex<double> *F, int idx, int elSize, int mtxSize) {
-    if(!F)
-        return;
-    char filename[100];
-    std::sprintf(filename, "blocks/block-%d-%d-%d.mtx", idx, elSize, mtxSize);
-
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << filename << " for writing.\n";
-        return;
-    }
-
-    int nz = elSize * (elSize + 1) / 2 + (elSize - 1);
-
-    file << "%%MatrixMarket matrix coordinate complex general\n";
-    file << elSize << " " << elSize << " " << nz << "\n";
-
-    for (int col = 0; col < elSize; ++col) {
-        for (int row = 0; row < elSize; ++row) {
-            std::complex<double> value = F[col + row * elSize];
-            if (value != std::complex<double>(0.0, 0.0))
-                file << row + 1 << " " << col + 1 << " " << value.real() << " " << value.imag() << "\n";
-        }
-    }
-
-    file.close();
-}
-
-void printInfoFile(std::complex<double> *F, int idx, int elSize, int mtxSize) {
-    if(!F)
-        return;
-    char filename[100];
-    std::sprintf(filename, "blocks/block-%d-%d-%d.txt", idx, elSize, mtxSize);
-
-    std::ofstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << filename << " for writing.\n";
-        return;
-    }
-
-    double rcond = 0;
-
-    LAPACKE_ztrcon(LAPACK_COL_MAJOR, '1', 'U', 'N', elSize, reinterpret_cast<const MKL_Complex16 *>(F), elSize, &rcond);
-
-    file << "Condition number: " << rcond << endl;
-
-    file.close();
-
-}
-
 void getSubMatrix(complex<double> ** subMatrix, complex<double> * matrix, int rowMin, int rowMax, int colMin, int colMax, int size) {
     int subRows = rowMax - rowMin + 1;
     int subCols = colMax - colMin + 1;
@@ -228,6 +178,10 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         //P = P*N/(k+1);
         for(int ii = 0; ii < elSize; ii++){
             for(int j = 0; j < elSize; j++){
+                if(isnan(P[ii + j * elSize].real()) || isnan(P[ii + j * elSize].imag())){
+                    cout << "NAN" << endl;
+                    break;
+                }
                 F[ii + j * elSize] = F[ii + j * elSize] +  P[ii + j * elSize] * f;
                 F_F_old[ii + j * elSize] = F[ii + j * elSize] - F_old[ii + j * elSize];
             }
