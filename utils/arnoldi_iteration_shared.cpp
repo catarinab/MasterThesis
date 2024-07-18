@@ -15,7 +15,7 @@
 int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, int m, dense_matrix * V,
                      dense_matrix * H) {
 
-    int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(),SPARSE_OPERATION_NON_TRANSPOSE,A.getMKLDescription(),
+    int stat = mkl_sparse_set_mv_hint(A.getMKLSparseMatrix(), SPARSE_OPERATION_NON_TRANSPOSE, A.getMKLDescription(),
                                       k_total);
 
     if (stat != SPARSE_STATUS_SUCCESS) {
@@ -35,22 +35,22 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
     int k;
 
     //auxiliary
-    auto* w = (double *) malloc(m * sizeof(double));
+    auto *w = (double *) malloc(m * sizeof(double));
     double *vCol;
     double dotProd;
     double tempNorm;
 
-    for(k = 1; k < k_total + 1; k++) {
+    for (k = 1; k < k_total + 1; k++) {
         tempNorm = 0;
         dotProd = 0;
-        V->getCol(k-1, &vCol);
+        V->getCol(k - 1, &vCol);
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         vCol, 0.0, w);
 
 
         #pragma omp parallel shared(V, H, w, dotProd, tempNorm) private(vCol)
         {
-            for(int j = 0; j < k; j++) {
+            for (int j = 0; j < k; j++) {
                 V->getCol(j, &vCol);
 
                 //dotprod between w and V->getCol(j)
@@ -60,7 +60,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 }
 
                 #pragma omp for
-                for(int i = 0; i < m; i++) {
+                for (int i = 0; i < m; i++) {
                     w[i] -= vCol[i] * dotProd;
                 }
 
@@ -71,17 +71,16 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
                 };
             }
 
-            if(k < k_total) {
+            if (k < k_total) {
                 //calculate ||w||
                 #pragma omp for reduction(+:tempNorm)
-                for(int i = 0; i < m; i++) {
+                for (int i = 0; i < m; i++) {
                     tempNorm += w[i] * w[i];
                 }
                 double wNorm = sqrt(tempNorm);
 
                 //only change V and H if ||w|| != 0
-                if(wNorm != 0) 0
-
+                if (wNorm != 0) {
                     //V(:, k) = w / ||w||
                     V->getCol(k, &vCol);
                     #pragma omp for nowait
@@ -91,12 +90,12 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
 
                     //H(k, k-1) = wNorm
                     #pragma omp single
-                        H->setValue(k, k - 1, wNorm);
+                    H->setValue(k, k - 1, wNorm);
                 }
             }
         }
-
     }
+
     free(w);
 
     return k;
