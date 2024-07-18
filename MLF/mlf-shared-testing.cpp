@@ -49,15 +49,15 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
 
 int main (int argc, char* argv[]) {
     //input values
-    double alpha = 0.8;
+    double alpha = 0.6;
     double beta = 0;
 
     string mtxPath;
     string vectorPath;
     int krylovDegree;
 
-    cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
-    cerr << "omp max threads: " << omp_get_max_threads() << endl;
+    /*cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
+    cerr << "omp max threads: " << omp_get_max_threads() << endl;*/
 
 
     if(argc != 5){
@@ -67,9 +67,9 @@ int main (int argc, char* argv[]) {
 
     processArgs(argc, argv, &krylovDegree, &mtxPath, &vectorPath);
 
-    cerr << "krylov degree: " << krylovDegree << endl;
+    /*cerr << "krylov degree: " << krylovDegree << endl;
     cerr << "mtxPath: " << mtxPath << endl;
-    cerr << "vectorPath: " << vectorPath << endl;
+    cerr << "vectorPath: " << vectorPath << endl;*/
 
     readVec(vectorPath);
 
