@@ -169,6 +169,10 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
+        if(isnan(f.real()) || isnan(f.imag())){
+            cout << "NAN" << endl;
+            break;
+        }
 
         //F_old = F
         memcpy(F_old, F, elSize * elSize * sizeof(complex<double>));
