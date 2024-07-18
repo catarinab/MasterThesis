@@ -169,7 +169,7 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         double norm_F_old;
         double norm_F;
         f = evaluateSingle(lambda, alpha, beta, k);
-        if(isnan(f.real()) || isnan(f.imag())){
+        if(isnan(f.real()) || isnan(f.imag()) || isinf(f.real()) || isinf(f.imag())){
             cout << "NAN" << endl;
             break;
         }
@@ -182,10 +182,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         //P = P*N/(k+1);
         for(int ii = 0; ii < elSize; ii++){
             for(int j = 0; j < elSize; j++){
-                if(isnan(P[ii + j * elSize].real()) || isnan(P[ii + j * elSize].imag())){
-                    cout << "NAN" << endl;
-                    break;
-                }
                 F[ii + j * elSize] = F[ii + j * elSize] +  P[ii + j * elSize] * f;
                 F_F_old[ii + j * elSize] = F[ii + j * elSize] - F_old[ii + j * elSize];
             }
