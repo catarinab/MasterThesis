@@ -16,7 +16,7 @@ csr_matrix buildInverseDiagonalMatrix(const string& input_file) {
     std::ifstream file(input_file); // Open file for reading
 
     if (!file.is_open()) {
-        std::cerr << "Failed to open the file." << std::endl;
+        std::cerr << "Failed to open the file." << input_file << std::endl;
         exit(1);
     }
     std::string line;
