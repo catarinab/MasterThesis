@@ -109,6 +109,7 @@ int * csr_matrix::getRowPtr() const {
 
 void csr_matrix::saveMatrixMarketFile(string & filename) {
     ofstream file(filename);
+    cout << "Saving matrix to file: " << filename << endl;
     file << "%%MatrixMarket matrix coordinate real general" << endl;
     file << this->size << " " << this->size << " " << this->nz << endl;
     for (int i = 0; i < this->size; i++) {
