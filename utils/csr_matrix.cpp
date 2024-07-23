@@ -61,10 +61,10 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
 
 void csr_matrix::convertInternal() {
     mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO,
-                            reinterpret_cast<int *>(&this->size),
-                            reinterpret_cast<int *>(&this->size), reinterpret_cast<int **>(this->pointerB.data()),
-                            reinterpret_cast<int **>(this->pointerE.data()),
-                            reinterpret_cast<int **>(this->colIndex.data()),
+                            reinterpret_cast<long long int *>(&this->size),
+                            reinterpret_cast<long long int *>(&this->size), reinterpret_cast<long long int **>(this->pointerB.data()),
+                            reinterpret_cast<long long int **>(this->pointerE.data()),
+                            reinterpret_cast<long long int **>(this->colIndex.data()),
                             reinterpret_cast<double **>(this->nzValues.data()));
 }
 
