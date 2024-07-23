@@ -58,7 +58,7 @@ int main (int argc, char* argv[]) {
 
     B.convertInternal(size);
 
-    B.printAttr();
+    //B.printAttr();
 
     csr_matrix A = csr_matrix();
     mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, M.getMKLSparseMatrix(), B.getMKLSparseMatrix(),
@@ -66,7 +66,7 @@ int main (int argc, char* argv[]) {
 
     A.convertInternal(size);
 
-    A.printAttr();
+    //A.printAttr();
 
 
     A.saveMatrixMarketFile((string &) "A-lamp-0.18.mtx");
