@@ -60,7 +60,7 @@ int main (int argc, char* argv[]) {
     mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, M.getMKLSparseMatrix(), B.getMKLSparseMatrix(),
                     A.getMKLSparseMatrixPointer());
 
-    A.saveMatrixMarketFile((string &) "A.mtx");
+    A.saveMatrixMarketFile((string &) "A-lamp-0.18.mtx");
 
     mkl_sparse_destroy(B.getMKLSparseMatrix());
     mkl_sparse_destroy(M.getMKLSparseMatrix());
