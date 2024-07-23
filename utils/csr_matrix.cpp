@@ -64,12 +64,19 @@ void csr_matrix::convertInternal(int sizel) {
     this->pointerB = vector<long long int>(sizel);
     this->pointerE = vector<long long int>(sizel);
     this->nzValues = vector<double>(sizel);
+    long long int * bPtr = this->pointerB.data();
+    long long int ** bPtrPtr = &bPtr;
+    long long int * ePtr = this->pointerE.data();
+    long long int ** ePtrPtr = &ePtr;
+    long long int * colPtr = this->colIndex.data();
+    long long int ** colPtrPtr = &colPtr;
+    double * nzPtr = this->nzValues.data();
+    double ** nzPtrPtr = &nzPtr;
+
+
     int status = mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO,
-                            reinterpret_cast<long long int *>(&this->size),
-                            reinterpret_cast<long long int *>(&this->size), reinterpret_cast<long long int **>(this->pointerB.data()),
-                            reinterpret_cast<long long int **>(this->pointerE.data()),
-                            reinterpret_cast<long long int **>(this->colIndex.data()),
-                            reinterpret_cast<double **>(this->nzValues.data()));
+                            &this->size, &this->size, bPtrPtr, ePtrPtr,
+                                         colPtrPtr, nzPtrPtr);
 
     cout << "status: " << status << endl;
 }

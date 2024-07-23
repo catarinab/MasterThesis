@@ -27,9 +27,6 @@ void processArgs(int argc, char* argv[], string * mtxName) {
 
 int main (int argc, char* argv[]) {
 
-    int alpha = 1;
-    int beta = 1;
-
 
     cerr << "mkl max threads: " << mkl_get_max_threads() << endl;
     cerr << "omp max threads: " << omp_get_max_threads() << endl;
