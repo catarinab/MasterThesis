@@ -56,6 +56,10 @@ int main (int argc, char* argv[]) {
 
     //A = - M^-1 B
 
+    B.convertInternal();
+
+    B.printAttr();
+
     csr_matrix A = csr_matrix();
     mkl_sparse_spmm(SPARSE_OPERATION_NON_TRANSPOSE, M.getMKLSparseMatrix(), B.getMKLSparseMatrix(),
                     A.getMKLSparseMatrixPointer());
