@@ -42,7 +42,7 @@ public:
 
     void saveMatrixMarketFile(string & filename);
 
-    void convertInternal();
+    void convertInternal(int sizel);
 };
 
 #endif // CSR_MATRIX_HPP
