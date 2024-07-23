@@ -60,7 +60,7 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
 }
 
 void csr_matrix::convertInternal() {
-    mkl_sparse_d_export_csr(this->mklSparseMatrix, SPARSE_INDEX_BASE_ZERO, &this->size, &this->size, &this->pointerB,
+    mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO, &this->size, &this->size, &this->pointerB,
                             &this->pointerE, &this->colIndex, &this->nzValues);
 }
 
