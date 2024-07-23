@@ -52,7 +52,7 @@ int main (int argc, char* argv[]) {
     mkl_sparse_destroy(C.getMKLSparseMatrix());
     mkl_sparse_destroy(D.getMKLSparseMatrix());
 
-    csr_matrix M = buildInverseDiagonalMatrix(mtxPath + "-mass.mtx");
+    csr_matrix M = buildInverseDiagonalMatrix(mtxPath + "-mass.vec");
 
     //A = - M^-1 B
 
