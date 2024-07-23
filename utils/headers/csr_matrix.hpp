@@ -41,6 +41,8 @@ public:
     [[nodiscard]] matrix_descr getMKLDescription() const;
 
     void saveMatrixMarketFile(string & filename);
+
+    void convertInternal();
 };
 
 #endif // CSR_MATRIX_HPP

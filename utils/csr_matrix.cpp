@@ -59,6 +59,11 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
     return rowValues;
 }
 
+void csr_matrix::convertInternal() {
+    mkl_sparse_d_export_csr(this->mklSparseMatrix, SPARSE_INDEX_BASE_ZERO, &this->size, &this->size, &this->pointerB,
+                            &this->pointerE, &this->colIndex, &this->nzValues);
+}
+
 void csr_matrix::printAttr() const{
     cout << "size: " << this->size << endl;
     cout << "nz: " << this->nz << endl;
