@@ -60,12 +60,12 @@ vector<SparseTriplet> csr_matrix::getRow(int row) {
 }
 
 void csr_matrix::convertInternal() {
-    long long int * rows_start_ptr = this->pointerB.data();
-    long long int * rows_end_ptr = this->pointerE.data();
-    long long int * col_indx_ptr = this->colIndex.data();
-    double * values_ptr = this->nzValues.data();
-    mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO, &this->size,
-                            &this->size, &rows_start_ptr, &rows_end_ptr, &col_indx_ptr, &values_ptr);
+    mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO,
+                            reinterpret_cast<int *>(&this->size),
+                            reinterpret_cast<int *>(&this->size), reinterpret_cast<int **>(this->pointerB.data()),
+                            reinterpret_cast<int **>(this->pointerE.data()),
+                            reinterpret_cast<int **>(this->colIndex.data()),
+                            reinterpret_cast<double **>(this->nzValues.data()));
 }
 
 void csr_matrix::printAttr() const{
