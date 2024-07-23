@@ -11,6 +11,8 @@
 using namespace std;
 
 //build sparse matrix from matrix market file
+csr_matrix buildInverseDiagonalMatrix(const string& input_file);
+
 csr_matrix buildFullMatrix(const string& input_file);
 
 csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, int * counts);

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <omp.h>
 #include <cstring>
-#include <fstream>
 
 #include "../utils/headers/mtx_ops_mkl.hpp"
 #include "../utils/headers/calculate_MLF.hpp"

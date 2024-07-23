@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <mkl.h>
+#include <fstream>
 
 #include "headers/dense_vector.hpp"
 #include "headers/dense_matrix.hpp"
@@ -11,7 +12,39 @@
 
 using namespace std;
 
-//build sparse matrix from matrix market file
+csr_matrix buildInverseDiagonalMatrix(const string& input_file) {
+    std::ifstream file(input_file); // Open file for reading
+
+    if (!file.is_open()) {
+        std::cerr << "Failed to open the file." << std::endl;
+        exit(1);
+    }
+    std::string line;
+
+    std::getline(file, line);
+
+    int size = stoi(line);
+    csr_matrix csr(size);
+    int lineNr = 0;
+
+    vector<vector<SparseTriplet>> rowValues;
+    rowValues.resize(size);
+
+    while (std::getline(file, line)) {
+        SparseTriplet triplet(lineNr, lineNr, 1/stod(line));
+        rowValues[lineNr].push_back(triplet);
+        lineNr++;
+    }
+
+    file.close();
+
+    for (int i = 0; i < (int) rowValues.size(); i++) {
+        csr.insertRow(rowValues[i], i);
+    }
+    csr.defineMKLSparseMatrix();
+    return csr;
+}
+
 csr_matrix buildFullMatrix(const string& input_file) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFileFullMtx(input_file, &rows, &cols, &nz);

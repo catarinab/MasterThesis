@@ -243,14 +243,6 @@ complex<double> * evaluateBlock(complex<double> * T, double alpha, double beta,
         }
     }
 
-    /*std::ofstream outfile;
-
-    char filename[100];
-    std::sprintf(filename, "blocks/block-%d-%d-%d.txt", i, elSize, tSize);
-
-    outfile.open(filename, std::ios_base::app);
-    outfile <<  "DIDNT CONVERGE" << endl;
-    outfile.close();*/
     if(!hasPrinted) {
         cout << "DIDNT CONVERGE, ";
         hasPrinted = true;

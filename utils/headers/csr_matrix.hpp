@@ -32,11 +32,15 @@ public:
     void insertRow(vector<SparseTriplet> row, int rowId);
     vector<SparseTriplet> getRow(int row);
     void printAttr() const;
+    [[nodiscard]] double getValue(int row, int col) const;
+    int * getRowPtr() const;
 
     void defineMKLSparseMatrix();
     [[nodiscard]] sparse_matrix_t getMKLSparseMatrix() const;
     [[nodiscard]] sparse_matrix_t * getMKLSparseMatrixPointer();
     [[nodiscard]] matrix_descr getMKLDescription() const;
+
+    void saveMatrixMarketFile(string & filename);
 };
 
 #endif // CSR_MATRIX_HPP

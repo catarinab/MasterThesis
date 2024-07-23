@@ -1,4 +1,5 @@
 #include "headers/csr_matrix.hpp"
+#include <fstream>
 
 using namespace std;
 
@@ -89,4 +90,31 @@ void csr_matrix::printAttr() const{
         cout << i << " ";
     }
     cout << endl;
+}
+
+double csr_matrix::getValue(int row, int col) const {
+    long long int start = this->rowPtr[row];
+    long long int end = this->rowPtr[row + 1];
+    for (long long int i = start; i < end; i++) {
+        if (this->colIndex[i] == col) {
+            return this->nzValues[i];
+        }
+    }
+    return 0;
+}
+
+int * csr_matrix::getRowPtr() const {
+    return (int *) this->rowPtr.data();
+}
+
+void csr_matrix::saveMatrixMarketFile(string & filename) {
+    ofstream file(filename);
+    file << "%%MatrixMarket matrix coordinate real general" << endl;
+    file << this->size << " " << this->size << " " << this->nz << endl;
+    for (int i = 0; i < this->size; i++) {
+        for (int j = (int) this->rowPtr[i]; j < this->rowPtr[i + 1]; j++) {
+            file << i + 1 << " " << this->colIndex[j] + 1 << " " << this->nzValues[j] << endl;
+        }
+    }
+    file.close();
 }
