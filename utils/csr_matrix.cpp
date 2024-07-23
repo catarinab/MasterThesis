@@ -63,6 +63,7 @@ void csr_matrix::convertInternal(int sizel) {
     this->colIndex = vector<long long int>(sizel);
     this->pointerB = vector<long long int>(sizel);
     this->pointerE = vector<long long int>(sizel);
+    this->nzValues = vector<double>(sizel);
     int status = mkl_sparse_d_export_csr(this->mklSparseMatrix, (sparse_index_base_t *) SPARSE_INDEX_BASE_ZERO,
                             reinterpret_cast<long long int *>(&this->size),
                             reinterpret_cast<long long int *>(&this->size), reinterpret_cast<long long int **>(this->pointerB.data()),
