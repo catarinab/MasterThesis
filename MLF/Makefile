@@ -9,6 +9,7 @@ CFLAGSCubature= -I ../cubature
 DEBUG = -g
 
 TARGET=mlf-distr.out
+TARGETLAMP=mlf-shared-lamp.out
 TARGETV2=mlf-distr-v2.out
 TARGETV3=mlf-distr-v3.out
 TARGETV4=mlf-distr-v4.out
@@ -136,7 +137,7 @@ mlf-shared: $(OBJS_SHARED)
 
 
 mlf-shared-lamp: $(OBJS_SHARED_LAMP)
-	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
+	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETLAMP)
 	@echo "$(GREEN)Compiled Mittag-Leffler computation shared version: $(TARGETSHARED) $(NORMAL)"
 
 mlf-shared-cblas: $(OBJS_SHARED_CBLAS)
