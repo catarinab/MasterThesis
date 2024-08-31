@@ -11,20 +11,13 @@
 using namespace std;
 
 //build sparse matrix from matrix market file
-csr_matrix buildInverseDiagonalMatrix(const string& input_file);
-
 csr_matrix buildFullMatrix(const string& input_file);
 
 csr_matrix buildPartialMatrix(const string& input_file, int me, int * displs, int * counts);
 
 csr_matrix buildPartIndentityMatrix(int me, int * displs, int * counts);
 
-void checkValues(int a, int b, const string& func);
-
 dense_matrix solveEq(const dense_matrix& A, const dense_matrix& b);
-
-//multiply dense matrix and dense vector
-dense_vector denseMatrixVec(const dense_matrix& A, const dense_vector& b);
 
 //multiply two dense matrices
 dense_matrix denseMatrixMult(const dense_matrix& A, const dense_matrix& B) ;

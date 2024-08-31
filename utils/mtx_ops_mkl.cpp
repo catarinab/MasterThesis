@@ -12,39 +12,6 @@
 
 using namespace std;
 
-csr_matrix buildInverseDiagonalMatrix(const string& input_file) {
-    std::ifstream file(input_file); // Open file for reading
-
-    if (!file.is_open()) {
-        std::cerr << "Failed to open the file." << input_file << std::endl;
-        exit(1);
-    }
-    std::string line;
-
-    std::getline(file, line);
-
-    int size = stoi(line);
-    csr_matrix csr(size);
-    int lineNr = 0;
-
-    vector<vector<SparseTriplet>> rowValues;
-    rowValues.resize(size);
-
-    while (std::getline(file, line)) {
-        SparseTriplet triplet(lineNr, lineNr, 1/stod(line));
-        rowValues[lineNr].push_back(triplet);
-        lineNr++;
-    }
-
-    file.close();
-
-    for (int i = 0; i < (int) rowValues.size(); i++) {
-        csr.insertRow(rowValues[i], i);
-    }
-    csr.defineMKLSparseMatrix();
-    return csr;
-}
-
 csr_matrix buildFullMatrix(const string& input_file) {
     long long int rows, cols, nz;
     vector<vector<SparseTriplet>> rowValues = readFileFullMtx(input_file, &rows, &cols, &nz);
@@ -77,6 +44,7 @@ csr_matrix buildPartIndentityMatrix(int me, int * displs, int * counts) {
 }
 
 dense_matrix solveEq(const dense_matrix& A, const dense_matrix& b) {
+    //solve Ax = b
     vector<lapack_int> ipiv(A.getRowVal());
     LAPACKE_dgetrf(LAPACK_COL_MAJOR, A.getRowVal(), A.getColVal(), (double *) A.getDataPointer(),
                    A.getRowVal(), ipiv.data());
@@ -143,8 +111,8 @@ void sparseMatrixVector(const csr_matrix& matrix, const dense_vector& vec, dense
                     vec.values.data(), 0.0, res.values.data());
 }
 
-//a = a + scalar*x
-//this function could be used to add or subtract vectors (only the vector x is multiplied by the scalar)
+//a = a + scalar*b
+//this function could be used to add or subtract vectors (only the vector b is multiplied by the scalar)
 void addVec(dense_vector& a, const dense_vector& b, double scalar, int size) {
     cblas_daxpy(size, scalar, b.values.data(), 1, a.values.data(), 1);
 }
