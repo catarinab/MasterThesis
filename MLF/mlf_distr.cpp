@@ -87,8 +87,10 @@ int main (int argc, char* argv[]) {
     exec_time += omp_get_wtime();
 
     if(me == 0) {
-        cout << exec_time_arnoldi << "," << exec_time_schur << "," << exec_time << endl;
-        cerr << b.getNorm2() << endl;
+        printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
+        printf("exec_time_schur: %f\n", exec_time_schur);
+        printf("exec_time: %f\n", exec_time);
+        cout << "result norm: " << b.getNorm2() << endl;
     }
 
     free(displs);

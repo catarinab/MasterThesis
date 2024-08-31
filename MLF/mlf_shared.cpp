@@ -69,7 +69,10 @@ int main (int argc, char* argv[]) {
 
     exec_time += omp_get_wtime();
 
-    cout << exec_time_arnoldi << "," << exec_time_schur << "," << res.getNorm2() << endl;
+    printf("exec_time_arnoldi: %f\n", exec_time_arnoldi);
+    printf("exec_time_schur: %f\n", exec_time_schur);
+    printf("exec_time: %f\n", exec_time);
+    cout << "result norm: " << res.getNorm2() << endl;
 
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());

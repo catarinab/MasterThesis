@@ -30,7 +30,7 @@ void readVec(const string& filename) {
         inputFile.close();
     }
     else {
-        cout << "Error opening julia vector file" << endl;
+        cout << "Error opening vector file" << endl;
     }
 }
 
@@ -40,8 +40,8 @@ void processArgs(int argc, char* argv[], int * krylovDegree, string * mtxPath, s
             *krylovDegree = stoi(argv[i+1]);
         }
         else if(strcmp(argv[i], "-p") == 0) {
-            *mtxPath = "problems/" + std::string(argv[i + 1]) + ".mtx";
-            *juliaPath = "problems/" + std::string(argv[i + 1]) + "-res.txt";
+            *mtxPath = std::string(argv[i + 1]) + ".mtx";
+            *juliaPath = std::string(argv[i + 1]) + "-res.txt";
         }
     }
 }
@@ -95,7 +95,7 @@ int main (int argc, char* argv[]) {
     double diffNorm = cblas_dnrm2(size, diff.values.data(), 1);
     double trueNorm = cblas_dnrm2(size, matlabRes.values.data(), 1);
 
-    cout << std::scientific << (double) diffNorm / trueNorm << endl;
+    cout << "Relative error: " << std::scientific << (double) diffNorm / trueNorm << endl;
     
     mkl_sparse_destroy(A.getMKLSparseMatrix());
 
