@@ -34,6 +34,7 @@ int arnoldiIteration(const csr_matrix& A, dense_vector& initVec, int k_total, in
         mkl_sparse_d_mv(SPARSE_OPERATION_NON_TRANSPOSE, 1.0, A.getMKLSparseMatrix(), A.getMKLDescription(),
                         z, 0.0, privZ);
         for(int j = 0; j <= k; j++) {
+            //dense matrix was done to be column major so you only have to get the pointer to initial item
             V->getCol(j, &vCol);
 
             dotProd = cblas_ddot(counts[me], privZ, 1, vCol, 1);

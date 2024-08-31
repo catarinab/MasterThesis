@@ -62,10 +62,6 @@ class dense_matrix {
     [[nodiscard]] int getColVal() const;
     double getNorm2();
 
-    void printVector(const string& filename);
-    void readVector(const string& currFolder);
-    void printMatrix(const string &name);
-
     dense_matrix operator/ (double x);
     dense_matrix operator* (double x);
     dense_matrix operator- () const;
@@ -74,12 +70,6 @@ class dense_matrix {
     double *getValues();
 
     void getCol(int col, double **ptr, int startingRow);
-
-    void setCol(int col, const double *ptr);
-
-    void setCol(int col, double *ptr, int elements);
-
-    void setCol(int col, const double *ptr, int changedRows);
 
     void setCol(int col, dense_vector &vec, int start, int count);
 

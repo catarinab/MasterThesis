@@ -9,7 +9,6 @@ CFLAGSCubature= -I ../cubature
 DEBUG = -g
 
 TARGET=mlf-distr.out
-TARGETLAMP=mlf-shared-lamp.out
 TARGETV2=mlf-distr-v2.out
 TARGETV3=mlf-distr-v3.out
 TARGETV4=mlf-distr-v4.out
@@ -33,10 +32,6 @@ OBJDIR_DISTR = obj_distr
 SRCS_SHARED = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
               ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
               ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp mlf_shared.cpp
-
-SRCS_SHARED_LAMP = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
-              ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
-              ../utils/calculate_MLF.cpp ../utils/mittag_leffler_scalar.cpp create-lamp.cpp
 
 SRCS_SHARED_TEST = ../utils/arnoldi_iteration_shared.cpp ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp \
               ../utils/dense_vector.cpp ../utils/io_ops.cpp ../utils/schur_blocking.cpp ../utils/mtx_ops_mkl.cpp \
@@ -73,7 +68,6 @@ SRCS_TEST_EIGEN = ../utils/csr_matrix.cpp ../utils/dense_matrix.cpp ../utils/den
 
 # Convert source files to object files in the object directory
 OBJS_SHARED = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED)))
-OBJS_SHARED_LAMP = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_LAMP)))
 OBJS_SHARED_CBLAS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_CBLAS)))
 OBJS_SHARED_TEST = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SRCS_SHARED_TEST)))
 OBJS_DISTR = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTR)))
@@ -81,9 +75,7 @@ OBJS_DISTR_V2 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV2))
 OBJS_DISTR_V3 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV3)))
 OBJS_DISTR_V4 = $(patsubst %.cpp, $(OBJDIR_DISTR)/%.o, $(notdir $(SRCS_DISTRV4)))
 
-all: mlf-shared mlf-distr
-
-lamp: mlf-shared-lamp
+all: mlf-shared mlf-distr mlf-shared-test
 
 distr: mlf-distr mlf-distr-v2 mlf-distr-v3
 
@@ -125,20 +117,12 @@ $(OBJDIR_DISTR)/mlf-distr-restarted-v4.o: mlf-distr-restarted-v4.cpp | $(OBJDIR_
 
 $(OBJDIR)/frac-krylov.o: frac-krylov.cpp | $(OBJDIR)
 	$(C++) $(CFLAGS) $(CFLAGSCubature) $(CFLAGSAutoDiff) $(CFLAGSEigen) -c $< -o $@
-
-$(OBJDIR)/create-lamp.o: create-lamp.cpp | $(OBJDIR)
-	$(C++) $(CFLAGS) -c $< -o $@
-
 # Targets
 
 mlf-shared: $(OBJS_SHARED)
 	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHARED)
 	@echo "$(GREEN)Compiled Mittag-Leffler computation shared version: $(TARGETSHARED) $(NORMAL)"
 
-
-mlf-shared-lamp: $(OBJS_SHARED_LAMP)
-	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETLAMP)
-	@echo "$(GREEN)Compiled Mittag-Leffler computation shared version: $(TARGETSHARED) $(NORMAL)"
 
 mlf-shared-cblas: $(OBJS_SHARED_CBLAS)
 	$(C++) $(CFLAGS) $(LINK) $^ -o $(TARGETSHAREDCBLAS)

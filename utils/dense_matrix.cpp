@@ -49,10 +49,6 @@ void dense_matrix::setCol(int col, dense_vector& vec, int start, int count){
     memcpy(this->values + col * this->rows, vec.values.data() + start, count * sizeof(double));
 }
 
-void dense_matrix::setCol(int col, double * ptr, int elements){
-    memcpy(this->values + col * this->rows, ptr, elements * sizeof(double));
-}
-
 //insert value in matrix
 void dense_matrix::setValue(int row, int col, double val){
     if(row >= this->rows || col >= this->cols) {
@@ -77,7 +73,6 @@ double * dense_matrix::getValues() {
 //get specific column (as a dense_vector)
 dense_vector dense_matrix::getCol(int col) {
     dense_vector res(this->rows);
-
     // Row major order
     for (int row = 0; row < this->rows; row++) {
         res.setValue(row, this->values[row + col * this->rows]);
@@ -88,14 +83,12 @@ dense_vector dense_matrix::getCol(int col) {
 
 //get specific column (in an existing dense_vector)
 void dense_matrix::getCol(int col, dense_vector * res) {
-#pragma omp parallel for
     for (int row = 0; row < this->rows; row++) {
         res->setValue(row, this->values[row + col * this->rows]);
     }
 }
 
 void dense_matrix::getCol(int col, vector<double>& res){
-#pragma omp for
     for (int row = 0; row < this->rows; row++) {
         res[row] = this->values[row + col * this->rows];
     }
@@ -112,41 +105,6 @@ void dense_matrix::getCol(int col, double ** ptr, int startingRow) {
 //get matrix norm2
 double dense_matrix::getNorm2() {
     return cblas_dnrm2(this->rows * this->cols, this->values, 1);
-}
-
-void dense_matrix::printVector(const string& filename) {
-    ofstream myFile;
-    myFile.open(filename);
-    if(!myFile.is_open()) {
-        cout << "Error opening file" << endl;
-        return;
-    }
-    myFile << this->rows << endl;
-    for(int i = 0; i < this->rows; i++) {
-        double value = this->values[i];
-        myFile << std::setprecision (16) << value << endl;
-    }
-    myFile.close();
-}
-
-void dense_matrix::readVector(const string& filename) {
-    int count = 0;
-    ifstream inputFile(filename);
-    if (inputFile) {
-        double value;
-        inputFile >> value;
-        this->rows = (int) value;
-        this->cols = (int) value;
-        this->values = static_cast<double *>(calloc(this->rows * this->cols, sizeof(double)));
-        while (inputFile >> value) {
-            this->values[count++] = value;
-        }
-        inputFile.close();
-    }
-    else {
-        cout << "Error opening file" << endl;
-    }
-
 }
 
 //divide all elements of matrix by x
@@ -177,20 +135,6 @@ dense_matrix dense_matrix::operator- () const {
         for(int col = 0; col < this->cols; col++)
             res.setValue(row, col, -this->values[row + col * this->rows]);
     return res;
-}
-
-
-void dense_matrix::printMatrix(const string& name) {
-    cout <<"Matrix " << name << " : " << this->rows << " x :" << this->cols << endl;
-    for(int row = 0; row < this->rows; row++) {
-        cout << "Row " << row << " : ";
-        for(int col = 0; col < this->cols; col++) {
-            cout << this->values[row + col * this->rows] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-
 }
 
 void dense_matrix::getCol(int col, double *ptr) {

@@ -416,7 +416,7 @@ dense_matrix calculate_MLF(double * A, double alpha, double beta, int size) {
 
     auto * temp = (complex<double> *) calloc(size * size, sizeof(complex<double>));
 
-    //return to A
+    //return to f(A=
     cblas_zgemm(CblasColMajor, CblasNoTrans, CblasNoTrans,
                 size, size, size, &alphaMult, U, size, fA, size, &betaMult, temp, size);
 

@@ -8,15 +8,6 @@
 
 using namespace std;
 
-int dense_vector::getSize() const {
-    return this->size;
-}
-
-void dense_vector::resize(int newSize) {
-    this->size = newSize;
-    this->values.resize(newSize);
-}
-
 void dense_vector::getOnesVec() {
     #pragma omp parallel for
     for(int i = 0; i < this->size; i++) 
@@ -82,21 +73,8 @@ double dense_vector::getNorm2() {
     return cblas_dnrm2(this->size, this->values.data(), 1);
 }
 
-double dense_vector::getValue(int i) {
-    return this->values[i];
-}
-
 void dense_vector::setValue(int i, double value) {
     this->values[i] = value;
-}
-
-std::vector<double> dense_vector::getValues() const {
-    return this->values;
-}
-
-void dense_vector::getMaxValVec() {
-    for(int i = 0; i < this->size; i++)
-        this->values[i] = std::numeric_limits<double>::max() / 10;
 }
 
 std::ostream& operator<<(std::ostream& os, const dense_vector& dv) {

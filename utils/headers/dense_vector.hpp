@@ -16,17 +16,10 @@ public:
         this->values = std::move(values);
     }
 
-    [[nodiscard]] int getSize() const;
-    
-    void resize(int size);
     void getOnesVec();
-    void getMaxValVec();
     void insertValue(int col, double value);
     void setValues(std::vector<double> values);
     void setValue(int i, double value);
-    
-    double getValue(int i);
-    [[nodiscard]] std::vector<double> getValues() const;
     
     dense_vector operator*(double x);
     dense_vector operator/(double x);
