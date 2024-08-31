@@ -37,8 +37,18 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#output">Output</a></li>
+    <li><a href="#Matrix-Exponential-Usage">Matrix Exponential Usage</a></li>
+      <ul>
+        <li><a href="#Matrix-Exponential-Distributed-Computing">Matrix Exponential Distributed Computing</a></li>
+        <li><a href="#Matrix-Exponential-Shared-Memory-Computing">Matrix Exponential Shared Memory Computing</a></li>
+        <li><a href="#Matrix-Exponential-Output">Matrix Exponential Output</a></li>
+      </ul>
+    <li><a href="#Mittag-Leffler-Usage"> Mittag-Leffler Usage</a></li>
+      <ul>
+        <li><a href="#Mittag-Leffler-Distributed-Computing">Mittag-Leffler Distributed Computing</a></li>
+        <li><a href="#Mittag-Leffler-Shared-Memory-Computing">Mittag-Leffler Shared Memory Computing</a></li>
+        <li><a href="#Mittag-Leffler-Output">Mittag-Leffler Output</a></li>
+      </ul>
   </ol>
 </details>
 
@@ -75,48 +85,25 @@ To get a local copy up and running follow these simple steps.
 ### Prerequisites
 
 * Clone the project into your computer
-* g++
-  * If your system does not have the g++ compiler, you will need to install it.
-  * If you are using Ubuntu, you can install it with:
-    ```sh
-    sudo apt install g++
-    ```
-* Eigen Library
-  * Download the Eigen Library's 3.4.0 [release](https://gitlab.com/libeigen/eigen/-/releases/3.4.0).
-  * Place the eigen folder on the project folder.
-  * Your folder should look something like this:
-    <HTML> <br> &#8618; conjugateGradient </HTML>
-    <HTML> <br> &#8618; eigen </HTML>
-    <HTML> <br> &#8618; exponentialMatrix </HTML>
-    <HTML> <br> &#8618; utils </HTML>
-* OpenMP
-  * You will need to install OpenMP on your system.
-  * Quick install for Ubuntu:
-    ```sh
-    sudo apt install libomp-dev
-    ```
-* OpenMPI
-  * OpenMPI Quick Start [here](https://docs.open-mpi.org/en/v5.0.x/installing-open-mpi/quickstart.html)
-  * Quick install for Ubuntu:
-    ```sh
-    sudo apt-get install openmpi-bin openmpi-common openssh-client openssh-server libopenmpi1.3 libopenmpi-dbg libopenmpi-dev
-    ```
-
-### Compilation
-
-If you have followed the previous steps, to compile the project you need to access the desired folder and use the makefile. For example:
-
-```sh
-cd exponentialMatrix
-make
-```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+* Have the following installed on your system:
+  * g++
+  * OpenMP
+  * OpenMPI
+* To install the prerequisites, you can use the following command on the project directory:
+  ```sh
+  make requirements
+  ```
 
 <!-- USAGE EXAMPLES -->
-## Usage
+## Matrix Exponential Usage
+
+To compile the program, you can use the makefile provided in the exponentialMatrix folder.
+```sh
+cd exponentialMatrix; make
+```
+
+This will generate an executable file called "exp-distr", for distributed computing
+and "exp-shared", for shared memory computing.
 
 After compiling the program, to run it you will need to give it some arguments.
 
@@ -124,7 +111,9 @@ After compiling the program, to run it you will need to give it some arguments.
 * n: the 2norm value of the vector you want to use to compare accuracy
 * m: the matrix path of the desired input matrix. The matrix has to be in the matrix market format.
 
-This project is suitable to run in SLURM Workload Managers. However, if you want to run this project locally, you can do so by following the following steps:
+### Matrix Exponential Distributed Computing
+This project is suitable to run in SLURM Workload Managers. 
+However, if you want to run this project locally, you can do so by following the following steps:
 
 To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
 ```sh
@@ -143,13 +132,31 @@ As such, to run the project locally for:
   
 You can use the following command:
 ```sh
-  mpirun -np 4 ./exp -k 5 -n 1 -m "matrix.mtx"
+  mpirun -np 4 ./exp-distr.out -k 5 -n 1 -m "matrix.mtx"
+```
+
+### Matrix Exponential Shared Memory Computing
+
+To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
+```sh
+export OMP_NUM_THREADS=4
+```
+
+To run the shared memory computing version of the project with the following arguments:
+
+* Five krylov iterations
+* Accuracy norm value of 1
+* Matrix path of the input matrix "matrix.mtx"
+
+You can use the following command:
+```sh
+  ./exp-shared -k 5 -n 1 -m "matrix.mtx"
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- OUTPUT EXAMPLES -->
-## Output
+### Matrix Exponential Output
 As for the ouput, you will get something like this:
 ```
 exec_time_arnoldi: 0.0033148
@@ -165,6 +172,114 @@ exec_time: 0.00901218
 * 2Norm: 2norm of the obtained vector
 * exec_time: execution time of the whole program 
 
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+## Mittag Leffler Usage
+
+To compile the program, you can use the makefile provided in the MLF folder.
+```sh
+cd MLF; make
+```
+
+This will generate an executable file called "mlf-distr", for distributed computing
+and "mlf-shared", for shared memory computing and "mlf-shared-test" for shared memory 
+computing with a test vector.
+
+After compiling the program, to run it you will need to give it some arguments.
+
+Regarding "mlf-distr" and "mlf-shared", the arguments are:
+* k: the number of Krylov iterations
+* m: the matrix path of the desired input matrix. The matrix has to be in the matrix market format.
+
+As for the "mlf-shared-test", the arguments are:
+* k: the number of Krylov iterations
+* p: problem name. This argument represents the name of the matrix, and the name of the 
+    vector to be used in the test. for example, if you want to use the matrix "prob.mtx",
+    and the vector "prob-res.txt", you will need to use the argument "prob".
+
+### Mittag Leffler Distributed Computing
+This project is suitable to run in SLURM Workload Managers.
+However, if you want to run this project locally, you can do so by following the following steps:
+
+To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
+```sh
+export OMP_NUM_THREADS=4
+```
+As for the number of mpi computational nodes, you can just set it up when running the project with the -np option when using mpirun to run the project. For example:
+```sh
+  mpirun -np 5 (...)
+```
+
+As such, to run the project locally for:
+* Five krylov iterations
+* Matrix path of the input matrix "matrix.mtx"
+* 4 mpi nodes
+
+You can use the following command:
+```sh
+  mpirun -np 4 ./mlf-distr.out -k 5 -m "matrix.mtx"
+```
+
+
+### Mittag Leffler Shared Memory Computing
+
+To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
+```sh
+export OMP_NUM_THREADS=4
+```
+
+To run the shared memory computing version of the project with the following arguments:
+
+* Five krylov iterations
+* Matrix path of the input matrix "matrix.mtx"
+
+You can use the following command:
+```sh
+  ./mlf-shared -k 5 -m "matrix.mtx"
+```
+
+### Mittag Leffler Shared Memory Computing with Test Vector
+
+To set the number of threads, you can use the OMP_NUM_THREADS variable. For example, to have 4 threads, you will need to run this command before running the project:
+```sh
+export OMP_NUM_THREADS=4
+```
+
+To run the shared memory computing version of the project with the following arguments:
+* Five krylov iterations
+* Problem name "prob"
+
+You can use the following command:
+```sh
+  ./mlf-shared-test -k 5 -p "prob"
+```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- OUTPUT EXAMPLES -->
+### Mittag Leffler Output
+
+As for the ouput, with "mlf-distr.out" and "mlf-shared.out" you will get something like this:
+```
+exec_time_arnoldi: 0.000635
+exec_time_schur: 0.003443
+exec_time: 0.004323
+result norm: 7.56616e+58
+```
+
+* exec_time_arnoldi: time it took to execute the Arnoldi process step
+* exec_time_schur: time it took to execute the Schur-Parlett matrix function evaluation step
+* exec_time: execution time of the whole program
+* result norm: 2norm of the obtained vector
+
+As for the "mlf-shared-test", you will get something like this:
+```
+Relative error: 1e-06
+```
+
+* Relative error: relative error between the obtained vector and the expected vector.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
