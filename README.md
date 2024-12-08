@@ -57,12 +57,13 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-Matrices are used to represent problems across various domains such as physics, computational chemistry, and engineering. Therefore, the efficient computation of matrix functions is generally critical when large-scale simulations are essential. When dealing with certain problems in these fields, Krylov methods such as the generalized minimal residual method and the conjugate gradient are prevailing choices for researchers when finding an approximate solution to large-scale problems.
-The Mittag-Leffler function, a special function that has prevalent use in the field of fractional calculus, is noteworthy for its applicability in various physical phenomena.
+Matrices are used to represent problems across various domains such as physics, computational chemistry, and engineering. Therefore, the efficient computation of matrix functions is generally critical whenever large-scale simulations are essential. In addressing certain problems in these fields, Krylov methods such as the generalized minimal residual method and the conjugate gradient are prevailing choices for researchers in finding an approximate solution to large-scale problems.
+The Mittag-Leffler function, a special function that has widespread use in the field of fractional calculus, is noteworthy for its applicability in various physical phenomena.
 Given the importance of the Mittag-Leffler function in fractional calculus, it is essential to have an efficient and accurate method to calculate its value over matrices. In this scenario, Krylov subspace methods are an effective tool for the numerical approximation of that value.
-The solution presented in this project addresses these inherent challenges by developing a parallelized and distributed Krylov Method, tailored for the Mittag-Leffler function. By using parallelism, the solution adopted in the current work has the potential to noticeably enhance the efficiency of matrix-vector computations. Furthermore, it aims to address scalability limitations by fully optimizing the utilization of available computing resources.
+The solutions presented in this thesis address these inherent challenges by developing a parallelized and distributed Krylov Method, tailored for the Exponential and Mittag-Leffler functions. By using parallelism, the solution adopted in the current work has the potential to enhance the efficiency of matrix-vector computations noticeably. Furthermore, it aims to address scalability limitations by fully optimizing the utilization of available computing resources.
+We have developed a solution using the Krylov Method to compute both the matrix exponential and the Mittag-Leffler function. The solution demonstrates fast convergence and execution time across various types of matrices. However, its scalability is limited by rising communication costs between nodes as the number of Krylov iterations grows, as well as by resource constraints.
 
-An initial solution has already been developed, which employs the Krylov Method to compute a matrix's exponential.
+You can find more information in https://fenix.tecnico.ulisboa.pt/cursos/meic-a/dissertacao/846778572214671
 <p align="right"></p>
 
 
