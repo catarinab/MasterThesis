@@ -63,7 +63,7 @@ Given the importance of the Mittag-Leffler function in fractional calculus, it i
 The solutions presented in this thesis address these inherent challenges by developing a parallelized and distributed Krylov Method, tailored for the Exponential and Mittag-Leffler functions. By using parallelism, the solution adopted in the current work has the potential to enhance the efficiency of matrix-vector computations noticeably. Furthermore, it aims to address scalability limitations by fully optimizing the utilization of available computing resources.
 We have developed a solution using the Krylov Method to compute both the matrix exponential and the Mittag-Leffler function. The solution demonstrates fast convergence and execution time across various types of matrices. However, its scalability is limited by rising communication costs between nodes as the number of Krylov iterations grows, as well as by resource constraints.
 
-You can find more information in https://fenix.tecnico.ulisboa.pt/cursos/meic-a/dissertacao/846778572214671
+You can find more information at https://fenix.tecnico.ulisboa.pt/cursos/meic-a/dissertacao/846778572214671
 <p align="right"></p>
 
 
